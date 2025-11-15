@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import Providers from '@/components/Providers'
 
 export const metadata: Metadata = {
   title: '日本車比較サイト - あなたにピッタリの車を見つけよう',
@@ -16,11 +17,13 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className="font-sans">
-        <Header />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <Footer />
+        <Providers>
+          <Header />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   )

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Car } from '@/types/car';
 import { formatPrice, formatFuelEfficiency } from '@/lib/carData';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface CarCardProps {
   car: Car;
@@ -11,6 +12,9 @@ interface CarCardProps {
 }
 
 export default function CarCard({ car, onAddToCompare, showCompareButton = true }: CarCardProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(car.id);
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
       <Link href={`/cars/${car.id}`}>
@@ -23,6 +27,28 @@ export default function CarCard({ car, onAddToCompare, showCompareButton = true 
           <div className="absolute top-2 left-2 bg-white px-2 py-1 rounded text-sm font-semibold">
             {car.manufacturer}
           </div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              toggleFavorite(car.id);
+            }}
+            className="absolute top-2 right-2 bg-white p-2 rounded-full hover:bg-gray-100 transition-colors shadow-md"
+            aria-label={favorite ? 'お気に入りから削除' : 'お気に入りに追加'}
+          >
+            <svg
+              className="w-6 h-6"
+              fill={favorite ? '#ef4444' : 'none'}
+              stroke={favorite ? '#ef4444' : 'currentColor'}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+          </button>
         </div>
       </Link>
 

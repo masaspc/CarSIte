@@ -47,6 +47,16 @@ export default function Header() {
             >
               比較する
             </Link>
+            <Link
+              href="/favorites"
+              className={`${
+                pathname === '/favorites'
+                  ? 'text-primary-600 font-semibold'
+                  : 'text-gray-700 hover:text-primary-600'
+              } transition-colors`}
+            >
+              お気に入り
+            </Link>
           </nav>
 
           <button className="md:hidden p-2">

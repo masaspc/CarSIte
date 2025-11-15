@@ -63,7 +63,7 @@ export default function Home() {
               日本国内で販売されている自動車を、様々な観点から比較検討
             </p>
 
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-6">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -80,6 +80,15 @@ export default function Home() {
                 </button>
               </div>
             </form>
+
+            <div className="text-center">
+              <Link
+                href="/quiz"
+                className="inline-block bg-primary-700 text-white py-3 px-8 rounded-lg hover:bg-primary-800 transition-colors font-semibold border-2 border-primary-500"
+              >
+                🎯 おすすめ診断で最適な車を見つける
+              </Link>
+            </div>
           </div>
         </div>
       </section>
