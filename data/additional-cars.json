@@ -1,0 +1,286 @@
+[
+  {
+    "id": "toyota-sienta-2023-x",
+    "manufacturer": "トヨタ",
+    "model": "シエンタ",
+    "grade": "X",
+    "bodyType": "ミニバン",
+    "price": 1950000,
+    "releaseDate": "2022-08",
+    "dimensions": {
+      "length": 4260,
+      "width": 1695,
+      "height": 1695,
+      "wheelbase": 2750,
+      "weight": 1320,
+      "minTurningRadius": 5,
+      "groundClearance": 145
+    },
+    "capacity": {
+      "seating": 7
+    },
+    "engine": {
+      "type": "ハイブリッド",
+      "displacement": 1490,
+      "maxPower": "67kW(91PS)",
+      "maxTorque": "120N・m",
+      "transmission": "電気式無段変速機",
+      "driveSystem": "FF"
+    },
+    "fuelEfficiency": {
+      "wltcMode": 28.2,
+      "cityMode": 28.9,
+      "suburbanMode": 29.3,
+      "highwayMode": 27.2,
+      "ecoCarTax": true
+    },
+    "safety": {
+      "collisionMitigationBrake": true,
+      "falseStartSuppression": true,
+      "laneDepartureWarning": true,
+      "laneKeepingAssist": true,
+      "adaptiveCruiseControl": true,
+      "blindSpotMonitor": false,
+      "camera360": false,
+      "parkingAssist": true,
+      "airbags": 7
+    },
+    "comfort": {
+      "navigation": false,
+      "etc": false,
+      "backCamera": true,
+      "powerSeat": false,
+      "seatHeater": false,
+      "steeringHeater": false,
+      "autoAircon": true,
+      "ledHeadlight": true,
+      "smartKey": true,
+      "powerBackDoor": false,
+      "handsFreeBackDoor": false,
+      "sunroof": false
+    },
+    "images": {
+      "exterior": [
+        "/images/placeholder-car.jpg"
+      ],
+      "interior": [
+        "/images/placeholder-interior.jpg"
+      ]
+    },
+    "officialUrl": "https://toyota.jp/sienta/",
+    "description": "5ナンバーサイズのコンパクトミニバン。小回りが利き、使いやすい7人乗り。"
+  },
+  {
+    "id": "toyota-harrier-2023-s",
+    "manufacturer": "トヨタ",
+    "model": "ハリアー",
+    "grade": "S",
+    "bodyType": "SUV",
+    "price": 3128000,
+    "releaseDate": "2020-06",
+    "dimensions": {
+      "length": 4740,
+      "width": 1855,
+      "height": 1660,
+      "wheelbase": 2690,
+      "weight": 1620,
+      "minTurningRadius": 5.7,
+      "groundClearance": 195
+    },
+    "capacity": {
+      "seating": 5
+    },
+    "engine": {
+      "type": "ガソリン",
+      "displacement": 1986,
+      "maxPower": "126kW(171PS)",
+      "maxTorque": "207N・m",
+      "transmission": "CVT",
+      "driveSystem": "FF"
+    },
+    "fuelEfficiency": {
+      "wltcMode": 15.4,
+      "cityMode": 12.2,
+      "suburbanMode": 15.6,
+      "highwayMode": 17.5,
+      "ecoCarTax": false
+    },
+    "safety": {
+      "collisionMitigationBrake": true,
+      "falseStartSuppression": true,
+      "laneDepartureWarning": true,
+      "laneKeepingAssist": true,
+      "adaptiveCruiseControl": true,
+      "blindSpotMonitor": true,
+      "camera360": false,
+      "parkingAssist": true,
+      "airbags": 8
+    },
+    "comfort": {
+      "navigation": false,
+      "etc": false,
+      "backCamera": true,
+      "powerSeat": true,
+      "seatHeater": false,
+      "steeringHeater": false,
+      "autoAircon": true,
+      "ledHeadlight": true,
+      "smartKey": true,
+      "powerBackDoor": true,
+      "handsFreeBackDoor": false,
+      "sunroof": false
+    },
+    "images": {
+      "exterior": [
+        "/images/placeholder-car.jpg"
+      ],
+      "interior": [
+        "/images/placeholder-interior.jpg"
+      ]
+    },
+    "officialUrl": "https://toyota.jp/harrier/",
+    "description": "都会派SUVの代表格。洗練されたデザインと快適な乗り心地を提供。"
+  },
+  {
+    "id": "toyota-voxy-2023-s-z",
+    "manufacturer": "トヨタ",
+    "model": "ヴォクシー",
+    "grade": "S-Z",
+    "bodyType": "ミニバン",
+    "price": 3390000,
+    "releaseDate": "2022-01",
+    "dimensions": {
+      "length": 4695,
+      "width": 1730,
+      "height": 1895,
+      "wheelbase": 2850,
+      "weight": 1670,
+      "minTurningRadius": 5.5,
+      "groundClearance": 140
+    },
+    "capacity": {
+      "seating": 7
+    },
+    "engine": {
+      "type": "ハイブリッド",
+      "displacement": 1797,
+      "maxPower": "72kW(98PS)",
+      "maxTorque": "142N・m",
+      "transmission": "電気式無段変速機",
+      "driveSystem": "FF"
+    },
+    "fuelEfficiency": {
+      "wltcMode": 23,
+      "cityMode": 23.4,
+      "suburbanMode": 24.4,
+      "highwayMode": 21.8,
+      "ecoCarTax": true
+    },
+    "safety": {
+      "collisionMitigationBrake": true,
+      "falseStartSuppression": true,
+      "laneDepartureWarning": true,
+      "laneKeepingAssist": true,
+      "adaptiveCruiseControl": true,
+      "blindSpotMonitor": true,
+      "camera360": true,
+      "parkingAssist": true,
+      "airbags": 7
+    },
+    "comfort": {
+      "navigation": false,
+      "etc": false,
+      "backCamera": true,
+      "powerSeat": false,
+      "seatHeater": false,
+      "steeringHeater": false,
+      "autoAircon": true,
+      "ledHeadlight": true,
+      "smartKey": true,
+      "powerBackDoor": true,
+      "handsFreeBackDoor": true,
+      "sunroof": false
+    },
+    "images": {
+      "exterior": [
+        "/images/placeholder-car.jpg"
+      ],
+      "interior": [
+        "/images/placeholder-interior.jpg"
+      ]
+    },
+    "officialUrl": "https://toyota.jp/voxy/",
+    "description": "ファミリーに人気のミニバン。使い勝手の良さと先進安全装備が魅力。"
+  },
+  {
+    "id": "toyota-corolla-sport-2023-g-x",
+    "manufacturer": "トヨタ",
+    "model": "カローラスポーツ",
+    "grade": "G-X",
+    "bodyType": "ハッチバック",
+    "price": 2190000,
+    "releaseDate": "2018-06",
+    "dimensions": {
+      "length": 4375,
+      "width": 1790,
+      "height": 1460,
+      "wheelbase": 2640,
+      "weight": 1310,
+      "minTurningRadius": 5.1,
+      "groundClearance": 130
+    },
+    "capacity": {
+      "seating": 5
+    },
+    "engine": {
+      "type": "ガソリン",
+      "displacement": 1196,
+      "maxPower": "85kW(116PS)",
+      "maxTorque": "185N・m",
+      "transmission": "CVT",
+      "driveSystem": "FF"
+    },
+    "fuelEfficiency": {
+      "wltcMode": 16.4,
+      "cityMode": 12.9,
+      "suburbanMode": 16.7,
+      "highwayMode": 18.7,
+      "ecoCarTax": false
+    },
+    "safety": {
+      "collisionMitigationBrake": true,
+      "falseStartSuppression": true,
+      "laneDepartureWarning": true,
+      "laneKeepingAssist": true,
+      "adaptiveCruiseControl": true,
+      "blindSpotMonitor": false,
+      "camera360": false,
+      "parkingAssist": false,
+      "airbags": 7
+    },
+    "comfort": {
+      "navigation": false,
+      "etc": false,
+      "backCamera": false,
+      "powerSeat": false,
+      "seatHeater": false,
+      "steeringHeater": false,
+      "autoAircon": true,
+      "ledHeadlight": true,
+      "smartKey": true,
+      "powerBackDoor": false,
+      "handsFreeBackDoor": false,
+      "sunroof": false
+    },
+    "images": {
+      "exterior": [
+        "/images/placeholder-car.jpg"
+      ],
+      "interior": [
+        "/images/placeholder-interior.jpg"
+      ]
+    },
+    "officialUrl": "https://toyota.jp/corollasport/",
+    "description": "スポーティなハッチバック。走る楽しさと実用性を兼ね備えた一台。"
+  }
+]

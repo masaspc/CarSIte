@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Car } from '@/types/car';
 import { formatPrice, formatFuelEfficiency } from '@/lib/carData';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { useReviews } from '@/contexts/ReviewsContext';
 
 interface CarCardProps {
   car: Car;
@@ -13,7 +14,9 @@ interface CarCardProps {
 
 export default function CarCard({ car, onAddToCompare, showCompareButton = true }: CarCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { getReviewStats } = useReviews();
   const favorite = isFavorite(car.id);
+  const reviewStats = getReviewStats(car.id);
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
@@ -57,7 +60,28 @@ export default function CarCard({ car, onAddToCompare, showCompareButton = true 
           <h3 className="text-xl font-bold mb-1 hover:text-primary-600">
             {car.model}
           </h3>
-          <p className="text-sm text-gray-600 mb-3">{car.grade}</p>
+          <p className="text-sm text-gray-600 mb-1">{car.grade}</p>
+          {reviewStats.totalReviews > 0 && (
+            <div className="flex items-center gap-1 mb-2">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className={`text-sm ${
+                      star <= Math.round(reviewStats.averageRating)
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+              <span className="text-xs text-gray-600">
+                {reviewStats.averageRating.toFixed(1)} ({reviewStats.totalReviews})
+              </span>
+            </div>
+          )}
         </Link>
 
         <div className="space-y-2 mb-4">

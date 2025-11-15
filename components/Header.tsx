@@ -57,6 +57,16 @@ export default function Header() {
             >
               お気に入り
             </Link>
+            <Link
+              href="/dealers"
+              className={`${
+                pathname === '/dealers'
+                  ? 'text-primary-600 font-semibold'
+                  : 'text-gray-700 hover:text-primary-600'
+              } transition-colors`}
+            >
+              ディーラー検索
+            </Link>
           </nav>
 
           <button className="md:hidden p-2">

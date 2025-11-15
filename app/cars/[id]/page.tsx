@@ -4,6 +4,8 @@ import { use } from 'react';
 import Link from 'next/link';
 import { getCarById, getSimilarCars, formatPrice, formatFuelEfficiency } from '@/lib/carData';
 import CarCard from '@/components/CarCard';
+import ReviewSection from '@/components/ReviewSection';
+import PriceHistoryChart from '@/components/PriceHistoryChart';
 import { Car } from '@/types/car';
 
 export default function CarDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -391,6 +393,18 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 価格推移グラフ */}
+        {car.priceHistory && car.priceHistory.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+            <PriceHistoryChart history={car.priceHistory} model={`${car.manufacturer} ${car.model}`} />
+          </div>
+        )}
+
+        {/* レビューセクション */}
+        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+          <ReviewSection carId={car.id} carName={`${car.manufacturer} ${car.model}`} />
         </div>
 
         {/* 類似車種 */}

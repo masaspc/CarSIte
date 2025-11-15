@@ -1,0 +1,122 @@
+[
+  {
+    "id": "toyota-tokyo-shibuya",
+    "name": "トヨタ 渋谷店",
+    "manufacturer": "トヨタ",
+    "prefecture": "東京都",
+    "city": "渋谷区",
+    "address": "東京都渋谷区道玄坂1-1-1",
+    "phone": "03-1234-5678",
+    "businessHours": "10:00-19:00",
+    "closedDays": "火曜日",
+    "services": ["新車販売", "中古車販売", "車検", "整備", "保険"]
+  },
+  {
+    "id": "nissan-tokyo-shinjuku",
+    "name": "日産 新宿店",
+    "manufacturer": "日産",
+    "prefecture": "東京都",
+    "city": "新宿区",
+    "address": "東京都新宿区西新宿1-1-1",
+    "phone": "03-2345-6789",
+    "businessHours": "10:00-19:00",
+    "closedDays": "水曜日",
+    "services": ["新車販売", "中古車販売", "車検", "整備"]
+  },
+  {
+    "id": "honda-tokyo-setagaya",
+    "name": "ホンダ 世田谷店",
+    "manufacturer": "ホンダ",
+    "prefecture": "東京都",
+    "city": "世田谷区",
+    "address": "東京都世田谷区三軒茶屋1-1-1",
+    "phone": "03-3456-7890",
+    "businessHours": "9:30-18:30",
+    "closedDays": "月曜日",
+    "services": ["新車販売", "車検", "整備", "保険"]
+  },
+  {
+    "id": "mazda-osaka-umeda",
+    "name": "マツダ 梅田店",
+    "manufacturer": "マツダ",
+    "prefecture": "大阪府",
+    "city": "大阪市北区",
+    "address": "大阪府大阪市北区梅田1-1-1",
+    "phone": "06-1234-5678",
+    "businessHours": "10:00-19:00",
+    "closedDays": "火曜日",
+    "services": ["新車販売", "中古車販売", "車検", "整備", "板金塗装"]
+  },
+  {
+    "id": "subaru-kanagawa-yokohama",
+    "name": "スバル 横浜店",
+    "manufacturer": "スバル",
+    "prefecture": "神奈川県",
+    "city": "横浜市",
+    "address": "神奈川県横浜市西区みなとみらい1-1-1",
+    "phone": "045-123-4567",
+    "businessHours": "10:00-18:00",
+    "closedDays": "水曜日",
+    "services": ["新車販売", "車検", "整備", "保険"]
+  },
+  {
+    "id": "toyota-aichi-nagoya",
+    "name": "トヨタ 名古屋店",
+    "manufacturer": "トヨタ",
+    "prefecture": "愛知県",
+    "city": "名古屋市",
+    "address": "愛知県名古屋市中村区名駅1-1-1",
+    "phone": "052-123-4567",
+    "businessHours": "10:00-19:00",
+    "closedDays": "火曜日",
+    "services": ["新車販売", "中古車販売", "車検", "整備", "保険", "板金塗装"]
+  },
+  {
+    "id": "lexus-tokyo-ginza",
+    "name": "レクサス 銀座店",
+    "manufacturer": "レクサス",
+    "prefecture": "東京都",
+    "city": "中央区",
+    "address": "東京都中央区銀座1-1-1",
+    "phone": "03-4567-8901",
+    "businessHours": "10:00-19:00",
+    "closedDays": "月曜日",
+    "services": ["新車販売", "車検", "整備", "保険"]
+  },
+  {
+    "id": "nissan-fukuoka-tenjin",
+    "name": "日産 天神店",
+    "manufacturer": "日産",
+    "prefecture": "福岡県",
+    "city": "福岡市",
+    "address": "福岡県福岡市中央区天神1-1-1",
+    "phone": "092-123-4567",
+    "businessHours": "10:00-19:00",
+    "closedDays": "水曜日",
+    "services": ["新車販売", "中古車販売", "車検", "整備"]
+  },
+  {
+    "id": "honda-saitama-omiya",
+    "name": "ホンダ 大宮店",
+    "manufacturer": "ホンダ",
+    "prefecture": "埼玉県",
+    "city": "さいたま市",
+    "address": "埼玉県さいたま市大宮区大宮1-1-1",
+    "phone": "048-123-4567",
+    "businessHours": "9:30-18:30",
+    "closedDays": "月曜日",
+    "services": ["新車販売", "中古車販売", "車検", "整備", "保険"]
+  },
+  {
+    "id": "mazda-hiroshima-main",
+    "name": "マツダ 広島本店",
+    "manufacturer": "マツダ",
+    "prefecture": "広島県",
+    "city": "広島市",
+    "address": "広島県広島市中区基町1-1-1",
+    "phone": "082-123-4567",
+    "businessHours": "10:00-19:00",
+    "closedDays": "火曜日",
+    "services": ["新車販売", "中古車販売", "車検", "整備", "保険", "板金塗装"]
+  }
+]

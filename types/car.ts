@@ -94,6 +94,11 @@ export interface Images {
   interior: string[];
 }
 
+export interface PriceHistoryPoint {
+  date: string;    // YYYY-MM format
+  price: number;   // 価格（円）
+}
+
 export interface Car {
   id: string;
   manufacturer: string;
@@ -111,6 +116,7 @@ export interface Car {
   images: Images;
   officialUrl: string;
   description: string;
+  priceHistory?: PriceHistoryPoint[]; // 価格推移（オプション）
 }
 
 export interface FilterParams {
