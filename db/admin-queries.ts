@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { grades, models } from '@/db/schema';
 
@@ -15,6 +15,8 @@ export async function listAllGrades() {
       manufacturer: models.manufacturer,
       manufacturerSlug: models.manufacturerSlug,
       bodyType: models.bodyType,
+      /** 親の車種が未検証ならグレードは公開できない（app/actions/cars.ts のゲート） */
+      modelVerifiedAt: models.verifiedAt,
     })
     .from(grades)
     .innerJoin(models, eq(grades.modelId, models.id))
@@ -52,3 +54,29 @@ export async function listModels() {
 }
 
 export type ModelOption = Awaited<ReturnType<typeof listModels>>[number];
+
+/**
+ * 車種の検証状態の一覧。管理画面から検証済みにするための画面に使う。
+ * 未検証の車種を先頭に出す（公開を止めているのはそこなので、探す手間を省く）。
+ */
+export async function listModelsWithVerification() {
+  return db
+    .select({
+      id: models.id,
+      manufacturer: models.manufacturer,
+      name: models.name,
+      bodyType: models.bodyType,
+      description: models.description,
+      officialUrl: models.officialUrl,
+      verifiedAt: models.verifiedAt,
+      verifiedBy: models.verifiedBy,
+      gradeCount: sql<number>`count(${grades.id})::int`,
+    })
+    .from(models)
+    .leftJoin(grades, eq(grades.modelId, models.id))
+    .groupBy(models.id)
+    // 未検証（NULL）を先頭に。Postgres の ASC は既定で NULLS LAST になる
+    .orderBy(sql`${models.verifiedAt} ASC NULLS FIRST`, asc(models.manufacturer), asc(models.name));
+}
+
+export type ModelVerificationRow = Awaited<ReturnType<typeof listModelsWithVerification>>[number];

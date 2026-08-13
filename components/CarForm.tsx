@@ -125,7 +125,25 @@ export default function CarForm({ initialData, mode, models }: CarFormProps) {
             </select>
           </label>
           <Field label="グレード名" required value={formData.name} onChange={(v) => set('name', v)} />
-          <Field label="slug" required value={formData.slug} onChange={(v) => set('slug', v)} placeholder="g-package" />
+          {/* slug は作成時にだけ決められる。公開URL・共有された /compare のURL・
+              訪問者の localStorage のお気に入りがこの値を参照しているため、
+              あとから変えると保存済みのリンクが黙って壊れる。
+              サーバ側 (updateGrade) でも変更を拒否する（フォームを信用しない） */}
+          <div>
+            <Field
+              label="slug"
+              required
+              readOnly={mode === 'edit'}
+              value={formData.slug}
+              onChange={(v) => set('slug', v)}
+              placeholder="g-package"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              {mode === 'edit'
+                ? 'slug は作成後に変更できません。共有URLと訪問者のお気に入りがこの値を参照しているため、変更すると保存済みのリンクが壊れます。'
+                : 'あとから変更できません。公開URLの一部になります。'}
+            </p>
+          </div>
           <NumberField label="価格（円）" required value={formData.price} onChange={(v) => set('price', Number(v))} />
           <Field label="発売年月" value={formData.releaseDate ?? ''} placeholder="2026-08" onChange={(v) => set('releaseDate', v || null)} />
           <Field label="販売終了年月" value={formData.discontinuedAt ?? ''} placeholder="YYYY-MM" onChange={(v) => set('discontinuedAt', v || null)} />
@@ -186,7 +204,8 @@ function Field({ label, onChange, ...props }: Omit<React.InputHTMLAttributes<HTM
   return (
     <label className="block text-sm font-medium">
       {label}
-      <input {...props} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary-500" />
+      {/* readOnly の欄（編集時の slug）は見た目でも編集不可と分かるようにする */}
+      <input {...props} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary-500 read-only:bg-gray-100 read-only:text-gray-600" />
     </label>
   );
 }

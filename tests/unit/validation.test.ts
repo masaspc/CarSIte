@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gradeInputSchema } from '@/lib/validation';
+import { assertSlugUnchanged, gradeInputSchema, SlugImmutableError } from '@/lib/validation';
 
 const valid = {
   modelId: '0189a1b2-c3d4-4e5f-8a9b-0c1d2e3f4a5b',
@@ -119,5 +119,20 @@ describe('gradeInputSchema', () => {
     for (const key of ['dimensions', 'performance', 'fuelDetail', 'images', 'sourceUrl', 'fetchedAt']) {
       expect(parsed).not.toHaveProperty(key);
     }
+  });
+});
+
+// slug は公開URL・共有URL・お気に入りの参照先。作成後は変えられない
+describe('assertSlugUnchanged', () => {
+  it('同じ slug なら通す', () => {
+    expect(() => assertSlugUnchanged('g-package', 'g-package')).not.toThrow();
+  });
+
+  it('変更された slug を拒否する', () => {
+    expect(() => assertSlugUnchanged('g-package', 'z-package')).toThrow(SlugImmutableError);
+  });
+
+  it('エラーメッセージに現在値と変更後の値を出す', () => {
+    expect(() => assertSlugUnchanged('g-package', 'z-package')).toThrow(/g-package.*z-package/);
   });
 });

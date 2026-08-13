@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BodyType, EngineType } from '@/types/car';
+import type { BodyType } from '@/db/schema';
 
 interface QuizAnswers {
   purpose?: string;
@@ -37,19 +37,20 @@ export default function QuizPage() {
   const generateRecommendation = () => {
     const params = new URLSearchParams();
 
-    // 用途に基づくボディタイプ
+    // 用途に基づくボディタイプ。BodyType はDBの enum 由来なので、
+    // ここに存在しない表記を書けばコンパイルで落ちる（0件ヒットの検索URLを作らない）
+    const appendBodyTypes = (...bodyTypes: BodyType[]) => {
+      for (const bodyType of bodyTypes) params.append('bodyType', bodyType);
+    };
+
     if (answers.purpose === 'commute') {
-      params.append('bodyType', '軽自動車');
-      params.append('bodyType', 'コンパクトカー');
+      appendBodyTypes('軽自動車', 'コンパクトカー');
     } else if (answers.purpose === 'family') {
-      params.append('bodyType', 'ミニバン');
-      params.append('bodyType', 'SUV');
+      appendBodyTypes('ミニバン', 'SUV');
     } else if (answers.purpose === 'leisure') {
-      params.append('bodyType', 'SUV');
-      params.append('bodyType', 'ステーションワゴン');
+      appendBodyTypes('SUV', 'ステーションワゴン');
     } else if (answers.purpose === 'driving') {
-      params.append('bodyType', 'スポーツカー');
-      params.append('bodyType', 'セダン');
+      appendBodyTypes('スポーツカー', 'セダン');
     }
 
     // 予算

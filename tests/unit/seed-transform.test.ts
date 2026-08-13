@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { DuplicateGradeError, modelKeyOf, transformCars, type RawCar } from '@/scripts/seed-transform';
+import {
+  DuplicateGradeError,
+  modelKeyOf,
+  SeedValidationError,
+  transformCars,
+  validateSeedGrades,
+  type RawCar,
+} from '@/scripts/seed-transform';
+import carsFixture from '@/tests/fixtures/cars.json';
+
+const MODEL_ID = '0189a1b2-c3d4-4e5f-8a9b-0c1d2e3f4a5b';
 
 function car(overrides: Partial<RawCar> = {}): RawCar {
   return {
@@ -56,16 +66,11 @@ describe('transformCars', () => {
     expect(grade.sunroof).toBe('unknown');
   });
 
-  it('transmission を原文・分類・段数に分ける', () => {
-    const result = transformCars([
-      car({ engine: { ...car().engine, transmission: '6AT' } }),
-    ]);
-
-    expect(result.grades[0]).toMatchObject({
-      transmission: '6AT',
-      transmissionType: 'AT',
-      gearCount: 6,
-    });
+  // 分類・段数の導出は共有スキーマ (validateSeedGrades) の仕事。
+  // ここで先に導出すると、管理画面とシードで同じ規則が二重定義になる
+  it('transmission は諸元表の原文のまま持つ', () => {
+    const result = transformCars([car({ engine: { ...car().engine, transmission: '6AT' } })]);
+    expect(result.grades[0].transmission).toBe('6AT');
   });
 
   it('priceHistory を展開する', () => {
@@ -126,5 +131,77 @@ describe('transformCars', () => {
     expect(() =>
       transformCars([car({ engine: { ...car().engine, type: '核融合' } } as never)]),
     ).toThrow(/engineType|type/);
+  });
+});
+
+/**
+ * シードの投入値も管理画面と同じ Zod スキーマを通す。
+ * 価格上限・乗車定員・重量・排気量の制約が「管理画面だけ」に効いている状態を防ぐ。
+ */
+describe('validateSeedGrades', () => {
+  const validate = (cars: RawCar[]) =>
+    validateSeedGrades(transformCars(cars).grades, () => MODEL_ID);
+
+  it('親の modelId を埋めて検証済みの行を返す', () => {
+    const [row] = validate([car()]);
+    expect(row.modelId).toBe(MODEL_ID);
+    expect(row.publicationStatus).toBe('draft');
+  });
+
+  it('transmission の分類と段数を管理画面と同じ規則で導出する', () => {
+    const [row] = validate([car({ engine: { ...car().engine, transmission: '6AT' } })]);
+    expect(row).toMatchObject({ transmission: '6AT', transmissionType: 'AT', gearCount: 6 });
+  });
+
+  it('JSONB と装備列を保持したまま通す', () => {
+    const [row] = validate([car()]);
+    expect(row.dimensions).toMatchObject({ length: 4600 });
+    expect(row.performance).toMatchObject({ maxPower: '72kW(98PS)' });
+    expect(row.images).toMatchObject({ exterior: ['/images/placeholder-car.jpg'] });
+    expect(row.collisionMitigationBrake).toBe('standard');
+  });
+
+  it('管理画面と同じ価格上限をシードにも効かせる', () => {
+    expect(() => validate([car({ price: 100_000_001 })])).toThrow(SeedValidationError);
+  });
+
+  it('乗車定員・重量・排気量の範囲もシードに効かせる', () => {
+    expect(() => validate([car({ capacity: { seating: 99 } })])).toThrow(SeedValidationError);
+    expect(() =>
+      validate([car({ dimensions: { ...car().dimensions, weight: 99_999 } })]),
+    ).toThrow(SeedValidationError);
+    expect(() =>
+      validate([car({ engine: { ...car().engine, displacement: 99_999 } })]),
+    ).toThrow(SeedValidationError);
+  });
+
+  it('発売年月の形式もシードに効かせる', () => {
+    expect(() => validate([car({ releaseDate: '2023/01' })])).toThrow(SeedValidationError);
+  });
+
+  it('失敗したグレードを名指しし、全件分まとめて報告する', () => {
+    try {
+      validate([
+        car({ id: 'a', grade: 'E', price: -1 }),
+        car({ id: 'b', grade: 'G', capacity: { seating: 0 } }),
+      ]);
+      expect.unreachable('エラーが投げられていない');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SeedValidationError);
+      const failures = (error as SeedValidationError).failures;
+      expect(failures).toHaveLength(2);
+      expect(failures.map((f) => f.grade)).toEqual([
+        'トヨタ / プリウス / E',
+        'トヨタ / プリウス / G',
+      ]);
+      expect(failures[0].issues.join()).toMatch(/price/);
+    }
+  });
+
+  // 「103件のフィクスチャは全部通るのか」をレビューのたびに手で確かめない
+  it('フィクスチャの全グレードが検証を通る', () => {
+    const { grades } = transformCars(carsFixture as RawCar[]);
+    expect(grades).toHaveLength(103);
+    expect(validateSeedGrades(grades, () => MODEL_ID)).toHaveLength(103);
   });
 });

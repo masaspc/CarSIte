@@ -32,6 +32,8 @@
 
 **シード直後は全グレードが `draft`（下書き）状態です。** 公開ページ（`/`, `/search`, `/cars/...` など）は `published` のグレードだけを表示するため、シードしただけでは一般公開ページに車が1台も表示されません。表示するには管理画面（`/admin`）にログインし、グレードごとに「公開する」操作を行う必要があります。
 
+**グレードを公開するには、先に親の車種を検証済みにする必要があります。** 車種ページは車種名・説明・ボディタイプ・公式URLも描画し、説明は `generateMetadata` にも入ります。これらは未検証の取得元データなので、`/admin` の「車種の検証」で内容を確認して「検証済みにする」（`models.verified_at` / `verified_by` に誰がいつ検証したかを記録）まで、その車種のグレードは公開できません。
+
 またフィクスチャの装備値やページなどには、過去のテンプレート生成に由来する機械的な値が含まれています（例: `scripts/generate-more-cars.js` は価格を `basePrice + index * 100000` のような式で機械的に生成していました。このスクリプト自体は Task 15 で削除済みです）。実運用データとしてそのまま信用せず、参考値として扱ってください。
 
 ## セットアップ
@@ -89,7 +91,17 @@ npm run db:migrate
 npm run db:seed
 ```
 
-シード完了後、全グレードは `draft` です。公開ページに車を表示するには `/admin` から公開操作を行ってください。
+シード完了後、全グレードは `draft`、全車種は未検証（`verified_at` が `NULL`）です。
+公開ページに車を表示するには `/admin` でまず車種を「検証済みにする」、そのうえでグレードを公開してください。
+
+シードは4テーブルを全削除してから入れ直します。データが残っているデータベースに対しては拒否され、
+上書きしてよい場合だけフラグで明示します。
+
+```bash
+npm run db:seed                                          # 空のDBのみ投入できる
+npm run db:seed -- --force                               # 既存データ（全件 draft）を破棄して入れ直す
+npm run db:seed -- --force --allow-destroying-published  # 公開済み・アーカイブ済みごと破棄する
+```
 
 6. 開発サーバーを起動
 
@@ -154,6 +166,7 @@ CarSIte/
 │   └── FavoritesContext.tsx  # お気に入り状態管理
 ├── db/                       # データベース関連
 │   ├── schema.ts             # Drizzleスキーマ定義
+│   ├── enums.ts              # DB enum の値定義（Client Componentからも読む単一の定義）
 │   ├── index.ts               # DB接続
 │   ├── queries.ts             # 公開ページ向けクエリ
 │   └── admin-queries.ts       # 管理画面向けクエリ
@@ -166,12 +179,14 @@ CarSIte/
 │   ├── search-params.ts        # 検索フィルタのURLシリアライズ
 │   ├── slug.ts                  # メーカー/車種/グレードのslug生成
 │   ├── transmission.ts          # トランスミッション文字列の分類
-│   └── validation.ts            # 入力バリデーション
-├── types/                       # TypeScript型定義
-│   ├── car.ts                    # フィクスチャ由来の車両型定義
-│   └── dealer.ts                 # ディーラー型定義
+│   ├── publication.ts           # グレード公開の可否判定（車種の検証チェック）
+│   └── validation.ts            # 入力バリデーション（管理画面・シード共通のZodスキーマ）
+├── types/                       # DBの行に対応しない表示用の型のみ
+│   ├── car.ts                    # 価格推移グラフの点
+│   └── dealer.ts                 # 都道府県の一覧
 ├── scripts/                      # シード関連スクリプト
 │   ├── seed.ts                    # tests/fixtures からDBへ投入
+│   ├── seed-guard.ts              # 既存データを破棄してよいかの判定
 │   └── seed-transform.ts          # フィクスチャ→DB行への変換ロジック
 ├── tests/                         # テスト
 │   ├── unit/                       # ユニットテスト
@@ -244,6 +259,7 @@ CarSIte/
 ### 9. 管理画面
 - GitHub OAuth（Auth.js）による認証。ログインできてもGitHubの数値ユーザーIDが `ADMIN_GITHUB_IDS` に含まれていなければ管理画面は利用不可
 - 車両一覧表示・公開状態（下書き/公開中/アーカイブ）の切り替え
+- 車種の検証（`verified_at` / `verified_by` の記録・取り消し）。未検証の車種のグレードは公開できない
 - 車両データの追加
 - 車両データの編集
 - 車両データの削除
@@ -287,17 +303,21 @@ CarSIte/
 - `npm run test:integration` - 統合テスト（実DBに接続）
 - `npm run db:generate` - Drizzleスキーマからマイグレーションファイルを生成
 - `npm run db:migrate` - マイグレーションを適用
-- `npm run db:seed` - `tests/fixtures` のデータをDBに投入（全件 `draft` で投入される）
+- `npm run db:seed` - `tests/fixtures` のデータをDBに投入（全件 `draft`）。既存データがあると拒否する（`--force` / `--allow-destroying-published` で上書き）
 
 ## カスタマイズ
 
 ### 車両データの追加
 
-管理画面（`/admin`）から追加するか、`tests/fixtures/cars.json` を編集して `npm run db:seed` を再実行してください（再実行すると既存データは全削除の上で再投入されます）。型定義は `types/car.ts`・`scripts/seed-transform.ts` を参照してください。
+管理画面（`/admin`）から追加するか、`tests/fixtures/cars.json` を編集して `npm run db:seed -- --force` を再実行してください（再実行すると既存データは全削除の上で再投入されます）。
+
+投入値の型と制約は `lib/validation.ts` の Zod スキーマが単一の真実の源です（管理画面からの入力もシードも同じスキーマを通ります）。フィクスチャの形は `scripts/seed-transform.ts` の `RawCar`、DBの列は `db/schema.ts`、列挙値は `db/enums.ts` を参照してください。
+
+グレードの `slug` は作成後に変更できません（共有URLと訪問者のお気に入りが参照しているため）。
 
 ### ディーラーデータの追加
 
-`tests/fixtures/dealers.json` に新しいディーラー情報を追加し、`npm run db:seed` を再実行してください。
+`tests/fixtures/dealers.json` に新しいディーラー情報を追加し、`npm run db:seed -- --force` を再実行してください。
 
 ### スタイルのカスタマイズ
 

@@ -1,7 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BodyType, EngineType, DriveSystem } from '@/types/car';
+// 選択肢はDBの enum 定義をそのまま読む。UI側で書き写すと、
+// DBに無い値で絞り込めたり、追加した値が選べなかったりする
+import { BODY_TYPES, DRIVE_SYSTEMS, ENGINE_TYPES } from '@/db/enums';
 
 interface FilterSidebarProps {
   // URLSearchParams はServer→Clientのpropsシリアライズを越えられない
@@ -10,22 +12,6 @@ interface FilterSidebarProps {
   /** 公開中の車種を持つメーカー名。文字列配列なのでRSCシリアライズの罠は無い */
   manufacturers: string[];
 }
-
-const bodyTypes: BodyType[] = [
-  '軽自動車',
-  'コンパクトカー',
-  'セダン',
-  'ハッチバック',
-  'ステーションワゴン',
-  'SUV',
-  'ミニバン',
-  'スポーツカー',
-  'クーペ',
-];
-
-const engineTypes: EngineType[] = ['ガソリン', 'ハイブリッド', 'EV', 'ディーゼル', 'PHEV'];
-
-const driveSystems: DriveSystem[] = ['FF', 'FR', '4WD', 'MR', 'RR'];
 
 export default function FilterSidebar({ entries, manufacturers }: FilterSidebarProps) {
   const router = useRouter();
@@ -103,7 +89,7 @@ export default function FilterSidebar({ entries, manufacturers }: FilterSidebarP
       <div className="mb-6">
         <h3 className="font-semibold mb-3">ボディタイプ</h3>
         <div className="space-y-2">
-          {bodyTypes.map((bodyType) => (
+          {BODY_TYPES.map((bodyType) => (
             <label key={bodyType} className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -121,7 +107,7 @@ export default function FilterSidebar({ entries, manufacturers }: FilterSidebarP
       <div className="mb-6">
         <h3 className="font-semibold mb-3">エンジンタイプ</h3>
         <div className="space-y-2">
-          {engineTypes.map((engineType) => (
+          {ENGINE_TYPES.map((engineType) => (
             <label key={engineType} className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -184,7 +170,7 @@ export default function FilterSidebar({ entries, manufacturers }: FilterSidebarP
           className="w-full px-3 py-2 border rounded text-sm"
         >
           <option value="">全て</option>
-          {driveSystems.map((ds) => (
+          {DRIVE_SYSTEMS.map((ds) => (
             <option key={ds} value={ds}>
               {ds}
             </option>

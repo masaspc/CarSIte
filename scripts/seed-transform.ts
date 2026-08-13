@@ -4,12 +4,10 @@ import {
   engineTypeEnum,
   FEATURE_COLUMNS,
   type BodyType,
-  type DriveSystem,
-  type EngineType,
   type FeatureColumn,
 } from '@/db/schema';
-import { parseTransmission, type TransmissionType } from '@/lib/transmission';
 import { gradeSlug, manufacturerSlug, modelSlug } from '@/lib/slug';
+import { seedGradeSchema, type SeedGradeInput, type SeedGradeRecord } from '@/lib/validation';
 
 export interface RawCar {
   id: string;
@@ -56,32 +54,17 @@ export interface SeedModel {
   description: string;
 }
 
-export type SeedGrade = {
-  key: string;
-  modelKey: string;
-  name: string;
-  slug: string;
-  publicationStatus: 'draft';
-  price: number;
-  releaseDate: string | null;
-  engineType: EngineType;
-  driveSystem: DriveSystem;
-  transmission: string;
-  transmissionType: TransmissionType;
-  gearCount: number | null;
-  seating: number;
-  displacement: number | null;
-  weight: number | null;
-  wltcMode: string | null;
-  cruisingRange: number | null;
-  ecoCarTax: boolean;
-  airbags: number | null;
-  dimensions: Record<string, number>;
-  performance: { maxPower: string; maxTorque: string };
-  fuelDetail: Record<string, number | undefined>;
-  images: { exterior: string[]; interior: string[] };
-  extraFeatures: Record<string, never>;
-} & Record<FeatureColumn, 'standard' | 'unknown'>;
+/**
+ * 1グレード分の投入値。形は lib/validation.ts の seedGradeSchema が決める
+ * （= Zodスキーマを単一の真実の源とする）。ここで独自に列を並べ直すと、
+ * 検証されない列がシード経由でだけ増やせてしまう。
+ *
+ * modelId だけは差し引く: 変換時点では models が未挿入で UUID が無く、
+ * 代わりに modelKey で親を指す。seed.ts が挿入後に解決して付け直す。
+ * transmissionType / gearCount も持たない — 原文 transmission から
+ * seedGradeSchema が導出する（管理画面と同じ導出を通す）。
+ */
+export type SeedGrade = { key: string; modelKey: string } & Omit<SeedGradeInput, 'modelId'>;
 
 export interface SeedPricePoint {
   gradeKey: string;
@@ -105,10 +88,23 @@ export class DuplicateGradeError extends Error {
   }
 }
 
+export class SeedValidationError extends Error {
+  constructor(public readonly failures: readonly { grade: string; issues: string[] }[]) {
+    super(
+      `Zod検証に失敗したグレードが ${failures.length} 件あります。` +
+        '不正なデータを黙って投入しないため、シード全体を中止します:\n' +
+        failures
+          .map(({ grade, issues }) => `  - ${grade}\n${issues.map((i) => `      ${i}`).join('\n')}`)
+          .join('\n'),
+    );
+    this.name = 'SeedValidationError';
+  }
+}
+
 /** 内部キーの区切り。車種名・メーカー名に現れない文字列にする */
 const SEPARATOR = '::';
 
-/** Task 7 の seed.ts もこの関数を使う。キー構築をファイル間で重複させないこと */
+/** モデルの一意キー。キー構築をファイル間で重複させないこと */
 export function modelKeyOf(manufacturer: string, name: string): string {
   return `${manufacturer}${SEPARATOR}${name}`;
 }
@@ -175,7 +171,6 @@ export function transformCars(cars: RawCar[]): SeedData {
     }
     seenGrades.add(gradeKey);
 
-    const transmission = parseTransmission(car.engine.transmission);
     const features = Object.fromEntries(
       FEATURE_COLUMNS.map((column) => [
         column,
@@ -198,13 +193,11 @@ export function transformCars(cars: RawCar[]): SeedData {
         'driveSystem',
         car.id,
       ),
-      transmission: transmission.raw,
-      transmissionType: transmission.type,
-      gearCount: transmission.gearCount,
+      transmission: car.engine.transmission,
       seating: car.capacity.seating,
       displacement: car.engine.displacement ?? null,
       weight: car.dimensions.weight ?? null,
-      wltcMode: car.fuelEfficiency.wltcMode == null ? null : String(car.fuelEfficiency.wltcMode),
+      wltcMode: car.fuelEfficiency.wltcMode ?? null,
       cruisingRange: car.fuelEfficiency.cruisingRange ?? null,
       ecoCarTax: car.fuelEfficiency.ecoCarTax,
       airbags: typeof car.safety.airbags === 'number' ? car.safety.airbags : null,
@@ -230,4 +223,41 @@ export function transformCars(cars: RawCar[]): SeedData {
   }
 
   return { models: [...models.values()], grades, priceHistory };
+}
+
+/**
+ * insert 直前に、1グレードずつ共有の Zod スキーマへ通す。
+ * 価格の上限や乗車定員の範囲といった制約を、管理画面からの入力と同じ定義で
+ * シードにも効かせるための唯一の経路。ここを通さずに insert してはいけない。
+ *
+ * 1件目で止めずに全件を検証してから投げる。フィクスチャを直す側にとっては
+ * 「1件直しては再実行」より、壊れている行が一度に全部見えるほうが速い。
+ * DuplicateGradeError と同じく、原因の行を名指しして中止する。
+ */
+export function validateSeedGrades(
+  gradeRows: readonly SeedGrade[],
+  modelIdOf: (modelKey: string) => string,
+): SeedGradeRecord[] {
+  const validated: SeedGradeRecord[] = [];
+  const failures: { grade: string; issues: string[] }[] = [];
+
+  for (const { key, modelKey, ...row } of gradeRows) {
+    const result = seedGradeSchema.safeParse({ ...row, modelId: modelIdOf(modelKey) });
+    if (result.success) {
+      validated.push(result.data);
+      continue;
+    }
+    failures.push({
+      grade: key.split(SEPARATOR).join(' / '),
+      issues: result.error.issues.map(
+        (issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`,
+      ),
+    });
+  }
+
+  if (failures.length > 0) {
+    throw new SeedValidationError(failures);
+  }
+
+  return validated;
 }

@@ -14,24 +14,23 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
+import {
+  BODY_TYPES,
+  DRIVE_SYSTEMS,
+  ENGINE_TYPES,
+  FEATURE_AVAILABILITIES,
+  PUBLICATION_STATUSES,
+  TRANSMISSION_TYPES,
+} from './enums';
 
-export const bodyTypeEnum = pgEnum('body_type', [
-  '軽自動車', 'コンパクトカー', 'セダン', 'ハッチバック',
-  'ステーションワゴン', 'SUV', 'ミニバン', 'スポーツカー', 'クーペ',
-]);
-export const engineTypeEnum = pgEnum('engine_type', [
-  'ガソリン', 'ハイブリッド', 'EV', 'ディーゼル', 'PHEV',
-]);
-export const driveSystemEnum = pgEnum('drive_system', ['FF', 'FR', '4WD', 'MR', 'RR']);
-export const transmissionTypeEnum = pgEnum('transmission_type', [
-  'CVT', 'AT', 'MT', 'DCT', '電気式無段変速機', 'other',
-]);
-export const featureAvailabilityEnum = pgEnum('feature_availability', [
-  'standard', 'option', 'none', 'unknown',
-]);
-export const publicationStatusEnum = pgEnum('publication_status', [
-  'draft', 'published', 'archived',
-]);
+// 列挙値の実体は db/enums.ts。Client Component から drizzle 抜きで読めるようにするため
+// 値だけを別ファイルに置き、DBの型はそこから組み立てる。
+export const bodyTypeEnum = pgEnum('body_type', BODY_TYPES);
+export const engineTypeEnum = pgEnum('engine_type', ENGINE_TYPES);
+export const driveSystemEnum = pgEnum('drive_system', DRIVE_SYSTEMS);
+export const transmissionTypeEnum = pgEnum('transmission_type', TRANSMISSION_TYPES);
+export const featureAvailabilityEnum = pgEnum('feature_availability', FEATURE_AVAILABILITIES);
+export const publicationStatusEnum = pgEnum('publication_status', PUBLICATION_STATUSES);
 
 export type BodyType = (typeof bodyTypeEnum.enumValues)[number];
 export type EngineType = (typeof engineTypeEnum.enumValues)[number];
@@ -68,6 +67,14 @@ export const models = pgTable(
     bodyType: bodyTypeEnum('body_type').notNull(),
     officialUrl: text('official_url'),
     description: text('description'),
+    /**
+     * grades と同じ意味の検証記録。name / description / officialUrl / bodyType は
+     * 未検証の取得元データがそのまま入っており、グレードを1件公開しただけで
+     * 車種ページと generateMetadata に露出する。グレードの公開は
+     * この2列が埋まっている車種にだけ許す（app/actions/cars.ts）。
+     */
+    verifiedAt: timestamp('verified_at', { withTimezone: true }),
+    verifiedBy: text('verified_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
