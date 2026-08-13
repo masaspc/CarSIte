@@ -1,4 +1,4 @@
-import { getPublishedGrades, PAGE_SIZE } from '@/db/queries';
+import { getPublishedGrades, getPublishedManufacturers, PAGE_SIZE } from '@/db/queries';
 import { parseSearchParams } from '@/lib/search-params';
 import CarCard from '@/components/CarCard';
 import FilterSidebar from '@/components/FilterSidebar';
@@ -20,7 +20,10 @@ export default async function SearchPage({
   }
 
   const filters = parseSearchParams(params);
-  const { rows, total } = await getPublishedGrades(filters);
+  const [{ rows, total }, manufacturers] = await Promise.all([
+    getPublishedGrades(filters),
+    getPublishedManufacturers(),
+  ]);
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -33,7 +36,7 @@ export default async function SearchPage({
             {/* URLSearchParams はクラスインスタンスなので Server→Client の
                 props シリアライズで素の {} になり .getAll 等が消える。
                 プレーンな配列として渡し、Client 側で再構築する。 */}
-            <FilterSidebar entries={Array.from(params.entries())} />
+            <FilterSidebar entries={Array.from(params.entries())} manufacturers={manufacturers} />
           </aside>
 
           <main className="flex-1">

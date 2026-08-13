@@ -7,6 +7,8 @@ interface FilterSidebarProps {
   // URLSearchParams はServer→Clientのpropsシリアライズを越えられない
   // （クラスインスタンスのメソッドが失われる）ので配列で受け取る
   entries: [string, string][];
+  /** 公開中の車種を持つメーカー名。文字列配列なのでRSCシリアライズの罠は無い */
+  manufacturers: string[];
 }
 
 const bodyTypes: BodyType[] = [
@@ -25,10 +27,11 @@ const engineTypes: EngineType[] = ['ガソリン', 'ハイブリッド', 'EV', '
 
 const driveSystems: DriveSystem[] = ['FF', 'FR', '4WD', 'MR', 'RR'];
 
-export default function FilterSidebar({ entries }: FilterSidebarProps) {
+export default function FilterSidebar({ entries, manufacturers }: FilterSidebarProps) {
   const router = useRouter();
   const params = new URLSearchParams(entries);
 
+  const selectedManufacturers = params.getAll('manufacturer');
   const selectedBodyTypes = params.getAll('bodyType');
   const selectedEngineTypes = params.getAll('engineType');
   const driveSystem = params.get('driveSystem') ?? '';
@@ -74,6 +77,27 @@ export default function FilterSidebar({ entries }: FilterSidebarProps) {
           リセット
         </button>
       </div>
+
+      {/* メーカー。公開データが0件のときは一覧も空になる（正しい挙動）ので
+          見出しごと非表示にする */}
+      {manufacturers.length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-semibold mb-3">メーカー</h3>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {manufacturers.map((manufacturer) => (
+              <label key={manufacturer} className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedManufacturers.includes(manufacturer)}
+                  onChange={() => toggleMulti('manufacturer', manufacturer)}
+                  className="mr-2"
+                />
+                <span className="text-sm">{manufacturer}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ボディタイプ */}
       <div className="mb-6">

@@ -173,3 +173,19 @@ export type DealerListItem = Awaited<ReturnType<typeof listDealers>>[number];
 
 export const getDealers = () =>
   unstable_cache(() => listDealers(), ['dealers'], { tags: ['dealers'] })();
+
+/** 公開中の車種を持つメーカーの一覧。絞り込みUIの選択肢に使う */
+export async function listPublishedManufacturers(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ manufacturer: models.manufacturer })
+    .from(models)
+    .innerJoin(grades, eq(grades.modelId, models.id))
+    .where(eq(grades.publicationStatus, 'published'))
+    .orderBy(asc(models.manufacturer));
+  return rows.map((r) => r.manufacturer);
+}
+
+export const getPublishedManufacturers = () =>
+  unstable_cache(() => listPublishedManufacturers(), ['published-manufacturers'], {
+    tags: ['cars'],
+  })();
