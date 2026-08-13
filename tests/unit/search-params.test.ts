@@ -53,6 +53,25 @@ describe('parseSearchParams', () => {
   it('未知のsort値は既定値にする', () => {
     expect(parse('sort=nonsense').sort).toBe('price-asc');
   });
+
+  it('価格に小数を許さない', () => {
+    expect(parse('priceMax=3000000.5').priceMax).toBeUndefined();
+    expect(parse('priceMin=1500000.1').priceMin).toBeUndefined();
+  });
+
+  it('乗車定員に小数を許さない', () => {
+    expect(parse('seatingMin=5.5').seatingMin).toBeUndefined();
+  });
+
+  it('燃費は小数を許可する', () => {
+    expect(parse('fuelEfficiencyMin=20.5').fuelEfficiencyMin).toBe(20.5);
+  });
+
+  it('ページ番号に上限がある', () => {
+    expect(parse('page=99999999').page).toBe(1000);
+    expect(parse('page=1000').page).toBe(1000);
+    expect(parse('page=999').page).toBe(999);
+  });
 });
 
 describe('buildSearchParams', () => {

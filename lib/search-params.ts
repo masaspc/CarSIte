@@ -13,6 +13,13 @@ function positiveNumber(raw: string | null): number | undefined {
   return value;
 }
 
+function positiveInteger(raw: string | null): number | undefined {
+  if (raw === null) return undefined;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) return undefined;
+  return value;
+}
+
 export function parseSearchParams(params: URLSearchParams): GradeFilters {
   const filters: GradeFilters = {};
 
@@ -31,16 +38,16 @@ export function parseSearchParams(params: URLSearchParams): GradeFilters {
   const driveSystem = params.get('driveSystem');
   if (driveSystem) filters.driveSystem = driveSystem;
 
-  const priceMin = positiveNumber(params.get('priceMin'));
+  const priceMin = positiveInteger(params.get('priceMin'));
   if (priceMin !== undefined) filters.priceMin = priceMin;
 
-  const priceMax = positiveNumber(params.get('priceMax'));
+  const priceMax = positiveInteger(params.get('priceMax'));
   if (priceMax !== undefined) filters.priceMax = priceMax;
 
   const fuelEfficiencyMin = positiveNumber(params.get('fuelEfficiencyMin'));
   if (fuelEfficiencyMin !== undefined) filters.fuelEfficiencyMin = fuelEfficiencyMin;
 
-  const seatingMin = positiveNumber(params.get('seatingMin'));
+  const seatingMin = positiveInteger(params.get('seatingMin'));
   if (seatingMin !== undefined) filters.seatingMin = seatingMin;
 
   const features = params
@@ -52,7 +59,12 @@ export function parseSearchParams(params: URLSearchParams): GradeFilters {
   filters.sort = SORTS.includes(sort as Sort) ? (sort as Sort) : 'price-asc';
 
   const page = Number(params.get('page'));
-  filters.page = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
+  if (Number.isFinite(page)) {
+    const floored = Math.floor(page);
+    filters.page = Math.min(Math.max(floored, 1), 1000);
+  } else {
+    filters.page = 1;
+  }
 
   return filters;
 }
