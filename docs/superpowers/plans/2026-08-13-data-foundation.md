@@ -695,7 +695,9 @@ EOF
   - `class DuplicateGradeError extends Error { duplicates: string[] }`
   - `transformCars(cars: RawCar[]): SeedData`
   - `SeedData = { models: SeedModel[]; grades: SeedGrade[]; priceHistory: SeedPricePoint[] }`
-  - `SeedGrade` は `modelKey: string`（`manufacturer model`）でモデルを参照する
+  - `SeedGrade` は `modelKey: string`（`modelKeyOf(manufacturer, name)` の戻り値）でモデルを参照する
+  - `modelKeyOf(manufacturer: string, name: string): string` を **export する**。Task 7 の
+    `seed.ts` はこの関数でキーを組み立てる。区切り文字をファイル間で重複定義してはいけない
 
 - [ ] **Step 1: 失敗するテストを書く**
 
@@ -922,7 +924,13 @@ export class DuplicateGradeError extends Error {
   }
 }
 
-const SEPARATOR = ' ';
+/** 内部キーの区切り。車種名・メーカー名に現れない文字列にする */
+const SEPARATOR = '::';
+
+/** Task 7 の seed.ts もこの関数を使う。キー構築をファイル間で重複させないこと */
+export function modelKeyOf(manufacturer: string, name: string): string {
+  return `${manufacturer}${SEPARATOR}${name}`;
+}
 
 /**
  * 既存の boolean 装備を feature_availability に写す。
@@ -1135,7 +1143,7 @@ git rm data/additional-cars.json
 import 'dotenv/config';
 import { db } from '@/db';
 import { dealers, grades, models, priceHistory } from '@/db/schema';
-import { DuplicateGradeError, transformCars, type RawCar } from './seed-transform';
+import { DuplicateGradeError, modelKeyOf, transformCars, type RawCar } from './seed-transform';
 import carsFixture from '../tests/fixtures/cars.json';
 import dealersFixture from '../tests/fixtures/dealers.json';
 
@@ -1170,7 +1178,7 @@ async function main() {
     .returning({ id: models.id, manufacturer: models.manufacturer, name: models.name });
 
   const modelIdByKey = new Map(
-    insertedModels.map((m) => [`${m.manufacturer} ${m.name}`, m.id]),
+    insertedModels.map((m) => [modelKeyOf(m.manufacturer, m.name), m.id]),
   );
 
   const insertedGrades = await db
@@ -1241,7 +1249,7 @@ const path = "tests/fixtures/cars.json";
 const cars = JSON.parse(fs.readFileSync(path, "utf8"));
 const seen = new Set();
 const kept = cars.filter((c) => {
-  const key = [c.manufacturer, c.model, c.grade].join(" ");
+  const key = [c.manufacturer, c.model, c.grade].join("::");
   if (seen.has(key)) { console.log("削除:", c.id, c.manufacturer, c.model, c.grade); return false; }
   seen.add(key);
   return true;
