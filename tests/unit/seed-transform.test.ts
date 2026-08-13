@@ -117,4 +117,14 @@ describe('transformCars', () => {
   it('空白を含む車種名でもキーが曖昧にならない', () => {
     expect(modelKeyOf('日産', 'ノート オーラ')).not.toBe(modelKeyOf('日産 ノート', 'オーラ'));
   });
+
+  it('bodyType が enum にない値ならエラーで停止する', () => {
+    expect(() => transformCars([car({ bodyType: '空飛ぶ車' } as never)])).toThrow(/bodyType/);
+  });
+
+  it('engineType が enum にない値ならエラーで停止する', () => {
+    expect(() =>
+      transformCars([car({ engine: { ...car().engine, type: '核融合' } } as never)]),
+    ).toThrow(/engineType|type/);
+  });
 });

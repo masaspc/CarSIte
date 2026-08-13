@@ -1,4 +1,7 @@
 import {
+  bodyTypeEnum,
+  driveSystemEnum,
+  engineTypeEnum,
   FEATURE_COLUMNS,
   type BodyType,
   type DriveSystem,
@@ -120,6 +123,28 @@ function mapFeature(value: unknown): 'standard' | 'unknown' {
   return value === true ? 'standard' : 'unknown';
 }
 
+/**
+ * RawCar（JSONフィクスチャの生入力）はただの string しか持たないため、
+ * DBのenumカラムに書き込む前に許可値かどうかを実行時に検証する。
+ * `as BodyType` のような型キャストはコンパイラを黙らせるだけで型安全性を
+ * 回復しないため使わない。ここで弾けば、insert時のDB制約違反という
+ * 分かりにくい失敗ではなく、どの車のどのフィールドが不正かを名指しして
+ * 止まる。DuplicateGradeError と同じ思想: 壊れたデータを黙って通さない。
+ */
+function assertEnum<T extends string>(
+  values: readonly T[],
+  value: string,
+  field: string,
+  carId: string,
+): T {
+  if (!(values as readonly string[]).includes(value)) {
+    throw new Error(
+      `${carId} の ${field} が不正です: ${JSON.stringify(value)}（許可値: ${values.join(' / ')}）`,
+    );
+  }
+  return value as T;
+}
+
 export function transformCars(cars: RawCar[]): SeedData {
   const models = new Map<string, SeedModel>();
   const grades: SeedGrade[] = [];
@@ -137,7 +162,7 @@ export function transformCars(cars: RawCar[]): SeedData {
         manufacturerSlug: manufacturerSlug(car.manufacturer),
         name: car.model,
         slug: modelSlug(car.model, car.officialUrl),
-        bodyType: car.bodyType as BodyType,
+        bodyType: assertEnum(bodyTypeEnum.enumValues, car.bodyType, 'bodyType', car.id),
         officialUrl: car.officialUrl,
         description: car.description,
       });
@@ -166,8 +191,13 @@ export function transformCars(cars: RawCar[]): SeedData {
       publicationStatus: 'draft',
       price: car.price,
       releaseDate: car.releaseDate || null,
-      engineType: car.engine.type as EngineType,
-      driveSystem: car.engine.driveSystem as DriveSystem,
+      engineType: assertEnum(engineTypeEnum.enumValues, car.engine.type, 'engineType', car.id),
+      driveSystem: assertEnum(
+        driveSystemEnum.enumValues,
+        car.engine.driveSystem,
+        'driveSystem',
+        car.id,
+      ),
       transmission: transmission.raw,
       transmissionType: transmission.type,
       gearCount: transmission.gearCount,
