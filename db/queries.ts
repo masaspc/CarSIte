@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, inArray, lte, or, sql, type SQL } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import { db } from '@/db';
 import { dealers, grades, models, priceHistory, type FeatureColumn } from '@/db/schema';
@@ -114,6 +114,65 @@ export async function listPublishedGrades(filters: GradeFilters) {
 export type GradeListItem = Awaited<ReturnType<typeof listPublishedGrades>>['rows'][number];
 
 /**
+ * `manufacturerSlug/modelSlug/gradeSlug` 形式の GradeRef から published なグレードの
+ * 全カラムを解決する。お気に入り・比較リストは slug 参照だけを保存しているため、
+ * 表示のたびにこれで実体へ解決する。壊れた形式・draft/archived になった参照は
+ * 黙って結果から除外する（呼び出し側で例外にはしない）。
+ */
+export async function findPublishedGradesByRefs(refs: string[]) {
+  const parsed = refs
+    .map((ref) => ref.split('/'))
+    .filter((parts): parts is [string, string, string] => parts.length === 3 && parts.every(Boolean));
+
+  if (parsed.length === 0) return [];
+
+  const refConditions = parsed.map(([manufacturerSlug, modelSlug, gradeSlug]) =>
+    and(
+      eq(models.manufacturerSlug, manufacturerSlug),
+      eq(models.slug, modelSlug),
+      eq(grades.slug, gradeSlug),
+    ),
+  );
+
+  return db
+    .select({
+      grade: grades,
+      manufacturer: models.manufacturer,
+      manufacturerSlug: models.manufacturerSlug,
+      modelName: models.name,
+      modelSlug: models.slug,
+      bodyType: models.bodyType,
+    })
+    .from(grades)
+    .innerJoin(models, eq(grades.modelId, models.id))
+    .where(and(PUBLISHED, or(...refConditions)));
+}
+
+export type ComparisonRow = Awaited<ReturnType<typeof findPublishedGradesByRefs>>[number];
+
+/** ComparisonRow を CarCard が受け取る GradeListItem の形へ整形する */
+export function toGradeListItem(row: ComparisonRow): GradeListItem {
+  return {
+    id: row.grade.id,
+    slug: row.grade.slug,
+    name: row.grade.name,
+    price: row.grade.price,
+    wltcMode: row.grade.wltcMode,
+    engineType: row.grade.engineType,
+    driveSystem: row.grade.driveSystem,
+    seating: row.grade.seating,
+    publicationStatus: row.grade.publicationStatus,
+    sunroof: row.grade.sunroof,
+    images: row.grade.images,
+    modelName: row.modelName,
+    modelSlug: row.modelSlug,
+    manufacturer: row.manufacturer,
+    manufacturerSlug: row.manufacturerSlug,
+    bodyType: row.bodyType,
+  };
+}
+
+/**
  * published なグレードを1件以上持つ車種のみを返す。
  * 車種自体は見つかっても、公開グレードがなければ null を返す。
  */
@@ -189,3 +248,35 @@ export const getPublishedManufacturers = () =>
   unstable_cache(() => listPublishedManufacturers(), ['published-manufacturers'], {
     tags: ['cars'],
   })();
+
+/** 管理画面用。公開状態を問わず全グレードを返す。 */
+export async function listAllGrades() {
+  return db
+    .select({
+      grade: grades,
+      modelName: models.name,
+      modelSlug: models.slug,
+      manufacturer: models.manufacturer,
+      manufacturerSlug: models.manufacturerSlug,
+      bodyType: models.bodyType,
+    })
+    .from(grades)
+    .innerJoin(models, eq(grades.modelId, models.id))
+    .orderBy(asc(models.manufacturer), asc(models.name), asc(grades.name));
+}
+
+export type AdminGrade = Awaited<ReturnType<typeof listAllGrades>>[number];
+
+export async function findAdminGrade(id: string) {
+  const [row] = await db
+    .select({
+      grade: grades,
+      modelName: models.name,
+      manufacturer: models.manufacturer,
+    })
+    .from(grades)
+    .innerJoin(models, eq(grades.modelId, models.id))
+    .where(eq(grades.id, id))
+    .limit(1);
+  return row ?? null;
+}

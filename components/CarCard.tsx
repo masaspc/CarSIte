@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import type { GradeListItem } from '@/db/queries';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { useReviews } from '@/contexts/ReviewsContext';
 
 interface CarCardProps {
   grade: GradeListItem;
@@ -24,10 +23,8 @@ function formatFuelEfficiency(wltcMode: string | null): string {
 
 export default function CarCard({ grade }: CarCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { getReviewStats } = useReviews();
-  // お気に入り・レビューはUUIDではなくslugで識別する（URL/storageにUUIDを出さない）
-  const favorite = isFavorite(grade.slug);
-  const reviewStats = getReviewStats(grade.slug);
+  const gradeRef = `${grade.manufacturerSlug}/${grade.modelSlug}/${grade.slug}`;
+  const favorite = isFavorite(gradeRef);
   const href = `/cars/${grade.manufacturerSlug}/${grade.modelSlug}`;
   const images = grade.images as GradeImages | null;
   const cover = images?.exterior?.[0];
@@ -54,7 +51,7 @@ export default function CarCard({ grade }: CarCardProps) {
           <button
             onClick={(e) => {
               e.preventDefault();
-              toggleFavorite(grade.slug);
+              toggleFavorite(gradeRef);
             }}
             className="absolute top-2 right-2 bg-white p-2 rounded-full hover:bg-gray-100 transition-colors shadow-md"
             aria-label={favorite ? 'お気に入りから削除' : 'お気に入りに追加'}
@@ -82,27 +79,6 @@ export default function CarCard({ grade }: CarCardProps) {
             {grade.modelName}
           </h3>
           <p className="text-sm text-gray-600 mb-1">{grade.name}</p>
-          {reviewStats.totalReviews > 0 && (
-            <div className="flex items-center gap-1 mb-2">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <span
-                    key={star}
-                    className={`text-sm ${
-                      star <= Math.round(reviewStats.averageRating)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-              <span className="text-xs text-gray-600">
-                {reviewStats.averageRating.toFixed(1)} ({reviewStats.totalReviews})
-              </span>
-            </div>
-          )}
         </Link>
 
         <div className="space-y-2 mb-4">
