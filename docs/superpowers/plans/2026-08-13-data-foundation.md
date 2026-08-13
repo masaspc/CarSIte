@@ -2619,7 +2619,17 @@ const links = [
 - [ ] **Step 7: ビルドと動作を確認する**
 
 Run: `npm run build && npm start`
-Expected: ビルド成功。`/search` は公開データが0件のため「見つかりませんでした」と表示される（全件 draft のため正しい）
+Expected: **この時点ではビルドは完全には通らない。** `lib/carData.ts` が `@/data/cars.json`
+を読んでおり、そのファイルは Task 7 が移設済み、`lib/carData.ts` 自体は Task 15 が削除する。
+つまり計画の順序上、Task 13 でビルドを緑にすることはできない。
+
+ここで確認するのは次の2点に限る。
+
+1. webpack のコンパイル自体は成功していること
+2. `app/dealers/page.tsx` が `tsc --noEmit` のエラー一覧から消えていること
+
+ビルド全体が通ることは Task 15 の完了条件1で担保する。なお `CarCard` の props 変更により
+`app/favorites/page.tsx` に型エラーが1件増えるが、これは Task 14 が解消する。
 
 - [ ] **Step 8: クライアントバンドルに車両データが無いことを確認する**
 
