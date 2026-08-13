@@ -1263,7 +1263,10 @@ Expected: `105 -> 103`、削除2件が表示される
 - [ ] **Step 5: 再度シードする**
 
 Run: `npm run db:seed`
-Expected: `投入対象: models=101 grades=103 priceHistory=11` の後に「シード完了」
+Expected: `投入対象: models=100 grades=103 priceHistory=40` の後に「シード完了」
+
+`priceHistory` の 40 は**車種数ではなく価格推移の点数**である。`priceHistory` を持つ
+車両は重複除去後10件で各4点を持つため 40 点になる。11 という値を期待しないこと。
 
 - [ ] **Step 6: 投入結果を確認する**
 
@@ -2869,7 +2872,7 @@ EOF
 | 2 | 全公開ページがServer Componentでバンドルに車両データが無い | Task 13 Step 8 |
 | 3 | `6AT`/`10AT` を含む全件がenum違反なくシードできる | Task 7 Step 6 |
 | 4 | 重複グレード2組でシードがエラー停止し一覧出力される | Task 7 Step 3 |
-| 5 | `priceHistory` 11件が移行され価格推移が描画される | Task 7 Step 5、Task 13 Step 3 |
+| 5 | 価格推移40点（10車両ぶん）が移行され描画される | Task 7 Step 5、Task 13 Step 3 |
 | 6 | シード直後の公開サイトが0件表示になる | Task 7 Step 6、Task 13 Step 7 |
 | 7 | `/admin/*` がGitHub OAuth（数値ID照合）で保護される | Task 11 |
 | 8 | 検索のフィルタ状態がURLに反映され再現する | Task 9、Task 13 Step 2 |
