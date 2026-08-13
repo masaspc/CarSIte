@@ -25,6 +25,17 @@ Task 6 以降で必要。`.env.local`（gitignore 済み）に置く。
 
 ```
 DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require
+```
+
+**`DATABASE_URL` には「プールなし（direct / unpooled）」の接続文字列を使うこと。**
+Neon の接続文字列は既定でプール版（ホスト名に `-pooler` が付く）だが、Drizzle Kit の
+マイグレーションをプール接続で実行するとエラーになる（PgBouncer 経由のためスキーマ操作が通らない）。
+Neon コンソールの Connect モーダルで **Connection pooling のトグルを OFF** にして取得する。
+
+実行時側の `@neondatabase/serverless` の `neon()` は HTTP ドライバで TCP 接続を保持しないため、
+プールなしの文字列でも問題なく動作する。したがって1つの変数を両方で使い回せる。
+
+```
 AUTH_SECRET=<openssl rand -base64 32 の出力>
 AUTH_GITHUB_ID=<GitHub OAuth App の Client ID>
 AUTH_GITHUB_SECRET=<GitHub OAuth App の Client Secret>
