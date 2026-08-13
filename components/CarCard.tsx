@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { GradeListItem } from '@/db/queries';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { COMPARE_KEY, MAX_COMPARE, addToCompare, readCompare } from '@/lib/compare-store';
 
 interface CarCardProps {
   grade: GradeListItem;
@@ -22,6 +24,15 @@ function formatFuelEfficiency(wltcMode: string | null): string {
   return `${wltcMode} km/L`;
 }
 
+/** 比較ボタンの表示。上限に達したことを黙って握りつぶさず、押した結果を必ず返す */
+type CompareState = 'idle' | 'added' | 'full';
+
+const COMPARE_LABEL: Record<CompareState, string> = {
+  idle: '比較',
+  added: '比較中',
+  full: `上限${MAX_COMPARE}台`,
+};
+
 export default function CarCard({ grade }: CarCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const gradeRef = `${grade.manufacturerSlug}/${grade.modelSlug}/${grade.slug}`;
@@ -29,6 +40,24 @@ export default function CarCard({ grade }: CarCardProps) {
   const href = `/cars/${grade.manufacturerSlug}/${grade.modelSlug}`;
   const images = grade.images as GradeImages | null;
   const cover = images?.exterior?.[0];
+  const [compareState, setCompareState] = useState<CompareState>('idle');
+
+  // sessionStorage はサーバー側に無いため、初期描画後に読む（hydration 不一致を避ける）
+  useEffect(() => {
+    setCompareState(readCompare().includes(gradeRef) ? 'added' : 'idle');
+  }, [gradeRef]);
+
+  // 保存するのは UUID でも実体でもなく slug 参照だけ。実体は /compare がサーバーで解決する
+  const handleAddToCompare = () => {
+    const current = readCompare();
+    const next = addToCompare(current, gradeRef);
+    if (next === current) {
+      setCompareState(current.includes(gradeRef) ? 'added' : 'full');
+      return;
+    }
+    sessionStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+    setCompareState('added');
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
@@ -107,12 +136,24 @@ export default function CarCard({ grade }: CarCardProps) {
           </div>
         </div>
 
-        <Link
-          href={href}
-          className="block bg-primary-600 text-white py-2 px-4 rounded hover:bg-primary-700 transition-colors text-center text-sm font-semibold"
-        >
-          詳細を見る
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={href}
+            className="flex-1 bg-primary-600 text-white py-2 px-4 rounded hover:bg-primary-700 transition-colors text-center text-sm font-semibold"
+          >
+            詳細を見る
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleAddToCompare}
+            disabled={compareState !== 'idle'}
+            aria-label={`${grade.modelName} ${grade.name} を比較リストに追加`}
+            className="bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 transition-colors text-sm font-semibold disabled:opacity-60 disabled:hover:bg-gray-200"
+          >
+            {COMPARE_LABEL[compareState]}
+          </button>
+        </div>
       </div>
     </div>
   );

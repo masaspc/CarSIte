@@ -14,7 +14,8 @@ function allowedIds(): Set<string> {
 
 /**
  * 例外を投げない版。管理画面のレイアウトのように「未認可なら別の画面を描画する」
- * 場合に使う。許可リストのパース処理を requireAdmin と共有する。
+ * 場合と、middleware の authorized コールバックから使う。
+ * 許可リストのパース処理を requireAdmin と共有する。
  */
 export function isAdminSession(session: Session | null): boolean {
   if (!session?.user) return false;
@@ -23,9 +24,20 @@ export function isAdminSession(session: Session | null): boolean {
 }
 
 /**
- * Server Action の内部で必ず呼ぶ。
+ * middleware.ts の matcher `/admin/:path*` と同じ範囲を表す。
+ * パス判定を関数に切り出しておくと、next-auth を起動せずに単体テストできる。
+ */
+export function isAdminPath(pathname: string): boolean {
+  return pathname === '/admin' || pathname.startsWith('/admin/');
+}
+
+/**
+ * Server Action と管理画面の各ページで必ず呼ぶ。
  * middleware だけに認可を依存させないための多層防御であり、
  * middleware があるからといって省略してはいけない。
+ *
+ * レイアウトはソフトナビゲーション時に再実行されないことがあるため、
+ * ページ側の呼び出しを layout.tsx の判定で代用してはいけない。
  */
 export async function requireAdmin() {
   const session = await auth();

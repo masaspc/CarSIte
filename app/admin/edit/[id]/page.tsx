@@ -1,9 +1,12 @@
 import { notFound } from 'next/navigation';
 import CarForm from '@/components/CarForm';
+import { requireAdmin } from '@/auth-guard';
 import { findAdminGrade, listModels } from '@/db/admin-queries';
 import type { GradeInput } from '@/lib/validation';
 
 export default async function AdminEditPage({ params }: { params: Promise<{ id: string }> }) {
+  // draft を読む前に必ず確認する。layout.tsx はソフトナビゲーションで再実行されない
+  await requireAdmin();
   const { id } = await params;
   const [row, models] = await Promise.all([findAdminGrade(id), listModels()]);
   if (!row) notFound();

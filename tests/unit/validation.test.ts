@@ -55,4 +55,69 @@ describe('gradeInputSchema', () => {
     const parsed = gradeInputSchema.parse({ ...valid, publicationStatus: 'published' });
     expect(parsed).not.toHaveProperty('publicationStatus');
   });
+
+  // フォーム経由のグレードもシードと同じ分類になることを担保する
+  describe('transmission の導出', () => {
+    it('段数付きの表記から type と gearCount を導出する', () => {
+      const parsed = gradeInputSchema.parse({ ...valid, transmission: '6AT' });
+      expect(parsed).toMatchObject({ transmission: '6AT', transmissionType: 'AT', gearCount: 6 });
+    });
+
+    it('無段変速は gearCount を持たない', () => {
+      expect(gradeInputSchema.parse({ ...valid, transmission: 'CVT' })).toMatchObject({
+        transmissionType: 'CVT',
+        gearCount: null,
+      });
+      expect(gradeInputSchema.parse({ ...valid, transmission: '電気式無段変速機' })).toMatchObject({
+        transmissionType: '電気式無段変速機',
+        gearCount: null,
+      });
+    });
+
+    it('分類できない表記は other にするが原文は残す', () => {
+      expect(gradeInputSchema.parse({ ...valid, transmission: '謎の変速機' })).toMatchObject({
+        transmission: '謎の変速機',
+        transmissionType: 'other',
+      });
+    });
+
+    it('未入力なら3カラムとも null にする', () => {
+      expect(gradeInputSchema.parse({ ...valid, transmission: '  ' })).toMatchObject({
+        transmission: null,
+        transmissionType: null,
+        gearCount: null,
+      });
+      expect(gradeInputSchema.parse(valid)).toMatchObject({
+        transmission: null,
+        transmissionType: null,
+        gearCount: null,
+      });
+    });
+
+    it('transmissionType や gearCount の直接指定は受け付けない', () => {
+      const parsed = gradeInputSchema.parse({
+        ...valid,
+        transmission: 'CVT',
+        transmissionType: 'MT',
+        gearCount: 6,
+      });
+      expect(parsed).toMatchObject({ transmissionType: 'CVT', gearCount: null });
+    });
+  });
+
+  // JSONB 列はフォームから設定できない仕様（更新時は .set() に現れず既存値が残る）
+  it('JSONB 列と取得元メタデータを落とす', () => {
+    const parsed = gradeInputSchema.parse({
+      ...valid,
+      dimensions: { length: 4600 },
+      performance: { maxPower: '100kW' },
+      fuelDetail: { cityMode: 20 },
+      images: { exterior: ['/a.png'] },
+      sourceUrl: 'https://example.com',
+      fetchedAt: new Date().toISOString(),
+    });
+    for (const key of ['dimensions', 'performance', 'fuelDetail', 'images', 'sourceUrl', 'fetchedAt']) {
+      expect(parsed).not.toHaveProperty(key);
+    }
+  });
 });

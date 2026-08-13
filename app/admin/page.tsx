@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { deleteGrade, setPublicationStatus } from '@/app/actions/cars';
+import { requireAdmin } from '@/auth-guard';
 import { listAllGrades } from '@/db/admin-queries';
 
 const statusLabel = { draft: '下書き', published: '公開中', archived: 'アーカイブ' } as const;
@@ -25,6 +26,9 @@ const NEXT_STATUSES = {
 } as const;
 
 export default async function AdminPage() {
+  // レイアウトの判定に依存しない。兄弟ルート間のソフトナビゲーションでは
+  // layout.tsx が再実行されず、権限を外された後でも draft が見えてしまうため。
+  await requireAdmin();
   const rows = await listAllGrades();
 
   return (

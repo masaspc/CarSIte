@@ -1,7 +1,10 @@
 import CarForm from '@/components/CarForm';
+import { requireAdmin } from '@/auth-guard';
 import { listModels } from '@/db/admin-queries';
 
 export default async function AdminAddPage() {
+  // layout.tsx はソフトナビゲーションで再実行されないため、ページ側でも必ず確認する
+  await requireAdmin();
   const models = await listModels();
 
   return (
