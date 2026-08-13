@@ -1,0 +1,191 @@
+import { FEATURE_COLUMNS, type FeatureColumn } from '@/db/schema';
+import { parseTransmission } from '@/lib/transmission';
+import { gradeSlug, manufacturerSlug, modelSlug } from '@/lib/slug';
+
+export interface RawCar {
+  id: string;
+  manufacturer: string;
+  model: string;
+  grade: string;
+  bodyType: string;
+  price: number;
+  releaseDate: string;
+  dimensions: Record<string, number>;
+  capacity: { seating: number };
+  engine: {
+    type: string;
+    displacement?: number;
+    maxPower: string;
+    maxTorque: string;
+    transmission: string;
+    driveSystem: string;
+  };
+  fuelEfficiency: {
+    wltcMode?: number;
+    cityMode?: number;
+    suburbanMode?: number;
+    highwayMode?: number;
+    cruisingRange?: number;
+    ecoCarTax: boolean;
+  };
+  safety: Record<string, boolean | number>;
+  comfort: Record<string, boolean>;
+  images: { exterior: string[]; interior: string[] };
+  officialUrl: string;
+  description: string;
+  priceHistory?: { date: string; price: number }[];
+}
+
+export interface SeedModel {
+  key: string;
+  manufacturer: string;
+  manufacturerSlug: string;
+  name: string;
+  slug: string;
+  bodyType: string;
+  officialUrl: string;
+  description: string;
+}
+
+export type SeedGrade = {
+  key: string;
+  modelKey: string;
+  name: string;
+  slug: string;
+  publicationStatus: 'draft';
+  price: number;
+  releaseDate: string | null;
+  engineType: string;
+  driveSystem: string;
+  transmission: string;
+  transmissionType: string;
+  gearCount: number | null;
+  seating: number;
+  displacement: number | null;
+  weight: number | null;
+  wltcMode: string | null;
+  cruisingRange: number | null;
+  ecoCarTax: boolean;
+  airbags: number | null;
+  dimensions: Record<string, number>;
+  performance: { maxPower: string; maxTorque: string };
+  fuelDetail: Record<string, number | undefined>;
+  images: { exterior: string[]; interior: string[] };
+  extraFeatures: Record<string, never>;
+} & Record<FeatureColumn, 'standard' | 'unknown'>;
+
+export interface SeedPricePoint {
+  gradeKey: string;
+  date: string;
+  price: number;
+}
+
+export interface SeedData {
+  models: SeedModel[];
+  grades: SeedGrade[];
+  priceHistory: SeedPricePoint[];
+}
+
+export class DuplicateGradeError extends Error {
+  constructor(public readonly duplicates: string[]) {
+    super(
+      `重複したグレードが ${duplicates.length} 件あります。値が食い違うため自動では解決できません:\n` +
+        duplicates.map((d) => `  - ${d}`).join('\n'),
+    );
+    this.name = 'DuplicateGradeError';
+  }
+}
+
+const SEPARATOR = '::';
+
+/**
+ * 既存の boolean 装備を feature_availability に写す。
+ * true は standard、false は **unknown**。
+ * 元データは機械生成のテンプレート値であり、false に「設定なし」の根拠がないため
+ * none に丸めない。
+ */
+function mapFeature(value: unknown): 'standard' | 'unknown' {
+  return value === true ? 'standard' : 'unknown';
+}
+
+export function transformCars(cars: RawCar[]): SeedData {
+  const models = new Map<string, SeedModel>();
+  const grades: SeedGrade[] = [];
+  const priceHistory: SeedPricePoint[] = [];
+  const seenGrades = new Set<string>();
+  const duplicates: string[] = [];
+
+  for (const car of cars) {
+    const modelKey = `${car.manufacturer}${SEPARATOR}${car.model}`;
+
+    if (!models.has(modelKey)) {
+      models.set(modelKey, {
+        key: modelKey,
+        manufacturer: car.manufacturer,
+        manufacturerSlug: manufacturerSlug(car.manufacturer),
+        name: car.model,
+        slug: modelSlug(car.model, car.officialUrl),
+        bodyType: car.bodyType,
+        officialUrl: car.officialUrl,
+        description: car.description,
+      });
+    }
+
+    const gradeKey = `${modelKey}${SEPARATOR}${car.grade}`;
+    if (seenGrades.has(gradeKey)) {
+      duplicates.push(`${car.manufacturer} / ${car.model} / ${car.grade}`);
+      continue;
+    }
+    seenGrades.add(gradeKey);
+
+    const transmission = parseTransmission(car.engine.transmission);
+    const features = Object.fromEntries(
+      FEATURE_COLUMNS.map((column) => [
+        column,
+        mapFeature(car.safety[column] ?? car.comfort[column]),
+      ]),
+    ) as Record<FeatureColumn, 'standard' | 'unknown'>;
+
+    grades.push({
+      key: gradeKey,
+      modelKey,
+      name: car.grade,
+      slug: gradeSlug(car.grade),
+      publicationStatus: 'draft',
+      price: car.price,
+      releaseDate: car.releaseDate || null,
+      engineType: car.engine.type,
+      driveSystem: car.engine.driveSystem,
+      transmission: transmission.raw,
+      transmissionType: transmission.type,
+      gearCount: transmission.gearCount,
+      seating: car.capacity.seating,
+      displacement: car.engine.displacement ?? null,
+      weight: car.dimensions.weight ?? null,
+      wltcMode: car.fuelEfficiency.wltcMode == null ? null : String(car.fuelEfficiency.wltcMode),
+      cruisingRange: car.fuelEfficiency.cruisingRange ?? null,
+      ecoCarTax: car.fuelEfficiency.ecoCarTax,
+      airbags: typeof car.safety.airbags === 'number' ? car.safety.airbags : null,
+      dimensions: car.dimensions,
+      performance: { maxPower: car.engine.maxPower, maxTorque: car.engine.maxTorque },
+      fuelDetail: {
+        cityMode: car.fuelEfficiency.cityMode,
+        suburbanMode: car.fuelEfficiency.suburbanMode,
+        highwayMode: car.fuelEfficiency.highwayMode,
+      },
+      images: car.images,
+      extraFeatures: {},
+      ...features,
+    });
+
+    for (const point of car.priceHistory ?? []) {
+      priceHistory.push({ gradeKey, date: point.date, price: point.price });
+    }
+  }
+
+  if (duplicates.length > 0) {
+    throw new DuplicateGradeError(duplicates);
+  }
+
+  return { models: [...models.values()], grades, priceHistory };
+}
