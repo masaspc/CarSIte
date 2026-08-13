@@ -96,7 +96,13 @@ export class DuplicateGradeError extends Error {
   }
 }
 
+/** 内部キーの区切り。車種名・メーカー名に現れない文字列にする */
 const SEPARATOR = '::';
+
+/** Task 7 の seed.ts もこの関数を使う。キー構築をファイル間で重複させないこと */
+export function modelKeyOf(manufacturer: string, name: string): string {
+  return `${manufacturer}${SEPARATOR}${name}`;
+}
 
 /**
  * 既存の boolean 装備を feature_availability に写す。
@@ -116,7 +122,7 @@ export function transformCars(cars: RawCar[]): SeedData {
   const duplicates: string[] = [];
 
   for (const car of cars) {
-    const modelKey = `${car.manufacturer}${SEPARATOR}${car.model}`;
+    const modelKey = modelKeyOf(car.manufacturer, car.model);
 
     if (!models.has(modelKey)) {
       models.set(modelKey, {

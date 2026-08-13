@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DuplicateGradeError, transformCars, type RawCar } from '@/scripts/seed-transform';
+import { DuplicateGradeError, modelKeyOf, transformCars, type RawCar } from '@/scripts/seed-transform';
 
 function car(overrides: Partial<RawCar> = {}): RawCar {
   return {
@@ -106,5 +106,15 @@ describe('transformCars', () => {
     const result = transformCars([car()]);
     expect(result.grades[0].dimensions).toMatchObject({ length: 4600, minTurningRadius: 5.4 });
     expect(result.grades[0].performance).toMatchObject({ maxPower: '72kW(98PS)' });
+  });
+
+  it('modelKeyOf が transformCars の生成するキーと一致する', () => {
+    const result = transformCars([car()]);
+    expect(result.models[0].key).toBe(modelKeyOf('トヨタ', 'プリウス'));
+    expect(result.grades[0].modelKey).toBe(modelKeyOf('トヨタ', 'プリウス'));
+  });
+
+  it('空白を含む車種名でもキーが曖昧にならない', () => {
+    expect(modelKeyOf('日産', 'ノート オーラ')).not.toBe(modelKeyOf('日産 ノート', 'オーラ'));
   });
 });
