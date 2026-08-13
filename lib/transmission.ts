@@ -16,6 +16,11 @@ const MECHANISM: Record<string, TransmissionType> = {
 };
 
 export function parseTransmission(input: string): ParsedTransmission {
+  // Handle non-string inputs gracefully
+  if (typeof input !== 'string') {
+    return { raw: '', type: 'other', gearCount: null };
+  }
+
   const raw = input.trim();
 
   if (raw === '電気式無段変速機') {

@@ -37,4 +37,22 @@ describe('parseTransmission', () => {
   it('前後の空白を落とす', () => {
     expect(parseTransmission('  6AT  ')).toEqual({ raw: '6AT', type: 'AT', gearCount: 6 });
   });
+
+  it('非文字列・undefined 入力でクラッシュしない', () => {
+    expect(parseTransmission(undefined as unknown as string)).toEqual({
+      raw: '',
+      type: 'other',
+      gearCount: null,
+    });
+    expect(parseTransmission(null as unknown as string)).toEqual({
+      raw: '',
+      type: 'other',
+      gearCount: null,
+    });
+    expect(parseTransmission(123 as unknown as string)).toEqual({
+      raw: '',
+      type: 'other',
+      gearCount: null,
+    });
+  });
 });
