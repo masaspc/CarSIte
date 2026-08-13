@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import type { ComparisonRow } from '@/db/queries';
 import type { GradeRef } from '@/lib/compare-store';
@@ -137,13 +138,14 @@ export default function ComparisonTable({ grades, onRemove }: Props) {
               return (
                 <th key={row.grade.id} className="py-4 px-4 min-w-[200px]">
                   <div className="space-y-2">
-                    <div className="aspect-video bg-gray-200 rounded overflow-hidden">
+                    <div className="aspect-video bg-gray-200 rounded overflow-hidden relative">
                       {cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={cover}
                           alt={`${row.manufacturer} ${row.modelName}`}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">

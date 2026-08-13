@@ -33,6 +33,13 @@ export const publicationStatusEnum = pgEnum('publication_status', [
   'draft', 'published', 'archived',
 ]);
 
+export type BodyType = (typeof bodyTypeEnum.enumValues)[number];
+export type EngineType = (typeof engineTypeEnum.enumValues)[number];
+export type DriveSystem = (typeof driveSystemEnum.enumValues)[number];
+export type TransmissionType = (typeof transmissionTypeEnum.enumValues)[number];
+export type FeatureAvailability = (typeof featureAvailabilityEnum.enumValues)[number];
+export type PublicationStatus = (typeof publicationStatusEnum.enumValues)[number];
+
 /** 検索対象になるコア装備。これ以外は grades.extraFeatures (JSONB) に逃がす */
 export const FEATURE_COLUMNS = [
   'collisionMitigationBrake', 'falseStartSuppression', 'laneDepartureWarning',

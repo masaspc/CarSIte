@@ -1,5 +1,11 @@
-import { FEATURE_COLUMNS, type FeatureColumn } from '@/db/schema';
-import { parseTransmission } from '@/lib/transmission';
+import {
+  FEATURE_COLUMNS,
+  type BodyType,
+  type DriveSystem,
+  type EngineType,
+  type FeatureColumn,
+} from '@/db/schema';
+import { parseTransmission, type TransmissionType } from '@/lib/transmission';
 import { gradeSlug, manufacturerSlug, modelSlug } from '@/lib/slug';
 
 export interface RawCar {
@@ -42,7 +48,7 @@ export interface SeedModel {
   manufacturerSlug: string;
   name: string;
   slug: string;
-  bodyType: string;
+  bodyType: BodyType;
   officialUrl: string;
   description: string;
 }
@@ -55,10 +61,10 @@ export type SeedGrade = {
   publicationStatus: 'draft';
   price: number;
   releaseDate: string | null;
-  engineType: string;
-  driveSystem: string;
+  engineType: EngineType;
+  driveSystem: DriveSystem;
   transmission: string;
-  transmissionType: string;
+  transmissionType: TransmissionType;
   gearCount: number | null;
   seating: number;
   displacement: number | null;
@@ -131,7 +137,7 @@ export function transformCars(cars: RawCar[]): SeedData {
         manufacturerSlug: manufacturerSlug(car.manufacturer),
         name: car.model,
         slug: modelSlug(car.model, car.officialUrl),
-        bodyType: car.bodyType,
+        bodyType: car.bodyType as BodyType,
         officialUrl: car.officialUrl,
         description: car.description,
       });
@@ -160,8 +166,8 @@ export function transformCars(cars: RawCar[]): SeedData {
       publicationStatus: 'draft',
       price: car.price,
       releaseDate: car.releaseDate || null,
-      engineType: car.engine.type,
-      driveSystem: car.engine.driveSystem,
+      engineType: car.engine.type as EngineType,
+      driveSystem: car.engine.driveSystem as DriveSystem,
       transmission: transmission.raw,
       transmissionType: transmission.type,
       gearCount: transmission.gearCount,

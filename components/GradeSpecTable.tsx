@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { ModelDetail } from '@/db/queries';
 import { type FeatureColumn } from '@/db/schema';
 
@@ -122,10 +123,15 @@ export default function GradeSpecTable({ grades }: { grades: Grade[] }) {
               return (
                 <th key={grade.id} className="py-4 px-4 min-w-[200px]">
                   <div className="space-y-2">
-                    <div className="aspect-video bg-gray-200 rounded overflow-hidden">
+                    <div className="aspect-video bg-gray-200 rounded overflow-hidden relative">
                       {cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={cover} alt={grade.name} className="w-full h-full object-cover" />
+                        <Image
+                          src={cover}
+                          alt={grade.name}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
                           画像なし
