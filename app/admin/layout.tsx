@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { auth, signIn, signOut } from '@/auth';
+import { isAdminSession } from '@/auth-guard';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -18,6 +19,31 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           >
             <button className="w-full py-2 px-4 rounded-md text-white bg-primary-600 hover:bg-primary-700">
               GitHub でログイン
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // middleware・Server Action 側の requireAdmin と同じ許可リストで判定する。
+  // ここを通さないと「GitHubでログインさえすれば誰でも管理画面の一覧（draft含む）が見える」状態になる。
+  if (!isAdminSession(session)) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+        <div className="max-w-md w-full space-y-6 bg-white p-8 rounded-lg shadow-md text-center">
+          <h2 className="text-2xl font-bold text-gray-900">アクセス権がありません</h2>
+          <p className="text-sm text-gray-600">
+            このGitHubアカウントには管理者権限が付与されていません。
+          </p>
+          <form
+            action={async () => {
+              'use server';
+              await signOut({ redirectTo: '/' });
+            }}
+          >
+            <button className="w-full py-2 px-4 rounded-md text-white bg-gray-600 hover:bg-gray-700">
+              サインアウト
             </button>
           </form>
         </div>

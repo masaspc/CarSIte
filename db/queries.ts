@@ -249,34 +249,5 @@ export const getPublishedManufacturers = () =>
     tags: ['cars'],
   })();
 
-/** 管理画面用。公開状態を問わず全グレードを返す。 */
-export async function listAllGrades() {
-  return db
-    .select({
-      grade: grades,
-      modelName: models.name,
-      modelSlug: models.slug,
-      manufacturer: models.manufacturer,
-      manufacturerSlug: models.manufacturerSlug,
-      bodyType: models.bodyType,
-    })
-    .from(grades)
-    .innerJoin(models, eq(grades.modelId, models.id))
-    .orderBy(asc(models.manufacturer), asc(models.name), asc(grades.name));
-}
-
-export type AdminGrade = Awaited<ReturnType<typeof listAllGrades>>[number];
-
-export async function findAdminGrade(id: string) {
-  const [row] = await db
-    .select({
-      grade: grades,
-      modelName: models.name,
-      manufacturer: models.manufacturer,
-    })
-    .from(grades)
-    .innerJoin(models, eq(grades.modelId, models.id))
-    .where(eq(grades.id, id))
-    .limit(1);
-  return row ?? null;
-}
+// draft/archived を含む管理画面用のクエリ（listAllGrades, findAdminGrade, listModels）は
+// db/admin-queries.ts に置く。このファイルは published のみを返す公開APIとして保つ。

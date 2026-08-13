@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation';
 import CarForm from '@/components/CarForm';
-import { findAdminGrade } from '@/db/queries';
+import { findAdminGrade, listModels } from '@/db/admin-queries';
 import type { GradeInput } from '@/lib/validation';
 
 export default async function AdminEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const row = await findAdminGrade(id);
+  const [row, models] = await Promise.all([findAdminGrade(id), listModels()]);
   if (!row) notFound();
   const grade = row.grade;
   const initialData: GradeInput & { id: string } = {
@@ -19,7 +19,7 @@ export default async function AdminEditPage({ params }: { params: Promise<{ id: 
         <h1 className="text-2xl font-bold text-gray-900">車両編集</h1>
         <p className="mt-2 text-sm text-gray-700">{row.manufacturer} {row.modelName} / {grade.name}</p>
       </div>
-      <CarForm mode="edit" initialData={initialData} />
+      <CarForm mode="edit" initialData={initialData} models={models} />
     </div>
   );
 }
