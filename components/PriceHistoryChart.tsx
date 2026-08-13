@@ -1,11 +1,14 @@
 'use client';
 
 import { PriceHistoryPoint } from '@/types/car';
-import { formatPrice } from '@/lib/carData';
 
 interface PriceHistoryChartProps {
   history: PriceHistoryPoint[];
   model: string;
+}
+
+function formatPrice(price: number): string {
+  return `¥${price.toLocaleString()}`;
 }
 
 export default function PriceHistoryChart({ history, model }: PriceHistoryChartProps) {

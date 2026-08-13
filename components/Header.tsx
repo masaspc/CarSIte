@@ -1,10 +1,20 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+const links = [
+  { href: '/', label: 'ホーム' },
+  { href: '/search', label: '車を探す' },
+  { href: '/compare', label: '比較する' },
+  { href: '/favorites', label: 'お気に入り' },
+  { href: '/dealers', label: 'ディーラー検索' },
+];
+
 export default function Header() {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -17,59 +27,28 @@ export default function Header() {
           </Link>
 
           <nav className="hidden md:flex space-x-8">
-            <Link
-              href="/"
-              className={`${
-                pathname === '/'
-                  ? 'text-primary-600 font-semibold'
-                  : 'text-gray-700 hover:text-primary-600'
-              } transition-colors`}
-            >
-              ホーム
-            </Link>
-            <Link
-              href="/search"
-              className={`${
-                pathname === '/search'
-                  ? 'text-primary-600 font-semibold'
-                  : 'text-gray-700 hover:text-primary-600'
-              } transition-colors`}
-            >
-              車を探す
-            </Link>
-            <Link
-              href="/compare"
-              className={`${
-                pathname === '/compare'
-                  ? 'text-primary-600 font-semibold'
-                  : 'text-gray-700 hover:text-primary-600'
-              } transition-colors`}
-            >
-              比較する
-            </Link>
-            <Link
-              href="/favorites"
-              className={`${
-                pathname === '/favorites'
-                  ? 'text-primary-600 font-semibold'
-                  : 'text-gray-700 hover:text-primary-600'
-              } transition-colors`}
-            >
-              お気に入り
-            </Link>
-            <Link
-              href="/dealers"
-              className={`${
-                pathname === '/dealers'
-                  ? 'text-primary-600 font-semibold'
-                  : 'text-gray-700 hover:text-primary-600'
-              } transition-colors`}
-            >
-              ディーラー検索
-            </Link>
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`${
+                  pathname === link.href
+                    ? 'text-primary-600 font-semibold'
+                    : 'text-gray-700 hover:text-primary-600'
+                } transition-colors`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
-          <button className="md:hidden p-2">
+          <button
+            className="md:hidden p-2"
+            onClick={() => setIsOpen((prev) => !prev)}
+            aria-expanded={isOpen}
+            aria-controls="mobile-nav"
+            aria-label="メニュー"
+          >
             <svg
               className="w-6 h-6"
               fill="none"
@@ -85,6 +64,25 @@ export default function Header() {
             </svg>
           </button>
         </div>
+
+        {isOpen && (
+          <nav id="mobile-nav" className="md:hidden border-t bg-white">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-3 ${
+                  pathname === link.href
+                    ? 'text-primary-600 font-semibold'
+                    : 'text-gray-700'
+                } hover:bg-gray-50`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        )}
       </div>
     </header>
   );

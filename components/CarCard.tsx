@@ -1,39 +1,88 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { Car } from '@/types/car';
-import { formatPrice, formatFuelEfficiency } from '@/lib/carData';
+import type { GradeListItem } from '@/db/queries';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { useReviews } from '@/contexts/ReviewsContext';
+import { COMPARE_KEY, MAX_COMPARE, addToCompare, readCompare } from '@/lib/compare-store';
 
 interface CarCardProps {
-  car: Car;
-  onAddToCompare?: (car: Car) => void;
-  showCompareButton?: boolean;
+  grade: GradeListItem;
 }
 
-export default function CarCard({ car, onAddToCompare, showCompareButton = true }: CarCardProps) {
+interface GradeImages {
+  exterior?: string[];
+}
+
+function formatPrice(price: number): string {
+  return `¥${price.toLocaleString()}`;
+}
+
+function formatFuelEfficiency(wltcMode: string | null): string {
+  if (wltcMode === null) return '-';
+  return `${wltcMode} km/L`;
+}
+
+/** 比較ボタンの表示。上限に達したことを黙って握りつぶさず、押した結果を必ず返す */
+type CompareState = 'idle' | 'added' | 'full';
+
+const COMPARE_LABEL: Record<CompareState, string> = {
+  idle: '比較',
+  added: '比較中',
+  full: `上限${MAX_COMPARE}台`,
+};
+
+export default function CarCard({ grade }: CarCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { getReviewStats } = useReviews();
-  const favorite = isFavorite(car.id);
-  const reviewStats = getReviewStats(car.id);
+  const gradeRef = `${grade.manufacturerSlug}/${grade.modelSlug}/${grade.slug}`;
+  const favorite = isFavorite(gradeRef);
+  const href = `/cars/${grade.manufacturerSlug}/${grade.modelSlug}`;
+  const images = grade.images as GradeImages | null;
+  const cover = images?.exterior?.[0];
+  const [compareState, setCompareState] = useState<CompareState>('idle');
+
+  // sessionStorage はサーバー側に無いため、初期描画後に読む（hydration 不一致を避ける）
+  useEffect(() => {
+    setCompareState(readCompare().includes(gradeRef) ? 'added' : 'idle');
+  }, [gradeRef]);
+
+  // 保存するのは UUID でも実体でもなく slug 参照だけ。実体は /compare がサーバーで解決する
+  const handleAddToCompare = () => {
+    const current = readCompare();
+    const next = addToCompare(current, gradeRef);
+    if (next === current) {
+      setCompareState(current.includes(gradeRef) ? 'added' : 'full');
+      return;
+    }
+    sessionStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+    setCompareState('added');
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-      <Link href={`/cars/${car.id}`}>
+      <Link href={href}>
         <div className="aspect-video bg-gray-200 relative">
-          <img
-            src={car.images.exterior[0]}
-            alt={`${car.manufacturer} ${car.model}`}
-            className="w-full h-full object-cover"
-          />
+          {cover ? (
+            <Image
+              src={cover}
+              alt={`${grade.manufacturer} ${grade.modelName}`}
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+              画像なし
+            </div>
+          )}
           <div className="absolute top-2 left-2 bg-white px-2 py-1 rounded text-sm font-semibold">
-            {car.manufacturer}
+            {grade.manufacturer}
           </div>
           <button
             onClick={(e) => {
               e.preventDefault();
-              toggleFavorite(car.id);
+              toggleFavorite(gradeRef);
             }}
             className="absolute top-2 right-2 bg-white p-2 rounded-full hover:bg-gray-100 transition-colors shadow-md"
             aria-label={favorite ? 'お気に入りから削除' : 'お気に入りに追加'}
@@ -56,76 +105,54 @@ export default function CarCard({ car, onAddToCompare, showCompareButton = true 
       </Link>
 
       <div className="p-4">
-        <Link href={`/cars/${car.id}`}>
+        <Link href={href}>
           <h3 className="text-xl font-bold mb-1 hover:text-primary-600">
-            {car.model}
+            {grade.modelName}
           </h3>
-          <p className="text-sm text-gray-600 mb-1">{car.grade}</p>
-          {reviewStats.totalReviews > 0 && (
-            <div className="flex items-center gap-1 mb-2">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <span
-                    key={star}
-                    className={`text-sm ${
-                      star <= Math.round(reviewStats.averageRating)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-              <span className="text-xs text-gray-600">
-                {reviewStats.averageRating.toFixed(1)} ({reviewStats.totalReviews})
-              </span>
-            </div>
-          )}
+          <p className="text-sm text-gray-600 mb-1">{grade.name}</p>
         </Link>
 
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">価格</span>
             <span className="font-semibold text-lg text-primary-600">
-              {formatPrice(car.price)}
+              {formatPrice(grade.price)}
             </span>
           </div>
 
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">燃費（WLTC）</span>
-            <span className="font-semibold">
-              {formatFuelEfficiency(car.fuelEfficiency.wltcMode)}
-            </span>
+            <span className="font-semibold">{formatFuelEfficiency(grade.wltcMode)}</span>
           </div>
 
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">ボディタイプ</span>
-            <span className="font-semibold">{car.bodyType}</span>
+            <span className="font-semibold">{grade.bodyType}</span>
           </div>
 
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">駆動方式</span>
-            <span className="font-semibold">{car.engine.driveSystem}</span>
+            <span className="font-semibold">{grade.driveSystem}</span>
           </div>
         </div>
 
         <div className="flex gap-2">
           <Link
-            href={`/cars/${car.id}`}
+            href={href}
             className="flex-1 bg-primary-600 text-white py-2 px-4 rounded hover:bg-primary-700 transition-colors text-center text-sm font-semibold"
           >
             詳細を見る
           </Link>
 
-          {showCompareButton && onAddToCompare && (
-            <button
-              onClick={() => onAddToCompare(car)}
-              className="bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 transition-colors text-sm font-semibold"
-            >
-              比較
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleAddToCompare}
+            disabled={compareState !== 'idle'}
+            aria-label={`${grade.modelName} ${grade.name} を比較リストに追加`}
+            className="bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 transition-colors text-sm font-semibold disabled:opacity-60 disabled:hover:bg-gray-200"
+          >
+            {COMPARE_LABEL[compareState]}
+          </button>
         </div>
       </div>
     </div>

@@ -1,18 +1,11 @@
-export interface Dealer {
-  id: string;
-  name: string;
-  manufacturer: string;
-  prefecture: string;
-  city: string;
-  address: string;
-  phone: string;
-  businessHours: string;
-  closedDays: string;
-  services: string[];
-  lat?: number;
-  lng?: number;
-}
+/**
+ * `Dealer` インターフェースは削除した。dealers テーブルと形が違ううえ
+ * （city/address/phone などは NULL 可、lat/lng は列が無い）、
+ * どこからも使われていなかった。行の型は db/queries.ts の DealerListItem
+ * （= dealers.$inferSelect）を使うこと。
+ */
 
+/** 都道府県の選択肢。DBの列挙型ではなく、住所テキストの絞り込みUIのための一覧 */
 export const prefectures = [
   '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
   '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
