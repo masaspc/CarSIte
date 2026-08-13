@@ -1,4 +1,8 @@
-# CarSIte — 日本車比較サイト
+# CarSIte — エージェント向けの取り決め
+
+このファイルは Codex など `AGENTS.md` を読むエージェント向け。
+Claude Code 向けの `CLAUDE.md` と同じ内容を保つこと。片方だけ更新しない。
+
 
 Next.js 15 (App Router) + TypeScript + Tailwind CSS。
 
