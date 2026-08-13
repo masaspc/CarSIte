@@ -38,6 +38,23 @@ describe('modelSlug', () => {
   it('異なる車種名は異なるハッシュになる', () => {
     expect(modelSlug('カローラ', '')).not.toBe(modelSlug('カムリ', ''));
   });
+
+  it('非ASCII名から作った異なる車種のslugが衝突しない', () => {
+    expect(modelSlug('eKワゴン', '')).not.toBe(modelSlug('eKスペース', ''));
+  });
+
+  it('非ASCII混じりの名前は読める接頭辞とハッシュを持つ', () => {
+    expect(modelSlug('eKワゴン', '')).toMatch(/^ek-[0-9a-f]{6}$/);
+  });
+
+  it('全ASCIIの名前はハッシュを付けない', () => {
+    expect(modelSlug('C-HR', '')).toBe('c-hr');
+    expect(modelSlug('WRX S4', '')).toBe('wrx-s4');
+  });
+
+  it('officialUrl があるときは非ASCII名でもURL由来を優先する', () => {
+    expect(modelSlug('プリウス', 'https://toyota.jp/prius/')).toBe('prius');
+  });
 });
 
 describe('gradeSlug', () => {

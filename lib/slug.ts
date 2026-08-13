@@ -16,6 +16,11 @@ function shortHash(value: string): string {
   return createHash('sha1').update(value).digest('hex').slice(0, 6);
 }
 
+/** 非ASCII文字を含むかチェック */
+function hasNonAscii(value: string): boolean {
+  return /[^\x00-\x7F]/.test(value);
+}
+
 /** ASCII英数字だけを残したslug。作れないときは空文字 */
 function asciiSlug(value: string): string {
   return value
@@ -36,13 +41,23 @@ export function modelSlug(model: string, officialUrl: string): string {
   const fromUrl = urlTailSegment(officialUrl);
   if (fromUrl) return fromUrl;
 
-  const ascii = asciiSlug(model);
-  return ascii || `model-${shortHash(model)}`;
+  if (hasNonAscii(model)) {
+    const ascii = asciiSlug(model);
+    return ascii ? `${ascii}-${shortHash(model)}` : `model-${shortHash(model)}`;
+  } else {
+    const ascii = asciiSlug(model);
+    return ascii || `model-${shortHash(model)}`;
+  }
 }
 
 export function gradeSlug(grade: string): string {
-  const ascii = asciiSlug(grade);
-  return ascii || `grade-${shortHash(grade)}`;
+  if (hasNonAscii(grade)) {
+    const ascii = asciiSlug(grade);
+    return ascii ? `${ascii}-${shortHash(grade)}` : `grade-${shortHash(grade)}`;
+  } else {
+    const ascii = asciiSlug(grade);
+    return ascii || `grade-${shortHash(grade)}`;
+  }
 }
 
 function urlTailSegment(officialUrl: string): string {
