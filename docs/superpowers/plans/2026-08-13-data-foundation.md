@@ -1080,7 +1080,34 @@ EOF
 
 `.env*.local` が含まれていることを確認する。無ければ追加する。
 
-- [ ] **Step 4: DBクライアントを作る**
+- [ ] **Step 4: 環境変数ローダを作る**
+
+`dotenv/config` は `.env` しか読まず、`.env.local` は読まない。一方 `.gitignore` は
+`.env*.local` のみを無視するため、素の `.env` に接続文字列を置くと**コミットされる危険がある**。
+`.env.local` を使い、Node から動くスクリプトは明示的にそれを読む。
+
+`load-env.ts`:
+
+```ts
+import { config } from 'dotenv';
+
+// Next.js は .env.local を自動で読むが、drizzle-kit や tsx から動く
+// スクリプトは読まないため、ここで明示的に読み込む。
+config({ path: '.env.local' });
+config({ path: '.env' });
+
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    'DATABASE_URL が設定されていません。.env.local にプールなし(-pooler なし)の接続文字列を置いてください。',
+  );
+}
+```
+
+`drizzle.config.ts` の先頭を `import 'dotenv/config';` から `import './load-env';` に差し替える。
+
+`.gitignore` に `.env` を追加する（`.env*.local` だけでは素の `.env` が追跡されるため）。
+
+- [ ] **Step 5: DBクライアントを作る**
 
 `db/index.ts`:
 
@@ -1099,12 +1126,12 @@ export const db = drizzle(sql, { schema });
 export { schema };
 ```
 
-- [ ] **Step 5: マイグレーションを適用する**
+- [ ] **Step 6: マイグレーションを適用する**
 
 Run: `npm run db:migrate`
 Expected: エラーなく完了
 
-- [ ] **Step 6: 適用結果を確認する**
+- [ ] **Step 7: 適用結果を確認する**
 
 Run:
 ```bash
@@ -1113,10 +1140,10 @@ psql "$DATABASE_URL" -c "\d grades" | head -40
 ```
 Expected: `models` / `grades` / `price_history` / `dealers` が存在し、`grades` に装備20列と `publication_status` がある
 
-- [ ] **Step 7: コミット**
+- [ ] **Step 8: コミット**
 
 ```bash
-git add db/index.ts .gitignore
+git add db/index.ts load-env.ts drizzle.config.ts .gitignore
 git commit -m "$(cat <<'EOF'
 feat: Neon への接続とマイグレーション適用を追加
 
@@ -1151,7 +1178,7 @@ git rm data/additional-cars.json
 `scripts/seed.ts`:
 
 ```ts
-import 'dotenv/config';
+import '../load-env';
 import { db } from '@/db';
 import { dealers, grades, models, priceHistory } from '@/db/schema';
 import { DuplicateGradeError, modelKeyOf, transformCars, type RawCar } from './seed-transform';
