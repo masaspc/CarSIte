@@ -1,54 +1,11 @@
-'use client';
-
 import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import CarCard from '@/components/CarCard';
-import { getAllCars, getBodyTypes } from '@/lib/carData';
-import { Car } from '@/types/car';
+import { getPublishedGrades } from '@/db/queries';
+import { bodyTypeEnum } from '@/db/schema';
 
-export default function Home() {
-  const router = useRouter();
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const allCars = getAllCars();
-  const bodyTypes = getBodyTypes();
-
-  // 最新の車を取得（発売日順）
-  const latestCars = [...allCars]
-    .sort((a, b) => b.releaseDate.localeCompare(a.releaseDate))
-    .slice(0, 6);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchKeyword.trim()) {
-      router.push(`/search?keyword=${encodeURIComponent(searchKeyword)}`);
-    } else {
-      router.push('/search');
-    }
-  };
-
-  const handleAddToCompare = (car: Car) => {
-    // セッションストレージから比較リストを取得
-    const compareListJson = sessionStorage.getItem('compareList');
-    const compareList: Car[] = compareListJson ? JSON.parse(compareListJson) : [];
-
-    // 既に追加されているかチェック
-    if (compareList.some((c) => c.id === car.id)) {
-      alert('この車両は既に比較リストに追加されています');
-      return;
-    }
-
-    // 最大3台まで
-    if (compareList.length >= 3) {
-      alert('比較リストは最大3台までです');
-      return;
-    }
-
-    // 追加
-    compareList.push(car);
-    sessionStorage.setItem('compareList', JSON.stringify(compareList));
-    alert(`${car.manufacturer} ${car.model} を比較リストに追加しました`);
-  };
+export default async function Home() {
+  const { rows: latestGrades } = await getPublishedGrades({ sort: 'date-desc', page: 1 });
+  const bodyTypes = bodyTypeEnum.enumValues;
 
   return (
     <div className="bg-gray-50">
@@ -63,13 +20,12 @@ export default function Home() {
               日本国内で販売されている自動車を、様々な観点から比較検討
             </p>
 
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-6">
+            <form action="/search" className="max-w-2xl mx-auto mb-6">
               <div className="flex gap-2">
                 <input
                   type="text"
+                  name="keyword"
                   placeholder="車種名やメーカー名で検索"
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
                   className="flex-1 px-6 py-4 rounded-lg text-gray-900 text-lg focus:outline-none focus:ring-2 focus:ring-primary-300"
                 />
                 <button
@@ -128,15 +84,15 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {latestCars.map((car) => (
-              <CarCard
-                key={car.id}
-                car={car}
-                onAddToCompare={handleAddToCompare}
-              />
-            ))}
-          </div>
+          {latestGrades.length === 0 ? (
+            <p className="text-gray-600">現在公開されている車両はありません</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {latestGrades.slice(0, 6).map((grade) => (
+                <CarCard key={grade.id} grade={grade} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

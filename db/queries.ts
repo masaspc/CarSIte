@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import { db } from '@/db';
-import { grades, models, priceHistory, type FeatureColumn } from '@/db/schema';
+import { dealers, grades, models, priceHistory, type FeatureColumn } from '@/db/schema';
 
 const PUBLISHED = eq(grades.publicationStatus, 'published');
 
@@ -163,3 +163,13 @@ export const getPublishedModel = (manufacturerSlug: string, modelSlug: string) =
     ['published-model', manufacturerSlug, modelSlug],
     { tags: ['cars', `model:${manufacturerSlug}/${modelSlug}`] },
   )();
+
+/** ディーラーは公開/非公開の区別を持たない。全件が公開情報。 */
+export async function listDealers() {
+  return db.select().from(dealers).orderBy(asc(dealers.prefecture), asc(dealers.name));
+}
+
+export type DealerListItem = Awaited<ReturnType<typeof listDealers>>[number];
+
+export const getDealers = () =>
+  unstable_cache(() => listDealers(), ['dealers'], { tags: ['dealers'] })();
