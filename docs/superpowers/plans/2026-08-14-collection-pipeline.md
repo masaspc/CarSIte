@@ -6,7 +6,7 @@
 
 **Architecture:** 登録済みPDFベースパス + 年月をHEADで探索して最新版を特定 → sha256 で変更を判定し、変わったものだけ Claude に投入 → 差分を `change_requests` に積む → 価格改定は条件付き自動、それ以外は人間が承認 → 適用して公開。ヘッドレスブラウザは使わない。
 
-**Tech Stack:** Next.js 15.5 / TypeScript / Drizzle ORM 0.45 / Neon Postgres (HTTP driver, **トランザクション無し**) / Zod 4 / Vitest 4 / `@anthropic-ai/sdk` / `pdf-lib` / GitHub Actions
+**Tech Stack:** Next.js 15.5 / TypeScript / Drizzle ORM 0.45 / Neon Postgres (HTTP driver, **トランザクション無し**) / Zod 4 / Vitest 4 / `@anthropic-ai/sdk` / `unpdf`（PDF.js） / GitHub Actions
 
 **設計書:** `docs/superpowers/specs/2026-08-14-collection-pipeline-design.md`
 
@@ -26,6 +26,8 @@
 - **`npx tsx -e` はCJSに変換されるためトップレベル `await` が使えない。**
   確認用のワンライナーは `void (async () => { ... })();` で包む
   （包まないと `Top-level await is currently not supported with the "cjs" output format` で落ちる）
+- **PDF.js（`unpdf`）は渡された `Uint8Array` を破壊し、長さ0にする。** `countPdfPages` のように
+  バッファを受け取る関数は、必ず `new Uint8Array(bytes)` で複製してから渡すこと
 - **`db.execute()` は配列ではなく `{ rows, rowCount, fields, ... }` を返す。** `const [r] = await db.execute(...)`
   は `TypeError: (intermediate value) is not iterable` で落ちる。`const { rows } = await db.execute(...)` と書く。
   素の `neon()` クライアントのタグ付きテンプレートは配列を返すので、そちらは分割代入でよい
@@ -253,13 +255,14 @@ git commit -m "feat: 諸元表PDFの年月探索ロジックを追加"
 
 ## Task 2: PDFの事前検査
 
-取得したPDFをLLMに渡す前に弾くための検査。外部から来るファイルなので、費用の暴発と意図しない文書の読み込みの両方を防ぐ。判定は純粋関数、ページ数の取得だけ `pdf-lib` を使う。
+取得したPDFをLLMに渡す前に弾くための検査。外部から来るファイルなので、費用の暴発と意図しない文書の読み込みの両方を防ぐ。判定は純粋関数、ページ数の取得だけ `unpdf`（PDF.js）を使う。
 
 **Files:**
 - Create: `lib/pdf-guard.ts`
 - Create: `pipeline/pdf.ts`
 - Modify: `package.json`
 - Test: `tests/unit/pdf-guard.test.ts`
+- Test: `tests/unit/pipeline-pdf.test.ts`
 
 **Interfaces:**
 - Consumes: なし
@@ -267,13 +270,24 @@ git commit -m "feat: 諸元表PDFの年月探索ロジックを追加"
   - `class PdfRejectedError extends Error`
   - `assertPdfAcceptable(input: PdfCandidate): void`（`PdfCandidate = { contentType: string | null; bytes: Uint8Array; pageCount: number }`）
   - `looksLikePdf(bytes: Uint8Array): boolean`
+  - `isEncryptedPdf(bytes: Uint8Array): boolean`（拒否はしない。記録用）
   - `MAX_PDF_BYTES`（10 MiB）, `MAX_PDF_PAGES`（50）
   - `countPdfPages(bytes: Uint8Array): Promise<number>`（`pipeline/pdf.ts`）
 
 - [ ] **Step 1: 依存を追加**
 
 ```bash
-npm install pdf-lib@^1.17.1
+npm install unpdf
+```
+
+**`pdf-lib` ではなく `unpdf`（PDF.js のサーバレス向けビルド）を使う。**
+実物のトヨタ諸元表は編集制限のために暗号化されており（トレーラに `/Encrypt` がある）、
+`pdf-lib` は `ignoreEncryption: true` を付けても本文を復号しないためページツリーの
+解決に失敗する。PDF.js は空のユーザーパスワードで復号できる。
+
+```
+pdf-lib: Error: Expected instance of PDFDict, but got instance of undefined
+unpdf  : 6（正しい）
 ```
 
 - [ ] **Step 2: 失敗するテストを書く**
@@ -445,25 +459,32 @@ export function assertPdfAcceptable({ contentType, bytes, pageCount }: PdfCandid
 `pipeline/pdf.ts`:
 
 ```ts
-import { PDFDocument } from 'pdf-lib';
+import { getDocumentProxy } from 'unpdf';
 
-/**
- * ページ数を数えるためだけに pdf-lib を使う。
- *
- * 本文の抽出には使わない。この諸元表は字間が壊れた形でしかテキストが取れず
- * （「プラグイ ンハイブ リ ッ ド車」）、正規表現でのパースは成立しない。
- * 表の読み取りはLLMの仕事である（設計書2.3）。
- */
 export async function countPdfPages(bytes: Uint8Array): Promise<number> {
-  const document = await PDFDocument.load(bytes, { updateMetadata: false });
-  return document.getPageCount();
+  // 必ず複製を渡す。PDF.js は受け取ったバッファの所有権を奪い、
+  // 呼び出し側の Uint8Array を長さ0にしてしまう。複製しないと、
+  // ページ数を数えた直後に本体のバイト列が消え、
+  // sha256 の計算もマジックナンバーの検査も空データに対して行われる。
+  const document = await getDocumentProxy(new Uint8Array(bytes));
+  return document.numPages;
 }
 ```
+
+`tests/unit/pipeline-pdf.test.ts` には、最小のPDFをその場で組み立てて次を確かめるテストを書く。
+
+- ページ数が数えられる（6ページ / 1ページ）
+- **呼び出し側のバイト列が破壊されない**（`bytes.length` が呼び出し前後で同じ）
+- 二度続けて呼んでも同じ結果になる
+- PDFとして読めないものは例外
+
+3つ目のテストが最も重要である。複製を忘れると単体テストは通るのに
+実際の収集で本体が消えるという、見つけにくい壊れ方をする。
 
 - [ ] **Step 5: テストが通ることを確認**
 
 Run: `npx vitest run tests/unit/pdf-guard.test.ts`
-Expected: PASS。失敗0件、`tests/unit/pdf-guard.test.ts` から12件以上
+Expected: PASS。失敗0件、`tests/unit/pdf-guard.test.ts` から12件以上、`tests/unit/pipeline-pdf.test.ts` から5件以上
 
 - [ ] **Step 6: 型チェックと既存テスト**
 
@@ -473,7 +494,7 @@ Expected: tsc がエラー0件で終了し、テストは失敗0件・合計124�
 - [ ] **Step 7: コミット**
 
 ```bash
-git add lib/pdf-guard.ts pipeline/pdf.ts tests/unit/pdf-guard.test.ts package.json package-lock.json
+git add lib/pdf-guard.ts pipeline/pdf.ts tests/unit/pdf-guard.test.ts tests/unit/pipeline-pdf.test.ts package.json package-lock.json
 git commit -m "feat: PDFの事前検査（Content-Type・マジックナンバー・サイズ・ページ数）"
 ```
 
@@ -2978,6 +2999,13 @@ git commit -m "docs: バックアップと復旧の手順"
 2. `scripts/estimate-cost.ts` を書く。ゴールデンPDFを `count_tokens` に通し、入力トークン数を出す
 3. 1件だけ実際に抽出し、出力トークン数を測る
 4. 設計書6.4の概算と突き合わせる。**桁が違えばモデル選択を見直す**
+5. **暗号化されたPDFが受け付けられるかを、この最初の実呼び出しで必ず確かめる。**
+   トヨタの諸元表は編集制限のために暗号化されている（`isEncryptedPdf` が true を返す）。
+   一方 Claude API のPDF要件は「パスワード/暗号化なしの標準PDF」と書かれている。
+   実際には空のユーザーパスワードなので通る見込みだが、確認していない。
+   **拒否された場合は、収集の前段に復号の工程を足す**（GitHub Actions のランナーに
+   `qpdf --decrypt` を入れるのが最も手軽である）。この確認を飛ばすと、
+   Task 14 を全部組んだあとで全件が失敗することになる
 
 - [ ] **検証**
 
