@@ -50,14 +50,68 @@ export function modelSlug(model: string, officialUrl: string): string {
   }
 }
 
-export function gradeSlug(grade: string): string {
-  if (hasNonAscii(grade)) {
-    const ascii = asciiSlug(grade);
-    return ascii ? `${ascii}-${shortHash(grade)}` : `grade-${shortHash(grade)}`;
-  } else {
-    const ascii = asciiSlug(grade);
-    return ascii || `grade-${shortHash(grade)}`;
+/** パワートレイン表記に現れる動力源と、slug に使う短縮形 */
+const POWERTRAIN_TOKENS: ReadonlyArray<readonly [RegExp, string]> = [
+  // 「プラグインハイブリッド」は「ハイブリッド」を含むため、必ず先に判定する
+  [/プラグインハイブリッド|PHEV/i, 'phev'],
+  [/ハイブリッド|HV/i, 'hv'],
+  [/ディーゼル|DIESEL/i, 'diesel'],
+  [/ガソリン|GASOLINE/i, 'gas'],
+  [/電気自動車|BEV|(?<![A-Za-z])EV(?![A-Za-z])/i, 'ev'],
+];
+
+export interface GradeDiscriminator {
+  powertrain?: string | null;
+  driveSystem?: string | null;
+}
+
+/**
+ * パワートレイン表記を slug 用の短い記号にする。
+ * 「2.0L プラグインハイブリッド車」→「20phev」
+ *
+ * 排気量まで含めるのは、同じ動力源で排気量だけが違う設定があるためである
+ * （プリウスの 2.0L ハイブリッドと 1.8L ハイブリッド）。
+ * どの規則にも当てはまらない表記はハッシュにする。捨てて衝突させるより、
+ * 読めない文字列でも区別できるほうがよい。
+ */
+function powertrainToken(powertrain: string): string {
+  const displacement = /(\d)\.(\d)\s*L/i.exec(powertrain);
+  const size = displacement ? `${displacement[1]}${displacement[2]}` : '';
+
+  for (const [pattern, token] of POWERTRAIN_TOKENS) {
+    if (pattern.test(powertrain)) return `${size}${token}`;
   }
+  return shortHash(powertrain);
+}
+
+/**
+ * グレードの slug。公開URL `/cars/<maker>/<model>/<grade>` の最後の要素になる。
+ *
+ * 第2引数を省略すると従来どおりグレード名だけから作る。既にDBに入っている
+ * 103件の slug を変えないためであり、省略時の結果を変えてはいけない
+ * （slug は一度発行したら変えないという規約がサブプロジェクト1にある）。
+ *
+ * 諸元表から取り込む場合は識別子を渡す。1つの車種に同名のグレードが
+ * パワートレイン違いで並ぶため（プリウスの「Z」は 2.0L PHEV と 2.0L HV に
+ * 1つずつある）、名前だけでは unique(model_id, slug) に衝突する。
+ */
+export function gradeSlug(grade: string, discriminator?: GradeDiscriminator): string {
+  const ascii = asciiSlug(grade);
+  const base = hasNonAscii(grade)
+    ? ascii
+      ? `${ascii}-${shortHash(grade)}`
+      : `grade-${shortHash(grade)}`
+    : ascii || `grade-${shortHash(grade)}`;
+
+  const parts = [base];
+
+  const powertrain = discriminator?.powertrain?.trim();
+  if (powertrain) parts.push(powertrainToken(powertrain));
+
+  const driveSystem = discriminator?.driveSystem?.trim();
+  if (driveSystem) parts.push(asciiSlug(driveSystem) || shortHash(driveSystem));
+
+  return parts.join('-');
 }
 
 function urlTailSegment(officialUrl: string): string {
