@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# DBスナップショット（取得元サイトの諸元データ。配布しない）
+backups/
