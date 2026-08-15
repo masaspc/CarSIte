@@ -1596,7 +1596,7 @@ LLMに返させる構造の定義。Zod で書き、`z.toJSONSchema()` で Struc
 - Consumes: `DRIVE_SYSTEMS`, `ENGINE_TYPES`, `FEATURE_AVAILABILITIES`（`db/enums.ts`）
 - Produces:
   - `ExtractedSpecSchema`（Zod）, `type ExtractedSpec`, `type ExtractedGrade`
-  - `extractionJsonSchema(): unknown`
+  - `extractionJsonSchema(): unknown`（**Structured Outputs 互換に整形済み**）
   - `normalizeDriveSystem(raw: string): DriveSystem`（未知の表記は `UnknownEnumValueError`）
   - `class UnknownEnumValueError extends Error`
 
@@ -1769,8 +1769,14 @@ const ExtractedGradeSchema = z.object({
   wltcMode: z.number().positive().nullable(),
   engineType: z.enum(ENGINE_TYPES),
   transmission: z.string().nullable(),
-  /** キーは db/schema.ts の FEATURE_COLUMNS と同じ snake_case 名 */
-  features: z.record(z.string(), z.enum(FEATURE_AVAILABILITIES)),
+  /**
+   * FEATURE_COLUMNS の20項目をすべて必須にする。z.record は使えない —
+   * Structured Outputs は additionalProperties に false 以外を許さないため、
+   * 任意のキーを持つオブジェクトはそもそも表現できない。
+   * 20項目を列挙して全部要求すれば、判断できないものは省略ではなく
+   * unknown として明示される。
+   */
+  features: z.object(featureShape()),
 });
 
 export const ExtractedSpecSchema = z.object({
@@ -1789,19 +1795,44 @@ export type ExtractedSpec = z.infer<typeof ExtractedSpecSchema>;
  * APIに強制させる形と、返ってきた値を検証する形が食い違わない。
  */
 export function extractionJsonSchema(): unknown {
-  return z.toJSONSchema(ExtractedSpecSchema);
+  return sanitize(z.toJSONSchema(ExtractedSpecSchema));
 }
+```
+
+**`z.toJSONSchema()` の出力をそのまま渡してはいけない。** Structured Outputs は
+次を受け付けず、送ると 400 になる。
+
+| 送れないもの | Zod が出すもの |
+|---|---|
+| `$schema` | 常に付く |
+| `minLength` / `maxLength` / `pattern` | `.min(1)` など |
+| `minItems` / `maxItems` | `.min(1)` on array |
+| `minimum` / `maximum` / `exclusiveMinimum` / `multipleOf` | `.positive()` `.int()` など |
+| `additionalProperties` が `false` 以外 | `z.record()` |
+
+`sanitize()` でこれらを落とし、すべてのオブジェクトに
+`additionalProperties: false` を付ける。落としても検証は緩まない —
+返ってきた値は結局 `ExtractedSpecSchema.safeParse` を通すため、
+「APIには構造を強制させ、細かい制約は手元で確かめる」という二段構えになる。
+
+整形後の実際の出力:
+
+```
+トップレベル: [ 'type', 'properties', 'required', 'additionalProperties' ]
+price: {"anyOf":[{"type":"integer"},{"type":"null"}]}    ← exclusiveMinimum が消えている
+features のキー数: 20
+全体サイズ: 2946 文字
 ```
 
 - [ ] **Step 4: テストが通ることを確認**
 
 Run: `npx vitest run tests/unit/extraction-schema.test.ts`
-Expected: PASS。失敗0件、13件以上
+Expected: PASS。失敗0件、19件以上
 
 - [ ] **Step 5: 型チェックと全テスト**
 
 Run: `npx tsc --noEmit && npm test`
-Expected: tsc エラー0件、テスト失敗0件・合計148件以上
+Expected: tsc エラー0件、テスト失敗0件・合計178件以上
 
 - [ ] **Step 6: コミット**
 
