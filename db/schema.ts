@@ -16,6 +16,8 @@ import {
 } from 'drizzle-orm/pg-core';
 import {
   BODY_TYPES,
+  CHANGE_KINDS,
+  CHANGE_STATUSES,
   DRIVE_SYSTEMS,
   ENGINE_TYPES,
   FEATURE_AVAILABILITIES,
@@ -223,5 +225,121 @@ export const dealers = pgTable(
   (t) => [
     index('dealers_prefecture_idx').on(t.prefecture),
     index('dealers_manufacturer_idx').on(t.manufacturer),
+  ],
+);
+
+export const changeKindEnum = pgEnum('change_kind', CHANGE_KINDS);
+export const changeStatusEnum = pgEnum('change_status', CHANGE_STATUSES);
+
+/**
+ * 車種ごとの諸元表PDFのベースパス。人が一度だけ登録する。
+ *
+ * ページを描画してリンクを拾うのではなく、ベースパスに年月を付けて
+ * HEAD で探索する（設計書7.1）。ベースパス中のセクションID（005_p_001 など）は
+ * 車種ごとに違い推測できないため、ここだけは人の登録に頼る。
+ */
+export const specSources = pgTable(
+  'spec_sources',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    modelId: uuid('model_id').notNull().references(() => models.id, { onDelete: 'cascade' }),
+    /** 例: https://toyota.jp/pages/contents/prius/005_p_001/pdf/prius_spec_ */
+    pdfBaseUrl: text('pdf_base_url').notNull(),
+    /** 前回200が返った年月。初回は null で、maxLookback ぶん遡って探す */
+    knownMonth: text('known_month'),
+    registeredAt: timestamp('registered_at', { withTimezone: true }).notNull().defaultNow(),
+    lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+    /** 3に達したら「取得不能」として人間に上げる（設計書8章） */
+    consecutiveFailures: smallint('consecutive_failures').notNull().default(0),
+    lastError: text('last_error'),
+  },
+  (t) => [
+    unique('spec_sources_base_url_key').on(t.pdfBaseUrl),
+    index('spec_sources_model_id_idx').on(t.modelId),
+    check('spec_sources_known_month_check', sql`${t.knownMonth} ~ '^[0-9]{4}-[0-9]{2}$'`),
+  ],
+);
+
+/**
+ * 実際に取得したPDF。同じ内容を二度登録しないよう sha256 に一意制約を張る。
+ *
+ * stored_path にPDF原本を保存する。Structured Outputs はスキーマで要求した項目しか
+ * 返さないため、後から項目を足したくなったとき extractions.raw_output には入っていない。
+ * メーカーのURLは改定のたびに差し替わるので、後から取り直せる保証もない（設計書5.2）。
+ */
+export const specDocuments = pgTable(
+  'spec_documents',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    specSourceId: uuid('spec_source_id')
+      .notNull()
+      .references(() => specSources.id, { onDelete: 'cascade' }),
+    pdfUrl: text('pdf_url').notNull(),
+    documentMonth: text('document_month').notNull(),
+    sha256: text('sha256').notNull(),
+    byteSize: integer('byte_size').notNull(),
+    pageCount: smallint('page_count').notNull(),
+    storedPath: text('stored_path'),
+    fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('spec_documents_source_sha_key').on(t.specSourceId, t.sha256),
+    index('spec_documents_source_id_idx').on(t.specSourceId),
+    check('spec_documents_month_check', sql`${t.documentMonth} ~ '^[0-9]{4}-[0-9]{2}$'`),
+  ],
+);
+
+/**
+ * LLM抽出の生結果。成功・失敗を問わず残す。
+ *
+ * PDFのLLM処理が唯一の実コストなので、二度払わない設計にする。
+ * スキーマを後から変えても、既存項目の作り直しは raw_output からできる。
+ */
+export const extractions = pgTable(
+  'extractions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    specDocumentId: uuid('spec_document_id')
+      .notNull()
+      .references(() => specDocuments.id, { onDelete: 'cascade' }),
+    modelIdUsed: text('model_id_used').notNull(),
+    rawOutput: jsonb('raw_output'),
+    inputTokens: integer('input_tokens'),
+    outputTokens: integer('output_tokens'),
+    succeeded: boolean('succeeded').notNull(),
+    error: text('error'),
+    extractedAt: timestamp('extracted_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('extractions_document_id_idx').on(t.specDocumentId)],
+);
+
+/**
+ * 承認キュー。
+ *
+ * unique(spec_document_id, kind, target_key) が冪等性の要である。
+ * neon-http にトランザクションが無いため、cronの重複起動や再実行で
+ * 同じ変更が二重に積まれるのを制約で防ぐ（設計書5.4）。
+ */
+export const changeRequests = pgTable(
+  'change_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    specDocumentId: uuid('spec_document_id')
+      .notNull()
+      .references(() => specDocuments.id, { onDelete: 'cascade' }),
+    kind: changeKindEnum('kind').notNull(),
+    /** 適用対象を一意に指す文字列。グレードなら型式、無ければ 名前/パワートレイン/駆動方式 */
+    targetKey: text('target_key').notNull(),
+    /** 適用前後の値。ロールバックは これを逆適用する */
+    diff: jsonb('diff').notNull(),
+    status: changeStatusEnum('status').notNull().default('pending'),
+    decidedBy: text('decided_by'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    appliedAt: timestamp('applied_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('change_requests_document_kind_target_key').on(t.specDocumentId, t.kind, t.targetKey),
+    index('change_requests_status_idx').on(t.status),
   ],
 );
