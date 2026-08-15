@@ -138,6 +138,26 @@ export const grades = pgTable(
     handsFreeBackDoor: feature('hands_free_back_door'),
     sunroof: feature('sunroof'),
 
+    /**
+     * 車両型式（例 6LA-MXWH61-AHXHB）。国交省の型式指定で、バリアントごとに一意。
+     * 業界が実際に使う識別子であり、これがあれば同名グレード問題は構造的に解決する。
+     * 諸元表に載っていない車種もあるため null 可。
+     */
+    typeDesignation: text('type_designation'),
+
+    /**
+     * 諸元表の列見出しの原文（例「2.0L プラグインハイブリッド車」）。
+     *
+     * NOT NULL は必須である。nullable にすると PostgreSQL は UNIQUE 制約で
+     * NULL 同士を「異なる値」として扱うため、下の複合一意制約をすり抜けて
+     * 同名グレードが何行でも入る。値が取れない場合は空文字を入れる。
+     *
+     * engine_type（正規化した分類）とは別物。同じ「ハイブリッド」の中で
+     * 排気量違いを区別するために原文が要る。transmission を raw と type に
+     * 分けたのと同じ理屈である。
+     */
+    powertrain: text('powertrain').notNull().default(''),
+
     sourceUrl: text('source_url'),
     fetchedAt: timestamp('fetched_at', { withTimezone: true }),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
@@ -146,7 +166,18 @@ export const grades = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    unique('grades_model_name_key').on(t.modelId, t.name),
+    // unique('grades_model_name_key') は削除した。
+    // プリウスの諸元表には同名の「Z」「G」がパワートレイン違いで2つずつあり、
+    // 車種と名前だけでは1車種のうちに衝突する（設計書2.4）。
+    unique('grades_model_powertrain_drive_name_key').on(
+      t.modelId,
+      t.powertrain,
+      t.driveSystem,
+      t.name,
+    ),
+    unique('grades_type_designation_key').on(t.typeDesignation),
+    // slug は公開URLの識別子なので車種内で一意のまま。衝突は slug の生成規則側で
+    // 避ける（lib/slug.ts の gradeSlug に識別子を渡す）
     unique('grades_model_slug_key').on(t.modelId, t.slug),
     index('grades_model_id_idx').on(t.modelId),
     index('grades_status_price_idx').on(t.publicationStatus, t.price),
