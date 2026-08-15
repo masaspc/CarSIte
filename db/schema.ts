@@ -231,6 +231,9 @@ export const dealers = pgTable(
 export const changeKindEnum = pgEnum('change_kind', CHANGE_KINDS);
 export const changeStatusEnum = pgEnum('change_status', CHANGE_STATUSES);
 
+export type ChangeKind = (typeof changeKindEnum.enumValues)[number];
+export type ChangeStatus = (typeof changeStatusEnum.enumValues)[number];
+
 /**
  * 車種ごとの諸元表PDFのベースパス。人が一度だけ登録する。
  *

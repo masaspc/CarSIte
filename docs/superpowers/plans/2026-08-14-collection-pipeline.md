@@ -2183,6 +2183,7 @@ git commit -m "feat: Claude によるPDF構造化"
 
 **Files:**
 - Create: `pipeline/diff.ts`
+- Modify: `db/schema.ts`（`ChangeKind` / `ChangeStatus` 型のエクスポートを追加）
 - Test: `tests/unit/diff.test.ts`
 
 **Interfaces:**
@@ -2373,6 +2374,23 @@ export function gradeKey(grade: {
   - 両方にある → `price` が違えば `price_change`、`SPEC_FIELDS` のいずれかが違えば `spec_change`。両方違えば2件出す
   - existing にあって incoming に無い → `discontinued`
 - `diff` の形は `{ <field>: { before, after } }` で統一する。ロールバックが逆適用でできる形である
+
+**数値の同値判定を素朴に `===` でやってはいけない。** drizzle の `numeric` 列は
+**文字列で返る**。実DBで確認済み。
+
+```
+wltcMode: "32.6" 型: string      ← DBから
+price   : 2750000 型: number
+```
+
+抽出結果の `26` と DB の `"26.0"` を `===` で比べると常に不一致になり、
+**何も変わっていないのに毎週すべてのグレードに `spec_change` が立つ**。
+承認キューが空振りで埋まって使い物にならなくなる。
+`sameValue()` で数値として比較できるものは数値に寄せる。
+
+**突き合わせは型式と複合キーの両方で行う。** 型式が後から付いた場合
+（既存は null、抽出結果には型式がある）に片方だけで引くと、
+「廃止 + 新規」という誤った2件になる。
 
 - [ ] **Step 4: テストが通ることを確認**
 
