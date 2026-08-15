@@ -26,6 +26,9 @@
 - **`npx tsx -e` はCJSに変換されるためトップレベル `await` が使えない。**
   確認用のワンライナーは `void (async () => { ... })();` で包む
   （包まないと `Top-level await is currently not supported with the "cjs" output format` で落ちる）
+- **HTTPヘッダの値は ByteString（latin-1）。日本語を入れると `fetch` が
+  `Cannot convert argument to a ByteString` で落ちる。** User-Agent などは ASCII で書く。
+  この失敗は偽のHTTPを使う単体テストでは再現せず、実際にネットワークへ出て初めて出る
 - **PDF.js（`unpdf`）は渡された `Uint8Array` を破壊し、長さ0にする。** `countPdfPages` のように
   バッファを受け取る関数は、必ず `new Uint8Array(bytes)` で複製してから渡すこと
 - **`db.execute()` は配列ではなく `{ rows, rowCount, fields, ... }` を返す。** `const [r] = await db.execute(...)`
@@ -1436,8 +1439,9 @@ export interface Http {
   get(url: string): Promise<HttpResponse>;
 }
 
-const USER_AGENT =
-  'CarSiteBot/1.0 (+https://github.com/; 個人運営の車両比較サイト。諸元表PDFのみ取得)';
+/** ASCII だけで書くこと。HTTPヘッダは latin-1 しか通らない */
+export const USER_AGENT =
+  'CarSiteBot/1.0 (+personal car comparison site; spec PDFs only, weekly)';
 
 export function createFetchHttp(): Http {
   return {
@@ -1547,7 +1551,7 @@ export async function fetchAndValidate(
 - [ ] **Step 4: テストが通ることを確認**
 
 Run: `npx vitest run tests/unit/pipeline-fetch.test.ts`
-Expected: PASS。失敗0件、11件以上
+Expected: PASS。失敗0件、15件以上
 
 - [ ] **Step 5: 実物のトヨタのURLで探索が成立することを一度だけ確認**
 
