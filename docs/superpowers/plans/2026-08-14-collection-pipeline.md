@@ -1862,10 +1862,27 @@ PDFをそのまま Claude に投入し、Structured Outputs で構造を強制�
   - `EXTRACTION_MODEL = 'claude-opus-5'`
   - `EXTRACTION_SYSTEM_PROMPT`
 
+**SDK の `zodOutputFormat()` は使わない。** 実際に動かして比べたところ、
+`z.array().min(1)` 由来の `minItems` を落とさずに残す。仕様上は非対応の
+キーワードなので、自前の `sanitize()`（Task 7）を通した JSON Schema を
+`output_config.format` に直接渡す。SDK の `JSONOutputFormat` 型は
+`{ type: 'json_schema', schema }` なので、型アサーションなしで渡せる。
+
+```
+SDK版:   4,066文字（minItems が残る）
+自前版:  2,946文字（非対応キーワードなし）
+```
+
 - [ ] **Step 1: 依存を追加**
 
 ```bash
 npm install @anthropic-ai/sdk
+```
+
+実物のPDFでリクエストの大きさを確かめてある。
+
+```
+PDF 455,398バイト -> base64 607,200 -> リクエスト全体 0.58 MB（上限 32MB）
 ```
 
 - [ ] **Step 2: 失敗するテストを書く**
