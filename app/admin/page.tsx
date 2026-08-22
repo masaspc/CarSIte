@@ -71,7 +71,7 @@ export default async function AdminPage() {
               {modelRows.map((model) => (
                 <tr key={model.id}>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{model.manufacturer}</td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm font-medium">{model.name}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">{model.name}</td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{model.bodyType}</td>
                   <td className="max-w-xs truncate px-3 py-4 text-sm text-gray-500">{model.officialUrl ?? '—'}</td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{model.gradeCount}</td>
@@ -116,7 +116,7 @@ export default async function AdminPage() {
             {rows.map(({ grade, manufacturer, modelName, modelVerifiedAt }) => (
               <tr key={grade.id}>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{manufacturer}</td>
-                <td className="whitespace-nowrap px-3 py-4 text-sm font-medium">{modelName}</td>
+                <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">{modelName}</td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{grade.name}</td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">¥{grade.price.toLocaleString()}</td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm">
