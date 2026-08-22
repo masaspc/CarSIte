@@ -2912,6 +2912,8 @@ git commit -m "test: ゴールデンPDFによる回帰テスト"
 - Create: `scripts/register-source.ts`
 - Create: `.github/workflows/collect.yml`
 - Modify: `package.json`
+- Modify: `db/schema.ts`（`change_requests.reason` の追加）
+- Modify: `db/admin-queries.ts`（保存された理由を優先する）
 - Test: `tests/integration/collect.test.ts`
 
 **Interfaces:**
@@ -2941,10 +2943,27 @@ EVの電費（Wh/km）とは単位が違う。同じ列に混ぜると公開ペ�
 3. `spec_documents` に行を作り、PDF原本を `stored_path` に保存する
 4. `extractSpec` を呼ぶ。結果は成否にかかわらず `extractions` に記録する
 5. 成功したら `normalizeGrades` → `computeChanges` → `decideApproval`
-6. `change_requests` に積む。`decideApproval` が `auto` なら `status='approved'`, `decided_by='system'` で入れ、続けて `applyChangeRequest` を呼ぶ
+6. `change_requests` に積む。`decideApproval` が `auto` なら `status='approved'`, `decided_by='system'` で入れ、続けて `applyChangeRequest` を呼ぶ。
+   **`auto` でない場合は `reason` をそのまま `change_requests.reason` に保存する**（下記）
 7. 成功時は `consecutive_failures` を0に戻し、`known_month` を更新する
 
 `--dry-run` では 3 以降の書き込みを行わず、標準出力に何をするつもりかだけ出す。
+
+**`change_requests.reason` を足す。** Task 12 の承認キュー画面は「自動承認されなかった理由」を
+出すが、`decideApproval` の `reason` を保存する列がどのタスクにも無かったため、
+`db/admin-queries.ts` が表示時に `decideApproval` を呼び直して復元している。
+
+その復元は近似でしかない。`price_change` の判定は `DocumentContext.totalGrades`
+（＝その諸元表に載っていたグレード総数）を見るが、抽出結果はその時点のものが残らないので、
+親の車種の**現在の**グレード数で代用している。収集時から車種のグレード構成が変われば、
+画面に出る理由が実際に人間へ回された理由とずれる。
+
+判定した本人（`scripts/collect.ts`）がその場で書き残すのが正しい。
+
+- `db/schema.ts` の `changeRequests` に `reason: text('reason')` を足し、`npm run db:generate` → `npm run db:migrate`
+- `scripts/collect.ts` は `decideApproval` の戻りが `auto: false` のとき `reason` を一緒に INSERT する
+- `db/admin-queries.ts` の `listPendingChangeRequests` は保存された `reason` を優先し、
+  無い行（この変更より前に積まれたもの）だけ従来どおり `decideApproval` で復元する
 
 - [ ] **Step 3: 統合テストを書く**
 
