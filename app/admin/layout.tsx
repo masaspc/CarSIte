@@ -64,6 +64,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <Link href="/admin/add" className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">
                 新規追加
               </Link>
+              <Link href="/admin/changes" className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">
+                承認キュー
+              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
