@@ -165,6 +165,25 @@ async function findGrade(modelId: string, targetKey: string) {
   return row;
 }
 
+/**
+ * NOT NULL の列。ここに null を書こうとしたら適用せず stale にする。
+ *
+ * 諸元表には車両本体価格が載っていない（実物で確認: 「価格は販売店が独自に
+ * 定めていますので…」）。抽出結果の price は null になり、computeChanges は
+ * 「値 -> null」を price_change として立てる。それをそのまま適用すると
+ * grades.price の NOT NULL 制約に当たってDBエラーで落ちる。
+ *
+ * 「値が取れなかった」と「値が無くなった」は区別がつかない。
+ * 区別がつかないものを書き込まないのがこのパイプラインの原則である。
+ */
+const NON_NULLABLE_GRADE_COLUMNS = new Set<string>([
+  'name',
+  'price',
+  'seating',
+  'engineType',
+  ...FEATURE_COLUMNS,
+]);
+
 /** jsonb から来る diff は信用できない入力なので、書き込める列を白名簿で縛る */
 const UPDATABLE_GRADE_COLUMNS = new Set<string>([
   'name',
@@ -193,6 +212,7 @@ function buildGradePatch(
     const column = key.startsWith('features.') ? key.slice('features.'.length) : key;
     if (!UPDATABLE_GRADE_COLUMNS.has(column)) return null;
     if (!sameValue(grade[column], entry.before)) return null;
+    if (entry.after === null && NON_NULLABLE_GRADE_COLUMNS.has(column)) return null;
 
     const value = columnValue(column, entry.after);
     if (value === INVALID) return null;

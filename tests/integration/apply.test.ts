@@ -153,6 +153,36 @@ describe('applyChangeRequest — price_change', () => {
     expect((await readGrade(grade.id)).price).toBe(3_400_000);
   });
 
+  it('NOT NULL 列に null を書こうとしたら stale にする（DBエラーで落とさない）', async () => {
+    // 諸元表に車両本体価格は載っていない（実物で確認済み）。抽出結果の price は
+    // null になり、computeChanges は「値 -> null」を price_change として立てる。
+    // それを適用すると grades.price の NOT NULL 制約に当たる。
+    const model = await newModel();
+    const grade = await newGrade(model.id);
+    const request = await newChangeRequest(model.id, {
+      kind: 'price_change',
+      targetKey: `Z/${POWERTRAIN}/FF`,
+      diff: { price: { before: 3_200_000, after: null } },
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('stale');
+    expect((await readGrade(grade.id)).price).toBe(3_200_000);
+    expect((await readRequest(request.id)).status).toBe('stale');
+  });
+
+  it('null を許す列なら null を書ける', async () => {
+    const model = await newModel();
+    const grade = await newGrade(model.id, { weight: 1_420 });
+    const request = await newChangeRequest(model.id, {
+      kind: 'spec_change',
+      targetKey: `Z/${POWERTRAIN}/FF`,
+      diff: { weight: { before: 1_420, after: null } },
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('applied');
+    expect((await readGrade(grade.id)).weight).toBeNull();
+  });
+
   it('現在値が diff.before と食い違うなら stale になり、上書きしない', async () => {
     const model = await newModel();
     const grade = await newGrade(model.id, { price: 3_500_000 });
