@@ -29,8 +29,14 @@ function existing(overrides: Record<string, unknown> = {}) {
 }
 
 describe('gradeKey', () => {
-  it('型式があればそれを使う', () => {
-    expect(gradeKey(incoming())).toBe('6LA-MXWH61-AHXHB');
+  it('型式があってもキーには複合を使う', () => {
+    // 型式は一意とは限らない（ホンダ・スズキ）。DBの複合一意制約
+    // grades_model_powertrain_drive_name_key と同じ判別力に揃える
+    expect(gradeKey(incoming())).toBe('Z/2.0L プラグインハイブリッド車/FF');
+  });
+
+  it('型式の有無でキーが変わらない', () => {
+    expect(gradeKey(incoming())).toBe(gradeKey(incoming({ typeDesignation: null })));
   });
 
   it('型式が無ければ 名前/パワートレイン/駆動方式 の複合', () => {
@@ -51,6 +57,45 @@ describe('gradeKey', () => {
     const ff = gradeKey(incoming({ typeDesignation: null }));
     const awd = gradeKey(incoming({ typeDesignation: null, driveSystem: '4WD' }));
     expect(ff).not.toBe(awd);
+  });
+});
+
+/*
+ * ホンダ フィットとスズキ アルトの実データから来た要件。
+ * 型式が一意なのはトヨタだけで、ホンダは 6AA-GR3 ひとつで
+ * e:HEV X/FF・e:HEV Z/FF・e:HEV RS/FF の3件を覆う。
+ * docs/research/2026-08-24-manufacturer-pdf-survey.md を参照。
+ */
+describe('型式が複数グレードで共有される場合', () => {
+  const shared = (name: string) => ({
+    ...incoming(),
+    name,
+    powertrain: 'e:HEV',
+    typeDesignation: '6AA-GR3',
+  });
+
+  it('型式が同じでも名前が違えば別のキーになる', () => {
+    expect(gradeKey(shared('e:HEV X'))).not.toBe(gradeKey(shared('e:HEV Z')));
+  });
+
+  it('内容が同じなら変更を立てない（誤った discontinued を出さない）', () => {
+    const rows = ['e:HEV X', 'e:HEV Z', 'e:HEV RS'].map(shared);
+    const existingRows = rows.map((row, i) => ({ id: `id-${i}`, ...row }));
+
+    const changes = computeChanges(existingRows, rows);
+
+    expect(changes).toEqual([]);
+  });
+
+  it('1件だけ本当に消えたら、その1件だけが discontinued になる', () => {
+    const rows = ['e:HEV X', 'e:HEV Z', 'e:HEV RS'].map(shared);
+    const existingRows = rows.map((row, i) => ({ id: `id-${i}`, ...row }));
+
+    const changes = computeChanges(existingRows, rows.slice(0, 2));
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].kind).toBe('discontinued');
+    expect(changes[0].targetKey).toBe(gradeKey(shared('e:HEV RS')));
   });
 });
 
@@ -82,7 +127,8 @@ describe('computeChanges', () => {
     const changes = computeChanges([], [incoming()]);
     expect(changes).toHaveLength(1);
     expect(changes[0].kind).toBe('new_grade');
-    expect(changes[0].targetKey).toBe('6LA-MXWH61-AHXHB');
+    // targetKey は複合キー。型式は一意とは限らないので識別子にしない
+    expect(changes[0].targetKey).toBe('Z/2.0L プラグインハイブリッド車/FF');
   });
 
   it('new_grade の diff は before が null で after が値（逆適用できる形）', () => {

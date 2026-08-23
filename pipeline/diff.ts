@@ -57,12 +57,27 @@ export interface ChangeDraft {
 /**
  * グレードを一意に指す文字列。
  *
- * 車両型式があればそれが真の自然キーである（国交省の型式指定で、
- * バリアントごとに一意）。無い場合は 名前・パワートレイン・駆動方式 の複合で識別する。
- * 名前だけで突き合わせると、プリウスの2つの「Z」を取り違える。
+ * **型式は使わない。** 「型式はバリアントごとに一意」という前提は
+ * トヨタでしか成立しないことが実測で分かった（2026-08-24）。
+ *
+ *   トヨタ プリウス   8バリアント / 型式8種  ○
+ *   トヨタ アクア     9バリアント / 型式9種  ○
+ *   スズキ アルト     8バリアント / 型式2種  ✗
+ *   ホンダ フィット  15バリアント / 型式6種  ✗
+ *
+ * ホンダは 6AA-GR3 ひとつで e:HEV X/FF・e:HEV Z/FF・e:HEV RS/FF・
+ * 助手席回転シート車 e:HEV Z/FF の4件を覆う。型式をキーにすると4件が1件に潰れ、
+ * 内容が同じでも spec_change と discontinued が立つ（実測で確認）。
+ * 販売中のグレードを廃止扱いにしかねない。
+ *
+ * 名前・パワートレイン・駆動方式の複合で識別する。これは DB の
+ * grades_model_powertrain_drive_name_key と同じ判別力であり、
+ * キーと制約が一致する。型式は識別子ではなく諸元の1項目として持つ。
+ *
+ * 詳細: docs/research/2026-08-24-manufacturer-pdf-survey.md
  */
 export function gradeKey(grade: GradeIdentity): string {
-  return grade.typeDesignation ?? compositeKey(grade);
+  return compositeKey(grade);
 }
 
 function compositeKey(grade: GradeIdentity): string {
@@ -132,7 +147,26 @@ export function computeChanges(
   const byKey = new Map<string, ExistingGrade>();
   for (const row of existing) {
     byKey.set(compositeKey(row), row);
-    if (row.typeDesignation) byKey.set(row.typeDesignation, row);
+  }
+
+  /*
+   * 型式による突き合わせは、その型式が既存側で一意なときだけ行う。
+   *
+   * 型式が後から付いた場合（既存は null、抽出結果には型式がある）に
+   * 拾えるようにするための道だが、複数のグレードが同じ型式を共有する
+   * メーカーでは、どれに当てるかを決められない。曖昧なまま当てると
+   * 別のグレードに変更を書き込む。
+   */
+  const typeCounts = new Map<string, number>();
+  for (const row of existing) {
+    if (!row.typeDesignation) continue;
+    typeCounts.set(row.typeDesignation, (typeCounts.get(row.typeDesignation) ?? 0) + 1);
+  }
+  const byTypeDesignation = new Map<string, ExistingGrade>();
+  for (const row of existing) {
+    if (!row.typeDesignation) continue;
+    if (typeCounts.get(row.typeDesignation) !== 1) continue;
+    byTypeDesignation.set(row.typeDesignation, row);
   }
 
   const changes: ChangeDraft[] = [];
@@ -140,8 +174,8 @@ export function computeChanges(
 
   for (const row of incoming) {
     const found =
-      (row.typeDesignation ? byKey.get(row.typeDesignation) : undefined) ??
-      byKey.get(compositeKey(row));
+      byKey.get(compositeKey(row)) ??
+      (row.typeDesignation ? byTypeDesignation.get(row.typeDesignation) : undefined);
 
     if (!found) {
       changes.push({ kind: 'new_grade', targetKey: gradeKey(row), diff: newGradeDiff(row) });

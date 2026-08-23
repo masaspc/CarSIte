@@ -87,7 +87,15 @@ describe('grades の識別単位', () => {
     ).rejects.toThrow();
   });
 
-  it('type_designation は一意だが、null は何件あってもよい', async () => {
+  it('type_designation は共有できる（一意制約を外した）', async () => {
+    /*
+     * 「型式はバリアントごとに一意」はトヨタでしか成立しない。
+     * ホンダ フィットは 6AA-GR3 ひとつで4バリアントを覆う。
+     * docs/research/2026-08-24-manufacturer-pdf-survey.md
+     *
+     * 型式で弾いていた頃は、そういうメーカーのグレードが
+     * 2件目以降まるごと入らなかった。
+     */
     const modelId = await anyModelId();
     const designation = `__TEST-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -97,10 +105,19 @@ describe('grades の識別単位', () => {
       .returning({ id: grades.id });
     created.push(first.id);
 
+    const [second] = await db
+      .insert(grades)
+      .values(gradeRow(modelId, { typeDesignation: designation, powertrain: 'B' }))
+      .returning({ id: grades.id });
+    created.push(second.id);
+
+    expect(second.id).not.toBe(first.id);
+
+    // 同定は複合キーが担保する。型式が同じでも複合が同じなら弾かれる
     await expect(
       db
         .insert(grades)
-        .values(gradeRow(modelId, { typeDesignation: designation, powertrain: 'B' })),
+        .values(gradeRow(modelId, { typeDesignation: designation, powertrain: 'A' })),
     ).rejects.toThrow();
 
     // null は衝突しない。型式が公開されていない車種が複数あってよいのは要件どおり

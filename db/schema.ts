@@ -141,8 +141,10 @@ export const grades = pgTable(
     sunroof: feature('sunroof'),
 
     /**
-     * 車両型式（例 6LA-MXWH61-AHXHB）。国交省の型式指定で、バリアントごとに一意。
-     * 業界が実際に使う識別子であり、これがあれば同名グレード問題は構造的に解決する。
+     * 車両型式（例 6LA-MXWH61-AHXHB）。国交省の型式指定。
+     *
+     * **識別子としては使わない。** 「バリアントごとに一意」という前提は
+     * トヨタでしか成立しない（下の一意制約のコメント参照）。諸元の1項目として持つ。
      * 諸元表に載っていない車種もあるため null 可。
      */
     typeDesignation: text('type_designation'),
@@ -177,7 +179,28 @@ export const grades = pgTable(
       t.driveSystem,
       t.name,
     ),
-    unique('grades_type_designation_key').on(t.typeDesignation),
+    /*
+     * 型式単独の UNIQUE は削除した（2026-08-24）。
+     *
+     * 「型式はバリアントごとに一意」という前提はトヨタでしか成立しない。
+     * 4車種を実測した結果:
+     *
+     *   トヨタ プリウス   8バリアント / 型式8種  ○
+     *   トヨタ アクア     9バリアント / 型式9種  ○
+     *   スズキ アルト     8バリアント / 型式2種  ✗
+     *   ホンダ フィット  15バリアント / 型式6種  ✗
+     *
+     * ホンダは 6AA-GR3 ひとつで e:HEV X/FF・e:HEV Z/FF・e:HEV RS/FF・
+     * 助手席回転シート車 e:HEV Z/FF の4件を覆う。これらは name だけが違うため、
+     * 型式を含むどんな複合キーを作っても name を含めない限り区別できない。
+     *
+     * name を含めた時点で grades_model_powertrain_drive_name_key と同じ
+     * 判別力になり、型式を足す意味が無い。よって型式にかかる一意制約は置かない。
+     * グレードの同一性は上の複合キーが担保する。
+     *
+     * 「ひとつの型式が複数の車種にまたがらない」という不変条件は残るが、
+     * これは単純な UNIQUE では表現できないため、収集時の検査で見る。
+     */
     // slug は公開URLの識別子なので車種内で一意のまま。衝突は slug の生成規則側で
     // 避ける（lib/slug.ts の gradeSlug に識別子を渡す）
     unique('grades_model_slug_key').on(t.modelId, t.slug),

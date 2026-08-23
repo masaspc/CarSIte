@@ -135,18 +135,15 @@ async function unclaimToStale(id: string): Promise<void> {
 }
 
 /**
- * target_key は型式（あれば）か 名前/パワートレイン/駆動方式 の複合キー。
- * 複合キーは車種内でしか一意でないため、必ず model_id で絞る。
+ * target_key は 名前/パワートレイン/駆動方式 の複合キー（gradeKey が作る）。
+ * 車種内でしか一意でないため、必ず model_id で絞る。
+ *
+ * 型式による照合はフォールバックに回す。型式は一意とは限らず
+ * （ホンダは1つの型式が4バリアントを覆う）、複数該当したら当てない。
  */
 async function findGrade(modelId: string, targetKey: string) {
-  const [byTypeDesignation] = await db
-    .select()
-    .from(grades)
-    .where(and(eq(grades.modelId, modelId), eq(grades.typeDesignation, targetKey)));
-  if (byTypeDesignation) return byTypeDesignation;
-
   const parts = targetKey.split('/');
-  if (parts.length !== 3) return undefined;
+  if (parts.length !== 3) return findGradeByTypeDesignation(modelId, targetKey);
   const [name, powertrain, driveSystem] = parts;
   // 列挙値でない文字列を enum 列と比較すると Postgres が例外を投げる
   if (!isDriveSystem(driveSystem)) return undefined;
@@ -163,6 +160,16 @@ async function findGrade(modelId: string, targetKey: string) {
       ),
     );
   return row;
+}
+
+/** 複合キーの形をしていない target_key（型式で作られた古い行）のための後方互換 */
+async function findGradeByTypeDesignation(modelId: string, targetKey: string) {
+  const rows = await db
+    .select()
+    .from(grades)
+    .where(and(eq(grades.modelId, modelId), eq(grades.typeDesignation, targetKey)));
+  // 複数該当するなら型式では特定できない。当てずに諦める
+  return rows.length === 1 ? rows[0] : undefined;
 }
 
 /**
