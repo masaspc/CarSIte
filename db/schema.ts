@@ -336,6 +336,13 @@ export const changeRequests = pgTable(
     /** 適用前後の値。ロールバックは これを逆適用する */
     diff: jsonb('diff').notNull(),
     status: changeStatusEnum('status').notNull().default('pending'),
+    /**
+     * 自動承認しなかった理由（decideApproval の reason）。判定した収集スクリプトが
+     * その場で書き残す。後から decideApproval を呼び直して復元すると、判定が見る
+     * 「その諸元表のグレード総数」が当時の値ではなくなっており、実際に人間へ
+     * 回された理由とずれるため。自動承認された行は null。
+     */
+    reason: text('reason'),
     decidedBy: text('decided_by'),
     decidedAt: timestamp('decided_at', { withTimezone: true }),
     appliedAt: timestamp('applied_at', { withTimezone: true }),

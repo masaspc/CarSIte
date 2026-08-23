@@ -13,6 +13,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed.ts",
+    "collect": "tsx scripts/collect.ts",
+    "register-source": "tsx scripts/register-source.ts",
     "snapshot": "tsx scripts/snapshot.ts"
   },
   "dependencies": {

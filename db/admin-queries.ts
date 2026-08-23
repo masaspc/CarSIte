@@ -114,6 +114,7 @@ export async function listPendingChangeRequests(): Promise<GroupedChangeRequests
       kind: changeRequests.kind,
       targetKey: changeRequests.targetKey,
       diff: changeRequests.diff,
+      reason: changeRequests.reason,
       createdAt: changeRequests.createdAt,
       specDocumentId: specDocuments.id,
       documentMonth: specDocuments.documentMonth,
@@ -164,25 +165,41 @@ export async function listPendingChangeRequests(): Promise<GroupedChangeRequests
     }
 
     const diff = (row.diff ?? {}) as PendingChange['diff'];
-    const decision = decideApproval(
-      { kind: row.kind, targetKey: row.targetKey, diff },
-      {
-        totalGrades: gradeCounts.get(row.modelId) ?? 0,
-        priceChangeCount: priceChangeCounts.get(row.specDocumentId) ?? 0,
-      },
-    );
 
     group.changes.push({
       id: row.id,
       kind: row.kind,
       targetKey: row.targetKey,
       diff,
-      reason: decision.auto
-        ? '自動承認の条件は満たしていますが、未承認のまま残っています'
-        : decision.reason,
+      // 収集時に判定した本人が書き残した理由が正。無い行だけ復元にまわす
+      reason: row.reason ?? recoverReason(row, gradeCounts, priceChangeCounts),
       createdAt: row.createdAt,
     });
   }
 
   return [...groups.values()];
+}
+
+/**
+ * reason 列が入る前に積まれた行のための復元。
+ *
+ * decideApproval が見る「その諸元表のグレード総数」は当時の値が残っていないため、
+ * 親の車種の現在のグレード数で代用する。近似でしかないので、reason 列がある行では
+ * 使わない。
+ */
+function recoverReason(
+  row: { kind: ChangeKind; targetKey: string; diff: unknown; modelId: string; specDocumentId: string },
+  gradeCounts: Map<string, number>,
+  priceChangeCounts: Map<string, number>,
+): string {
+  const decision = decideApproval(
+    { kind: row.kind, targetKey: row.targetKey, diff: (row.diff ?? {}) as PendingChange['diff'] },
+    {
+      totalGrades: gradeCounts.get(row.modelId) ?? 0,
+      priceChangeCount: priceChangeCounts.get(row.specDocumentId) ?? 0,
+    },
+  );
+  return decision.auto
+    ? '自動承認の条件は満たしていますが、未承認のまま残っています'
+    : decision.reason;
 }
