@@ -13,6 +13,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # 諸元表PDFは編集制限で暗号化されている。LLMに渡す前に外すため必須
+      - run: sudo apt-get update && sudo apt-get install -y qpdf
       - run: npm ci
       - run: npm run collect
         env:

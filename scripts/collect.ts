@@ -15,6 +15,7 @@ import {
 import { buildPdfUrl, isStale } from '@/lib/spec-url';
 import { applyChangeRequest } from '@/pipeline/apply';
 import { decideApproval } from '@/pipeline/approval-rules';
+import { createQpdfDecryptor, ensureDecrypted, type Decryptor } from '@/pipeline/decrypt';
 import {
   computeChanges,
   gradeKey,
@@ -43,6 +44,8 @@ export interface CollectDeps {
   http: Http;
   /** dry-run では抽出まで到達しないため null でよい */
   extraction: ExtractionClient | null;
+  /** 諸元表は編集制限で暗号化されている。LLMに渡す前に外す */
+  decryptor: Decryptor;
   countPages: (bytes: Uint8Array) => Promise<number>;
   /** 'YYYY-MM'。年月探索と鮮度判定の基準 */
   now: string;
@@ -213,7 +216,12 @@ async function collectOne(
   if (!deps.extraction) {
     throw new Error('ExtractionClient がありません。ANTHROPIC_API_KEY を設定してください');
   }
-  const result = await extractSpec(pdf.bytes, deps.extraction);
+  /*
+   * 暗号化を外してから渡す。sha256 と stored_path は原本のままにする —
+   * 復号は qpdf の版で出力バイトが変わりうるので、変更検知の基準にはできない。
+   */
+  const forExtraction = await ensureDecrypted(pdf.bytes, deps.decryptor);
+  const result = await extractSpec(forExtraction, deps.extraction);
 
   await db.insert(extractions).values({
     specDocumentId: document.id,
@@ -349,6 +357,7 @@ async function main() {
   const summary = await collect({
     http: createFetchHttp(),
     extraction: dryRun ? null : createAnthropicClient(apiKey),
+    decryptor: createQpdfDecryptor(),
     countPages: countPdfPages,
     now: currentMonth(),
     dryRun,

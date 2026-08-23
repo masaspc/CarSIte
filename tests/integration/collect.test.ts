@@ -10,6 +10,7 @@ import { parseMonthFromUrl } from '@/lib/spec-url';
 import { countPdfPages } from '@/pipeline/pdf';
 import type { Http } from '@/pipeline/http';
 import type { ExtractionClient } from '@/pipeline/extract';
+import { createQpdfDecryptor } from '@/pipeline/decrypt';
 import { MAX_CONSECUTIVE_FAILURES, NEEDS_ATTENTION, collect } from '@/scripts/collect';
 
 /** 本物の諸元表。事前検査を通る必要があるので実物を使う */
@@ -122,6 +123,8 @@ async function run(overrides: Partial<Parameters<typeof collect>[0]> = {}) {
   return collect({
     http: fakeHttp([NOW], counters),
     extraction: fakeExtraction({ calls: 0 }),
+    // 実物のPDFは暗号化されているので、本物の qpdf を通す
+    decryptor: createQpdfDecryptor(),
     countPages: countPdfPages,
     now: NOW,
     dryRun: false,
@@ -159,6 +162,7 @@ describe('collect — 同じPDFを二度処理しない', () => {
     const deps = {
       http: fakeHttp([NOW], { gets: 0 }),
       extraction: fakeExtraction(extractionCounter),
+      decryptor: createQpdfDecryptor(),
       countPages: countPdfPages,
       now: NOW,
       dryRun: false,
@@ -184,6 +188,7 @@ describe('collect — 同じPDFを二度処理しない', () => {
     const deps = {
       http: fakeHttp([NOW], { gets: 0 }),
       extraction: fakeExtraction({ calls: 0 }),
+      decryptor: createQpdfDecryptor(),
       countPages: countPdfPages,
       now: NOW,
       dryRun: false,
