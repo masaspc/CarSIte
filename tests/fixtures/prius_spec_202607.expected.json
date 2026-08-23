@@ -1,0 +1,142 @@
+{
+  "_provenance": {
+    "source": "tests/fixtures/prius_spec_202607.pdf",
+    "sha256": "392d766fcd286955c5193c8595a0e41a6925c40759972af37a80c711fde96bb6",
+    "documentMonth": "2026-07",
+    "transcribedBy": "Claude Opus 5 (Claude Code) がPDFを直接読んで転記",
+    "transcribedAt": "2026-08-23",
+    "note": "data/cars.json の機械生成データとは異なり、メーカーの実物PDF由来である。ただしレンダリング画像からの転記であり、転記ミスの可能性はゼロではない。API抽出の出力と食い違った場合、どちらが正しいかは必ず原本で確認すること。"
+  },
+  "_scope": {
+    "included": "グレードの同定に必要な項目と、原本で明確に読み取れた諸元",
+    "excluded": {
+      "price": "この諸元表に車両本体価格は載っていない。原本に『価格は販売店が独自に定めていますので、詳しくは各販売店にお尋ねください』とある。載っているのはオプション価格のみ",
+      "features": "装備は3ページ目・4ページ目の色分け表（緑=標準／橙=メーカーオプション／青=販売店オプション）で表現されており、グレードとパワートレインの組み合わせで変わる。転記の確度が同定情報より落ちるため、ここには含めない"
+    }
+  },
+  "modelName": "プリウス",
+  "gradeCount": 8,
+  "grades": [
+    {
+      "name": "Z",
+      "powertrain": "2.0L プラグインハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6LA-MXWH61-AHXHB",
+      "weight": 1570,
+      "grossWeight": 1845,
+      "displacement": 1986,
+      "engineCode": "M20A-FXS",
+      "engineType": "PHEV",
+      "transmission": "電気式無段変速機",
+      "seating": 5,
+      "price": null
+    },
+    {
+      "name": "G",
+      "powertrain": "2.0L プラグインハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6LA-MXWH61-AHXGB",
+      "weight": 1560,
+      "grossWeight": 1835,
+      "displacement": 1986,
+      "engineCode": "M20A-FXS",
+      "engineType": "PHEV",
+      "transmission": "電気式無段変速機",
+      "seating": 5,
+      "price": null
+    },
+    {
+      "name": "Z",
+      "powertrain": "2.0L ハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6AA-MXWH60-AHXHB",
+      "weight": 1420,
+      "grossWeight": 1695,
+      "displacement": 1986,
+      "engineCode": "M20A-FXS",
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機",
+      "seating": 5,
+      "price": null
+    },
+    {
+      "name": "Z",
+      "powertrain": "2.0L ハイブリッド車",
+      "driveSystemRaw": "E-Four",
+      "typeDesignation": "6AA-MXWH65-AHXHB",
+      "weight": 1480,
+      "grossWeight": 1755,
+      "displacement": 1986,
+      "engineCode": "M20A-FXS",
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機",
+      "seating": 5,
+      "price": null
+    },
+    {
+      "name": "G",
+      "powertrain": "2.0L ハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6AA-MXWH60-AHXGB",
+      "weight": 1400,
+      "grossWeight": 1675,
+      "displacement": 1986,
+      "engineCode": "M20A-FXS",
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機",
+      "seating": 5,
+      "price": null
+    },
+    {
+      "name": "G",
+      "powertrain": "2.0L ハイブリッド車",
+      "driveSystemRaw": "E-Four",
+      "typeDesignation": "6AA-MXWH65-AHXGB",
+      "weight": 1460,
+      "grossWeight": 1735,
+      "displacement": 1986,
+      "engineCode": "M20A-FXS",
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機",
+      "seating": 5,
+      "price": null
+    },
+    {
+      "name": "U",
+      "powertrain": "1.8L ハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6AA-ZVW60-AHXKB",
+      "weight": 1360,
+      "grossWeight": 1635,
+      "displacement": 1797,
+      "engineCode": "2ZR-FXE",
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機",
+      "seating": 5,
+      "price": null
+    },
+    {
+      "name": "U",
+      "powertrain": "1.8L ハイブリッド車",
+      "driveSystemRaw": "E-Four",
+      "typeDesignation": "6AA-ZVW65-AHXKB",
+      "weight": 1420,
+      "grossWeight": 1695,
+      "displacement": 1797,
+      "engineCode": "2ZR-FXE",
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機",
+      "seating": 5,
+      "price": null
+    }
+  ],
+  "_bracketNotation": {
+    "legend": "●[ ]はE-Fourです。",
+    "explanation": "原本では2WDとE-Fourが1セルに同居している（車両重量 1,420 [1,480] など）。上の grades では展開済み。この展開が抽出の要件である",
+    "affectedFields": ["weight", "grossWeight", "wltcMode"]
+  },
+  "_sameNameGrades": {
+    "explanation": "「Z」と「G」がそれぞれ2つのパワートレインに存在する。名前だけで突き合わせると取り違える。型式が全て異なるため、型式を自然キーにすれば一意になる",
+    "duplicatedNames": ["Z", "G", "U"]
+  }
+}
