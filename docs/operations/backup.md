@@ -172,9 +172,17 @@ Neonごと失った場合の最後の手段。`backups/` の JSON が唯一の�
 - [ ] `before-first-collect` ブランチが存在する
 - [ ] そのブランチに接続して `grades` が103件・全件 `draft` であることを確認した
 - [ ] `npm run collect -- --dry-run` がDBを変えないことを確認した
-- [ ] **暗号化されたPDFが Claude API に受け付けられることを確認した（Task 16。未実施）**
+- [x] **暗号化PDFの扱いを決めた（2026-08-24）**
 
-最後の1つはまだ済んでいない。トヨタの諸元表は編集制限のため暗号化されており
-（`/Encrypt` を含む）、Claude API のPDF要件は「暗号化なし」と書かれている。
-ユーザーパスワードは空なので通る見込みだが、確認していない。
-拒否される場合は収集の前段に `qpdf --decrypt` が要る。
+暗号化は「受け付けられるか測る」のではなく「送る前に外す」で解決した。
+`pipeline/decrypt.ts` の `ensureDecrypted` が抽出直前に `qpdf --decrypt` を通す。
+これで Claude API の受け入れ可否にも、メーカーが将来保護設定を変えることにも
+左右されない。実測した暗号化は RC4 / R=4 / P=-3372、ユーザーパスワードは空、
+`extract for any purpose: allowed`。
+
+**`qpdf` が実行環境に必要である。** macOS は `brew install qpdf`、
+GitHub Actions は `collect.yml` が `apt-get install -y qpdf` で入れる。
+
+残っているのはトークン数とコストの実測（Task 16）だけで、これは
+`ANTHROPIC_API_KEY` を要する。本実行の直前に行えばよく、収集を始める
+前提条件ではない。
