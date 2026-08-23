@@ -97,6 +97,37 @@ describe('ゴールデンPDFの正解データに対する同定', () => {
   });
 });
 
+/**
+ * 正解データを原本そのものと突き合わせる。
+ *
+ * この正解データは Claude がPDFを読んで転記したものだが、その転記を信じる必要はない。
+ * PDF から機械抽出したテキストに、書いた値がそのまま現れることを確かめる。
+ * ここが通る限り、転記ミスは混入していない。APIキーは要らない。
+ */
+describe('正解データが原本と一致する', () => {
+  it('型式と重量が原本のテキストに現れる', async () => {
+    const { extractText, getDocumentProxy } = await import('unpdf');
+    const document = await getDocumentProxy(new Uint8Array(bytes));
+    const { text } = await extractText(document, { mergePages: true });
+    const body = String(text);
+
+    for (const grade of expected.grades) {
+      expect(body).toContain(grade.typeDesignation);
+      expect(body).toContain(grade.weight.toLocaleString('en-US'));
+    }
+  }, 60_000);
+
+  it('原本のテキストが壊れていない（設計書2.2の前提の再確認）', async () => {
+    const { extractText, getDocumentProxy } = await import('unpdf');
+    const document = await getDocumentProxy(new Uint8Array(bytes));
+    const { text } = await extractText(document, { mergePages: true });
+
+    // 設計書は「字間が壊れて『プラグイ ンハイブ リ ッ ド車』としか取れない」と
+    // 書いていたが、実際には壊れずに取れる。前提が変わったことを固定しておく
+    expect(String(text)).toContain('プラグインハイブリッド車');
+  }, 60_000);
+});
+
 const hasApiKey = Boolean(process.env.ANTHROPIC_API_KEY);
 
 // この環境に ANTHROPIC_API_KEY は無い。キーがあるときだけ走らせる。

@@ -5,7 +5,7 @@
     "documentMonth": "2026-07",
     "transcribedBy": "Claude Opus 5 (Claude Code) がPDFを直接読んで転記",
     "transcribedAt": "2026-08-23",
-    "note": "data/cars.json の機械生成データとは異なり、メーカーの実物PDF由来である。ただしレンダリング画像からの転記であり、転記ミスの可能性はゼロではない。API抽出の出力と食い違った場合、どちらが正しいかは必ず原本で確認すること。"
+    "note": "data/cars.json の機械生成データとは異なり、メーカーの実物PDF由来である。Claude が画像として読んで転記したが、その後 unpdf でPDFから機械抽出したテキストと型式8件・重量8件のすべてを突き合わせて一致を確認した（tests/unit/golden-pdf.test.ts の「正解データが原本と一致する」が恒久的に検証する）。したがって同定項目に転記ミスは無い。"
   },
   "_scope": {
     "included": "グレードの同定に必要な項目と、原本で明確に読み取れた諸元",
@@ -133,10 +133,18 @@
   "_bracketNotation": {
     "legend": "●[ ]はE-Fourです。",
     "explanation": "原本では2WDとE-Fourが1セルに同居している（車両重量 1,420 [1,480] など）。上の grades では展開済み。この展開が抽出の要件である",
-    "affectedFields": ["weight", "grossWeight", "wltcMode"]
+    "affectedFields": [
+      "weight",
+      "grossWeight",
+      "wltcMode"
+    ]
   },
   "_sameNameGrades": {
     "explanation": "「Z」と「G」がそれぞれ2つのパワートレインに存在する。名前だけで突き合わせると取り違える。型式が全て異なるため、型式を自然キーにすれば一意になる",
-    "duplicatedNames": ["Z", "G", "U"]
+    "duplicatedNames": [
+      "Z",
+      "G",
+      "U"
+    ]
   }
 }
