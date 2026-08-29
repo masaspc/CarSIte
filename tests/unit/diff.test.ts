@@ -238,3 +238,57 @@ describe('computeChanges', () => {
     expect(changes).toEqual([]);
   });
 });
+
+describe('computeChanges の比較オプション', () => {
+  it('comparePrice: false なら価格差があっても price_change を立てない', () => {
+    const changes = computeChanges(
+      [existing({ price: 3_200_000 })],
+      [incoming({ price: null })],
+      { comparePrice: false },
+    );
+
+    expect(changes.filter((c) => c.kind === 'price_change')).toEqual([]);
+  });
+
+  it('comparePrice の既定は true（従来どおり）', () => {
+    const changes = computeChanges([existing({ price: 3_200_000 })], [incoming({ price: null })]);
+
+    expect(changes.filter((c) => c.kind === 'price_change')).toHaveLength(1);
+  });
+
+  it('compareFeatures: false なら装備差があっても spec_change を立てない', () => {
+    const changes = computeChanges(
+      [existing({ features: { navigation: 'standard' } })],
+      [incoming({ features: {} })],
+      { compareFeatures: false },
+    );
+
+    expect(changes).toEqual([]);
+  });
+
+  it('compareFeatures: false でも諸元の変更は拾う', () => {
+    const changes = computeChanges(
+      [existing({ weight: 1_620, features: { navigation: 'standard' } })],
+      [incoming({ weight: 1_500, features: {} })],
+      { compareFeatures: false },
+    );
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].diff).toEqual({ weight: { before: 1_620, after: 1_500 } });
+  });
+
+  it('new_grade の diff からも装備と価格が外れる', () => {
+    const changes = computeChanges([], [incoming()], {
+      comparePrice: false,
+      compareFeatures: false,
+    });
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].kind).toBe('new_grade');
+    expect(changes[0].diff).not.toHaveProperty('price');
+    expect(Object.keys(changes[0].diff).some((k) => k.startsWith('features.'))).toBe(false);
+    // 同定に要る項目は残っている
+    expect(changes[0].diff).toHaveProperty('name');
+    expect(changes[0].diff).toHaveProperty('powertrain');
+  });
+});
