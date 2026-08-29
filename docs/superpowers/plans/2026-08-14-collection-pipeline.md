@@ -3163,6 +3163,30 @@ dry-run 前後で `spec_documents` / `extractions` / `change_requests` はいず
 括弧記法が展開されていること・複合キーが8件とも異なることを検証済み。
 キーが入れば、実抽出の型式8件と件数を正解データと突き合わせるテストがそのまま走る。
 
+### Task 5: プリウスの実データ取り込み（承認キューまで）
+
+正解データから起こした `tests/fixtures/prius.spec.json`（8グレード）を
+`npm run ingest-spec -- --model-slug prius` でそのまま取り込んだ（APIキー不要）。
+
+```
+$ npm run collect
+  トヨタ プリウス: 2026-07 は前回と同じ内容
+  トヨタ ヤリス: 2026-04 は前回と同じ内容
+$ npm run ingest-spec -- --model-slug prius
+プリウス: 変更 9 件を積みました（重複で飛ばした分 0 件）
+```
+
+`change_requests` に `new_grade` 8件・`discontinued` 1件が `pending` で積まれ、
+`grades` は103件・全 `draft` のまま変わっていない（未承認のため）。条件6・7は
+これで実データでも成立を確認できた。
+
+**この工程で「価格の壁」が確定した。** `new_grade` を承認・適用しようとすると
+`grades.price` が NOT NULL である一方、諸元表に車両本体価格が載っていないため、
+`pipeline/apply.ts` の `buildNewGradeValues` が価格の無い作成を拒み `stale` になる。
+これはバグではなく正しい挙動である（詳細は設計書7.4末尾の2026-08-29追記）。
+このため Task 5 の検証範囲は「承認キューに積まれるところまで」とし、
+プリウスの8件は承認せず `pending` のまま残してある。
+
 ---
 
 ## 積み残し（このサブプロジェクトの範囲外）
@@ -3170,6 +3194,11 @@ dry-run 前後で `spec_documents` / `extractions` / `change_requests` はいず
 サブプロジェクト1から持ち越し、まだ解消していないもの。
 
 - ~~`modelId` がグレード更新時に無防備（別の車種に付け替えられる）~~ → 2026-08-29 に解消。`assertModelUnchanged` を追加し、公開ゲートの回避を統合テストで再現・確認したうえで塞いだ
+- **価格の壁（2026-08-29 確定）**: 諸元表からの取り込みは既存グレードの諸元更新に
+  限られ、新規グレード（`new_grade`）の作成は現状のスキーマ・パイプラインでは
+  できない。`grades.price` が NOT NULL で、諸元表に車両本体価格が無いため。
+  解消には価格の取得元（案B、設計書7.4）か、管理画面での人手入力が要る。
+  プリウスの `new_grade` 8件は承認キューに `pending` のまま残っている
 - 車種メタデータの編集UIが無い
 - `npm audit` の残り7件（3 high / 4 moderate）。いずれも Next 16 か drizzle-kit のダウングレードが必要
 - GitHub OAuth App の作成と Vercel へのデプロイ（ユーザーの作業。サブプロジェクト1の完了条件11が未達のまま）
