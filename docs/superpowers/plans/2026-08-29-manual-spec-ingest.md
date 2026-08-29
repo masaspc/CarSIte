@@ -1291,7 +1291,10 @@ pdftotext -layout -f 1 -l 1 tests/fixtures/prius_spec_202607.pdf - | grep -B2 "�
 Run: `npx vitest run tests/unit/golden-pdf.test.ts`
 Expected: PASS。失敗0件、12件以上（1件 skip）
 
-- [ ] **Step 4: 実データで通しで確認する**
+- [ ] **Step 4: 実データで取り込みまで通す**
+
+**【2026-08-29 修正】** 当初の Step 4〜6 は `new_grade` を `applied` まで進める前提だったが、
+それは成立しない。理由は下記「価格の壁」を読むこと。
 
 ```bash
 npm run collect
@@ -1299,80 +1302,73 @@ npm run ingest-spec -- --model-slug prius
 ```
 
 Run: 上の2コマンド
-Expected: `collect` が「プリウス: 2026-07 は前回と内容が違う。取り込み待ち」と出し、
-`ingest-spec` が「プリウス: 変更 9 件を積みました」と出す
-（既存グレード1件が `discontinued`、新規8件が `new_grade`）
+Expected: `collect` はプリウスとヤリスを確認する（既に `spec_documents` があれば
+「前回と同じ内容」と出る。それでよい）。`ingest-spec` が
+「プリウス: 変更 9 件を積みました」と出す（`new_grade` 8件 + `discontinued` 1件）
 
-- [ ] **Step 5: 承認と適用を通す**
-
-```bash
-npx tsx -e "
-import './load-env';
-import { db } from './db';
-import { eq } from 'drizzle-orm';
-import { changeRequests, models, specDocuments, specSources } from './db/schema';
-import { approveChangeRequest, applyChangeRequest } from './pipeline/apply';
-void (async () => {
-  const [m] = await db.select({ id: models.id }).from(models).where(eq(models.slug, 'prius'));
-  const rows = await db.select({ id: changeRequests.id, kind: changeRequests.kind })
-    .from(changeRequests)
-    .innerJoin(specDocuments, eq(changeRequests.specDocumentId, specDocuments.id))
-    .innerJoin(specSources, eq(specDocuments.specSourceId, specSources.id))
-    .where(eq(specSources.modelId, m.id));
-  for (const r of rows) {
-    if (r.kind !== 'new_grade') continue;
-    await approveChangeRequest(r.id, 'manual-test');
-    console.log(r.kind, await applyChangeRequest(r.id, 'manual-test'));
-  }
-})();
-"
-```
-
-Run: 上のコマンド
-Expected: `new_grade applied` が8行出る
-
-- [ ] **Step 6: 結果を確認して元に戻す**
+- [ ] **Step 5: 承認キューに積まれたことを確認する**
 
 ```bash
 npx tsx -e "
 import './load-env';
 import { db } from './db';
-import { and, eq, sql } from 'drizzle-orm';
-import { grades, models } from './db/schema';
+import { sql } from 'drizzle-orm';
 void (async () => {
-  const [m] = await db.select({ id: models.id }).from(models).where(eq(models.slug, 'prius'));
-  const rows = await db.select({ name: grades.name, pt: grades.powertrain, ds: grades.driveSystem, td: grades.typeDesignation, st: grades.publicationStatus })
-    .from(grades).where(eq(grades.modelId, m.id));
-  console.log('プリウスのグレード:', rows.length);
-  for (const r of rows) console.log(' ', r.name, '|', r.pt, '|', r.ds, '|', r.td, '|', r.st);
-  console.log('全て draft か:', rows.every((r) => r.st === 'draft'));
+  const { rows } = await db.execute(sql\`
+    select kind, status, count(*)::int n from change_requests group by 1,2 order by 1\`);
+  console.log(rows);
+  const { rows: g } = await db.execute(sql\`
+    select (select count(*)::int from grades) total,
+           (select count(*)::int from grades where publication_status='draft') drafts\`);
+  console.log(g[0]);
 })();
 "
 ```
 
 Run: 上のコマンド
-Expected: 9件（既存1 + 新規8）、すべて `draft`
+Expected:
+```
+[ { kind: 'discontinued', status: 'pending', n: 1 },
+  { kind: 'new_grade', status: 'pending', n: 8 } ]
+{ total: 103, drafts: 103 }
+```
 
-**この時点でDBは103件から111件に増えている。** これは実データの正しい取り込みであり、
-戻す必要はない。ただし `tests/integration/grade-identity.test.ts` の
-「既存の103件は移行後も無傷で、全て draft のまま」が 103 を期待しているため、
-**このタスクの中で期待値を更新する**（緩めるのではなく、実際に増えた事実に合わせる）。
+**`grades` は103件のまま**である。承認していないので適用されていない。これが正しい。
 
-`tests/integration/grade-identity.test.ts` の該当テストを次のように変える。
+### 価格の壁（このタスクで確定した事実）
 
-```ts
-  it('シードした103件とプリウスの取り込み分が、全て draft のまま', async () => {
-    const { rows } = await db.execute(sql`
-      select count(*)::int as total,
-             count(*) filter (where publication_status = 'draft')::int as drafts
-      from grades
-      where name not like '__test_%'
-    `);
+`new_grade` を承認して適用しようとすると `stale` になる。バグではない。
 
-    // 103（シード）+ 8（プリウスの諸元表から取り込んだ実データ）
-    expect(rows[0].total).toBe(111);
-    expect(rows[0].drafts).toBe(111);
-  });
+`grades.price` は NOT NULL である。価格は公開ページの絞り込みと並び替えの軸であり、
+0 や仮の値を入れれば「安い順」が壊れる。一方、諸元表に車両本体価格は載っていない
+（原本に「価格は販売店が独自に定めていますので、詳しくは各販売店にお尋ねください」）。
+メーカーの価格ページも画像かJS描画で、機械的に取得できない（設計書7.4）。
+
+したがって次が成り立つ。
+
+> **諸元表からの取り込みは、既存グレードの諸元を更新できる。
+> しかし新しいグレードを作ることはできない。作成には価格が要るため。**
+
+`pipeline/apply.ts` の `buildNewGradeValues` が価格の無い `new_grade` を拒むのは
+**正しい挙動**である。価格を推測して入れるより、承認キューに残して人間に見せるほうがよい。
+
+**このタスクでは `new_grade` を承認しないこと。** 承認すると `stale` になり、
+一意制約のせいで再取り込みもできなくなる。
+
+- [ ] **Step 6: 設計書に帰結を書く**
+
+`docs/superpowers/specs/2026-08-14-collection-pipeline-design.md` の 7.4 の末尾に追記する。
+
+```markdown
+**2026-08-29 追記: 実データで確定した帰結。**
+
+プリウスの諸元表8グレードを実際に取り込んだ結果、`new_grade` は適用できないことが
+分かった。`grades.price` が NOT NULL であり、諸元表に価格が無いためである。
+`pipeline/apply.ts` の `buildNewGradeValues` が価格の無い作成を拒む。
+
+つまり**諸元表からの取り込みは既存グレードの諸元更新に限られる**。新規グレードの
+作成には価格の取得元（案B）か、管理画面での人手入力が要る。
+プリウスの8件は承認キューに `pending` のまま残してある。
 ```
 
 - [ ] **Step 7: 全体を確認**
@@ -1380,27 +1376,33 @@ Expected: 9件（既存1 + 新規8）、すべて `draft`
 Run: `npx tsc --noEmit && npm test && npm run test:integration && npm run build && npm run lint`
 Expected: tsc エラー0件、単体・統合とも失敗0件、build 成功、lint 警告0
 
+**`tests/integration/grade-identity.test.ts` の期待値は103のまま変更しない。**
+実データが増えていないので変える理由が無い。
+
 - [ ] **Step 8: 完了条件の達成状況を更新する**
 
-`docs/superpowers/plans/2026-08-14-collection-pipeline.md` の「完了条件の達成状況」表で、
-条件5と11を設計書の改訂後（5'・11'）に差し替え、達成状況を更新する。
+`docs/superpowers/plans/2026-08-14-collection-pipeline.md` の「完了条件の達成状況」表を
+設計書の改訂後（5'・11'）に合わせて更新し、価格の壁を「残る課題」として記載する。
 
 - [ ] **Step 9: コミット**
 
 ```bash
-git add tests/fixtures/prius.spec.json tests/unit/golden-pdf.test.ts tests/integration/grade-identity.test.ts docs/superpowers/plans/2026-08-14-collection-pipeline.md
+git add tests/fixtures/prius.spec.json tests/unit/golden-pdf.test.ts docs/superpowers/specs/2026-08-14-collection-pipeline-design.md docs/superpowers/plans/2026-08-14-collection-pipeline.md
 git commit -m "$(cat <<'EOF'
-feat: プリウスの諸元を実データとして取り込む
+feat: プリウスの諸元を取り込み、価格の壁を確定させる
 
-原本から起こした8グレードを ingest-spec で取り込み、承認・適用まで
-通した。APIキーは使っていない。
+原本から起こした8グレードを ingest-spec で取り込んだ。APIキーは使っていない。
+承認キューに new_grade 8件と discontinued 1件が pending で積まれた。
 
-grades は 103件から111件になった。増えた8件は実物の諸元表由来であり、
-data/cars.json の機械生成データとは出所が違う。全て draft のままで、
-公開ページには出ない。
+ここで設計上の帰結が確定した。new_grade は適用できない。grades.price が
+NOT NULL であり、諸元表に車両本体価格が載っていないためである。価格は公開ページの
+絞り込みと並び替えの軸なので、0 や仮の値を入れれば「安い順」が壊れる。
+buildNewGradeValues が価格の無い作成を拒むのは正しい挙動である。
 
-grade-identity.test.ts の期待値を111に更新した。テストを緩めたのではなく、
-実データが正しく増えた事実に合わせたものである。
+したがって諸元表からの取り込みは既存グレードの諸元更新に限られる。新規作成には
+価格の取得元か管理画面での人手入力が要る。設計書7.4に追記した。
+
+grades は103件・全 draft のまま変わっていない。承認していないためである。
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 EOF
