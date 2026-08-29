@@ -122,7 +122,7 @@ async function countRows(modelId: string) {
 
 describe('collect — 変更検知', () => {
   it('新しいPDFを spec_documents に記録し、原本を保存する', async () => {
-    const { model } = await newSource();
+    const { model, source } = await newSource();
     const dir = await storageDir();
 
     const summary = await run({ storageDir: dir });
@@ -135,9 +135,12 @@ describe('collect — 変更検知', () => {
     expect(rows.changes).toBe(0);
     expect(rows.extractions).toBe(0);
 
+    // 自分が作った source に紐づく行だけを見る。絞らないと本番の spec_documents
+    // （プリウス/ヤリス）の先頭行を掴むことがあり、不定期に落ちる
     const [document] = await db
       .select({ storedPath: specDocuments.storedPath, sha256: specDocuments.sha256 })
-      .from(specDocuments);
+      .from(specDocuments)
+      .where(eq(specDocuments.specSourceId, source.id));
     expect(document.storedPath).toContain(dir);
     expect(existsSync(document.storedPath!)).toBe(true);
   });
