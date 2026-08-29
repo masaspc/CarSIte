@@ -49,7 +49,7 @@ npm run snapshot
 ```bash
 npx neonctl auth   # 初回のみ
 npx neonctl branches create \
-  --project-id floral-bar-89335938 \
+  --project-id "$NEON_PROJECT_ID" \
   --name before-first-collect \
   --parent production
 ```
@@ -58,10 +58,18 @@ npx neonctl branches create \
 
 | | |
 |---|---|
-| プロジェクト | `carsite` (`floral-bar-89335938`) |
+| プロジェクト名 | `carsite` |
 | リージョン | `aws-ap-southeast-1` |
-| 既定ブランチ | `production` (`br-jolly-water-azr41vd9`) |
+| 既定ブランチ | `production` |
 | PostgreSQL | 18 |
+
+プロジェクトIDはこのリポジトリに書かない（公開リポジトリのため）。
+`npx neonctl projects list` で引けるので、環境変数に入れて使う。
+
+```bash
+export NEON_PROJECT_ID=$(npx neonctl projects list --output json \
+  | python3 -c 'import json,sys; print(next(p["id"] for p in json.load(sys.stdin) if p["name"]=="carsite"))')
+```
 
 ---
 
@@ -70,10 +78,9 @@ npx neonctl branches create \
 ### 3.1 作成したブランチ
 
 ```
-id:        br-billowing-hall-az42oyh4
-name:      before-first-collect
-parent:    br-jolly-water-azr41vd9 (production)
-created_at 2026-08-23T14:33:53Z
+name:       before-first-collect
+parent:     production
+created_at: 2026-08-23T14:33:53Z
 ```
 
 ### 3.2 接続して中身を確かめる
@@ -82,7 +89,7 @@ created_at 2026-08-23T14:33:53Z
 
 ```bash
 BACKUP_BRANCH_URL=$(npx neonctl connection-string before-first-collect \
-  --project-id floral-bar-89335938 --pooled false)
+  --project-id "$NEON_PROJECT_ID" --pooled false)
 export BACKUP_BRANCH_URL
 
 npx tsx -e "
@@ -152,7 +159,7 @@ void (async () => {
 復旧ブランチを新しい既定にする。
 
 ```bash
-npx neonctl branches set-default before-first-collect --project-id floral-bar-89335938
+npx neonctl branches set-default before-first-collect --project-id "$NEON_PROJECT_ID"
 ```
 
 `DATABASE_URL` を新しい既定ブランチのものに差し替える（`.env.local` と、
