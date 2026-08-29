@@ -101,7 +101,7 @@ export function normalizeGrades(spec: ExtractedSpec): NormalizedGrade[] {
     wltcMode: grade.wltcMode,
     engineType: grade.engineType,
     transmission: grade.transmission,
-    features: grade.features as Record<string, string>,
+    features: (grade.features ?? {}) as Record<string, string>,
   }));
 }
 

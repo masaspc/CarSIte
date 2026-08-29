@@ -292,3 +292,28 @@ describe('computeChanges の比較オプション', () => {
     expect(changes[0].diff).toHaveProperty('powertrain');
   });
 });
+
+describe('normalizeGrades の features 省略', () => {
+  it('features が無い抽出結果は空の装備として扱う', () => {
+    const rows = normalizeGrades({
+      modelName: 'プリウス',
+      grades: [
+        {
+          name: 'Z',
+          powertrain: '2.0L ハイブリッド車',
+          driveSystemRaw: '2WD',
+          typeDesignation: null,
+          price: null,
+          seating: 5,
+          weight: 1420,
+          displacement: 1986,
+          wltcMode: 28.4,
+          engineType: 'ハイブリッド',
+          transmission: '電気式無段変速機',
+        },
+      ],
+    } as never);
+
+    expect(rows[0].features).toEqual({});
+  });
+});

@@ -83,8 +83,13 @@ const ExtractedGradeSchema = z.object({
    * 加えて、キーを自由にするとモデルが勝手な名前の項目を作る。
    * 20項目を列挙して全部要求すれば、判断できないものは省略ではなく
    * unknown として明示される。
+   *
+   * ただしオブジェクト全体は任意である。人が諸元表を読んで書く入力
+   * （scripts/ingest-spec.ts）は装備を持たない。装備は色分けで表現されており
+   * テキストからは読めないため、サイト構築段階で別途行う（設計書6.0）。
+   * LLMに渡すJSONスキーマ側では引き続き全項目を要求する。
    */
-  features: z.object(featureShape()),
+  features: z.object(featureShape()).optional(),
 });
 
 export const ExtractedSpecSchema = z.object({
@@ -144,5 +149,21 @@ function sanitize(node: unknown): unknown {
  * APIに強制させる形と、返ってきた値を検証する形が食い違わない。
  */
 export function extractionJsonSchema(): unknown {
-  return sanitize(z.toJSONSchema(ExtractedSpecSchema));
+  const schema = sanitize(z.toJSONSchema(ExtractedSpecSchema)) as Record<string, unknown>;
+
+  /*
+   * features はスキーマ上は任意だが、それは人が書く入力のためであって
+   * モデルに対しては全項目を要求する。省略を許すと「判断できないものを
+   * unknown と書く」という指示が骨抜きになる。
+   */
+  const grade = (
+    ((schema.properties as Record<string, Record<string, unknown>>).grades.items) as Record<
+      string,
+      unknown
+    >
+  );
+  const required = grade.required as string[] | undefined;
+  if (required && !required.includes('features')) required.push('features');
+
+  return schema;
 }

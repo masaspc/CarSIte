@@ -167,3 +167,37 @@ describe('normalizeDriveSystem', () => {
     expect(() => normalizeDriveSystem('6WD')).toThrow(/6WD/);
   });
 });
+
+describe('features を持たない入力', () => {
+  const gradeWithoutFeatures = {
+    name: 'Z',
+    powertrain: '2.0L ハイブリッド車',
+    driveSystemRaw: '2WD',
+    typeDesignation: '6AA-MXWH60-AHXHB',
+    price: null,
+    seating: 5,
+    weight: 1420,
+    displacement: 1986,
+    wltcMode: 28.4,
+    engineType: 'ハイブリッド',
+    transmission: '電気式無段変速機',
+  };
+
+  it('features を省略しても検証を通る', () => {
+    const parsed = ExtractedSpecSchema.safeParse({
+      modelName: 'プリウス',
+      grades: [gradeWithoutFeatures],
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it('features があれば従来どおり検証する', () => {
+    const parsed = ExtractedSpecSchema.safeParse({
+      modelName: 'プリウス',
+      grades: [{ ...gradeWithoutFeatures, features: { navigation: 'まちがった値' } }],
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+});
