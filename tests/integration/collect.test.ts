@@ -1,15 +1,14 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { FEATURE_COLUMNS, changeRequests, extractions, models, specDocuments, specSources } from '@/db/schema';
+import { changeRequests, extractions, models, specDocuments, specSources } from '@/db/schema';
 import { parseMonthFromUrl } from '@/lib/spec-url';
 import { countPdfPages } from '@/pipeline/pdf';
 import type { Http } from '@/pipeline/http';
-import type { ExtractionClient } from '@/pipeline/extract';
 import { createQpdfDecryptor } from '@/pipeline/decrypt';
 import { MAX_CONSECUTIVE_FAILURES, NEEDS_ATTENTION, collect } from '@/scripts/collect';
 
@@ -85,48 +84,10 @@ function fakeHttp(months: string[], counters: { gets: number }): Http {
   };
 }
 
-function features(): Record<string, string> {
-  return Object.fromEntries(FEATURE_COLUMNS.map((column) => [column, 'unknown']));
-}
-
-/** 抽出結果を固定で返す偽のクライアント。呼ばれた回数を数える */
-function fakeExtraction(counters: { calls: number }, price = 3_200_000): ExtractionClient {
-  return {
-    async extract() {
-      counters.calls += 1;
-      return {
-        raw: {
-          modelName: 'テスト車種',
-          grades: [
-            {
-              name: 'Z',
-              powertrain: '2.0L ハイブリッド車',
-              driveSystemRaw: '2WD',
-              typeDesignation: null,
-              price,
-              seating: 5,
-              weight: 1_420,
-              displacement: 1_986,
-              wltcMode: 28.6,
-              engineType: 'ハイブリッド',
-              transmission: '電気式無段変速機',
-              features: features(),
-            },
-          ],
-        },
-        inputTokens: 1_000,
-        outputTokens: 500,
-      };
-    },
-  };
-}
-
 async function run(overrides: Partial<Parameters<typeof collect>[0]> = {}) {
   const counters = { gets: 0 };
   return collect({
     http: fakeHttp([NOW], counters),
-    extraction: fakeExtraction({ calls: 0 }),
-    // 実物のPDFは暗号化されているので、本物の qpdf を通す
     decryptor: createQpdfDecryptor(),
     countPages: countPdfPages,
     now: NOW,
@@ -159,58 +120,53 @@ async function countRows(modelId: string) {
   return { documents: documents.length, extractions: extractionCount, changes: changeCount };
 }
 
-describe('collect — 同じPDFを二度処理しない', () => {
-  it('2回目は extractions が増えない（LLMを呼んでいない）', async () => {
+describe('collect — 変更検知', () => {
+  it('新しいPDFを spec_documents に記録し、原本を保存する', async () => {
     const { model } = await newSource();
-    const extractionCounter = { calls: 0 };
     const dir = await storageDir();
 
-    const deps = {
-      http: fakeHttp([NOW], { gets: 0 }),
-      extraction: fakeExtraction(extractionCounter),
-      decryptor: createQpdfDecryptor(),
-      countPages: countPdfPages,
-      now: NOW,
-      dryRun: false,
-      storageDir: dir,
-      log: () => {},
-      sourceIds: [...createdSources],
-    };
+    const summary = await run({ storageDir: dir });
 
-    await collect(deps);
-    expect(extractionCounter.calls).toBe(1);
-    const first = await countRows(model.id);
-    expect(first.extractions).toBe(1);
+    expect(summary.detected).toBe(1);
+    const rows = await countRows(model.id);
+    expect(rows.documents).toBe(1);
 
-    await collect(deps);
-    expect(extractionCounter.calls).toBe(1);
-    const second = await countRows(model.id);
-    expect(second.extractions).toBe(1);
-    expect(second.documents).toBe(1);
+    // change_requests は作らない。取り込みは ingest-spec が行う
+    expect(rows.changes).toBe(0);
+    expect(rows.extractions).toBe(0);
+
+    const [document] = await db
+      .select({ storedPath: specDocuments.storedPath, sha256: specDocuments.sha256 })
+      .from(specDocuments);
+    expect(document.storedPath).toContain(dir);
+    expect(existsSync(document.storedPath!)).toBe(true);
   });
 
-  it('2回続けて走らせても change_requests が重複しない', async () => {
+  it('2回目は変更なしとして扱い、spec_documents が増えない', async () => {
     const { model } = await newSource();
     const dir = await storageDir();
-    const deps = {
-      http: fakeHttp([NOW], { gets: 0 }),
-      extraction: fakeExtraction({ calls: 0 }),
-      decryptor: createQpdfDecryptor(),
-      countPages: countPdfPages,
-      now: NOW,
-      dryRun: false,
-      storageDir: dir,
-      log: () => {},
-      sourceIds: [...createdSources],
-    };
 
-    await collect(deps);
-    const first = await countRows(model.id);
-    expect(first.changes).toBeGreaterThan(0);
+    const first = await run({ storageDir: dir });
+    expect(first.detected).toBe(1);
 
-    await collect(deps);
-    const second = await countRows(model.id);
-    expect(second.changes).toBe(first.changes);
+    const second = await run({ storageDir: dir });
+    expect(second.detected).toBe(0);
+    expect(second.unchanged).toBe(1);
+
+    expect((await countRows(model.id)).documents).toBe(1);
+  });
+
+  it('APIキーが無くても動く', async () => {
+    const saved = process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    try {
+      await newSource();
+      const summary = await run();
+      expect(summary.detected).toBe(1);
+      expect(summary.failed).toBe(0);
+    } finally {
+      if (saved !== undefined) process.env.ANTHROPIC_API_KEY = saved;
+    }
   });
 });
 
@@ -221,12 +177,12 @@ describe('collect — 1件の失敗が全体を止めない', () => {
 
     const summary = await run();
 
-    // 生きている方は抽出まで到達している
+    // 生きている方は記録まで到達している
     expect(summary.sources).toBeGreaterThanOrEqual(2);
-    expect(summary.extracted).toBeGreaterThanOrEqual(1);
+    expect(summary.detected).toBeGreaterThanOrEqual(1);
 
     const aliveRows = await countRows(alive.model.id);
-    expect(aliveRows.extractions).toBe(1);
+    expect(aliveRows.documents).toBe(1);
 
     const deadRows = await countRows(dead.model.id);
     expect(deadRows.documents).toBe(0);
@@ -255,7 +211,7 @@ describe('collect — dry-run', () => {
   it('DBに何も書かない', async () => {
     const { model } = await newSource();
 
-    const summary = await run({ dryRun: true, extraction: null });
+    const summary = await run({ dryRun: true });
 
     expect(summary.sources).toBeGreaterThanOrEqual(1);
     const rows = await countRows(model.id);
