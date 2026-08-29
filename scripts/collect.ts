@@ -52,6 +52,14 @@ export interface CollectDeps {
   dryRun: boolean;
   storageDir: string;
   log: (message: string) => void;
+  /**
+   * 処理する spec_source を限定する。省略すると全件。
+   *
+   * 1件だけ再試行したいとき（取得元の構成変更を直した直後など）に使う。
+   * 統合テストもこれで自分が作ったソースだけに絞る — 絞らないと
+   * 本物の登録済みソースまで偽のHTTPで処理してしまい、実データを汚す。
+   */
+  sourceIds?: string[];
 }
 
 export interface CollectSummary {
@@ -81,7 +89,9 @@ export async function collect(deps: CollectDeps): Promise<CollectSummary> {
     needsAttention: 0,
   };
 
-  const sources = await db
+  const only = deps.sourceIds ? new Set(deps.sourceIds) : null;
+
+  const all = await db
     .select({
       id: specSources.id,
       modelId: specSources.modelId,
@@ -93,6 +103,8 @@ export async function collect(deps: CollectDeps): Promise<CollectSummary> {
     })
     .from(specSources)
     .innerJoin(models, eq(specSources.modelId, models.id));
+
+  const sources = only ? all.filter((source) => only.has(source.id)) : all;
 
   if (sources.length === 0) {
     deps.log('spec_sources に登録がありません');
@@ -342,8 +354,20 @@ function currentMonth(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+/** `--source <uuid>` を複数回書ける。省略時は全件 */
+function parseSourceIds(argv: string[]): string[] | undefined {
+  const ids: string[] = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] !== '--source') continue;
+    const value = argv[i + 1];
+    if (value && !value.startsWith('--')) ids.push(value);
+  }
+  return ids.length > 0 ? ids : undefined;
+}
+
 async function main() {
   const dryRun = process.argv.includes('--dry-run');
+  const sourceIds = parseSourceIds(process.argv);
   const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
 
   if (!dryRun && !apiKey.trim()) {
@@ -363,6 +387,7 @@ async function main() {
     dryRun,
     storageDir: DEFAULT_STORAGE_DIR,
     log: (message) => console.log(message),
+    sourceIds,
   });
 
   console.log(

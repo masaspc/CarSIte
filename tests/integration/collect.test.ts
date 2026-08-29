@@ -21,9 +21,11 @@ const GOLDEN_PDF = new Uint8Array(
 const NOW = '2026-07';
 
 const createdModels: string[] = [];
+const createdSources: string[] = [];
 const tempDirs: string[] = [];
 
 afterEach(async () => {
+  createdSources.splice(0);
   for (const id of createdModels.splice(0)) {
     await db.delete(models).where(eq(models.id, id));
   }
@@ -61,6 +63,7 @@ async function newSource(options: { available?: boolean } = {}) {
       pdfBaseUrl: `https://example.com/${token}${options.available === false ? '-dead' : ''}/spec_`,
     })
     .returning();
+  createdSources.push(source.id);
 
   return { model, source };
 }
@@ -130,6 +133,9 @@ async function run(overrides: Partial<Parameters<typeof collect>[0]> = {}) {
     dryRun: false,
     storageDir: await storageDir(),
     log: () => {},
+    // 自分が作ったソースだけを処理する。絞らないと本番の登録済みソースまで
+    // 偽のHTTPで処理して実データを汚す（実際に汚した）
+    sourceIds: [...createdSources],
     ...overrides,
   });
 }
@@ -168,6 +174,7 @@ describe('collect — 同じPDFを二度処理しない', () => {
       dryRun: false,
       storageDir: dir,
       log: () => {},
+      sourceIds: [...createdSources],
     };
 
     await collect(deps);
@@ -194,6 +201,7 @@ describe('collect — 同じPDFを二度処理しない', () => {
       dryRun: false,
       storageDir: dir,
       log: () => {},
+      sourceIds: [...createdSources],
     };
 
     await collect(deps);
