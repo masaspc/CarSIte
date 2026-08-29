@@ -5,7 +5,6 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { models, specDocuments, specSources } from '@/db/schema';
 import { buildPdfUrl, isStale } from '@/lib/spec-url';
-import { createQpdfDecryptor, type Decryptor } from '@/pipeline/decrypt';
 import { fetchAndValidate, findLatestMonth } from '@/pipeline/fetch';
 import { createFetchHttp, type Http } from '@/pipeline/http';
 import { countPdfPages } from '@/pipeline/pdf';
@@ -20,8 +19,6 @@ export const DEFAULT_STORAGE_DIR = 'storage/pdfs';
 
 export interface CollectDeps {
   http: Http;
-  /** 諸元表は編集制限で暗号化されている。保存する原本は暗号化されたままにする */
-  decryptor: Decryptor;
   countPages: (bytes: Uint8Array) => Promise<number>;
   /** 'YYYY-MM'。年月探索と鮮度判定の基準 */
   now: string;
@@ -257,7 +254,6 @@ async function main() {
 
   const summary = await collect({
     http: createFetchHttp(),
-    decryptor: createQpdfDecryptor(),
     countPages: countPdfPages,
     now: currentMonth(),
     dryRun,

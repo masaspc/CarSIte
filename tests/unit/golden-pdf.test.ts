@@ -143,6 +143,10 @@ describe('正解データが原本と一致する', () => {
     for (const grade of ingest.grades) {
       expect(grade.weight).toBe(byType.get(grade.typeDesignation));
     }
+
+    // 8件すべてが同じ型式を指していても上記の検証は通ってしまうため、
+    // 型式が一意であることを別途確かめる
+    expect(new Set(ingest.grades.map((g) => g.typeDesignation)).size).toBe(ingest.grades.length);
   });
 });
 

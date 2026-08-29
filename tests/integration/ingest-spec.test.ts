@@ -48,8 +48,8 @@ async function newModelWithDocument() {
   return { model, source, document };
 }
 
-const spec = (overrides: Record<string, unknown> = {}) => ({
-  modelName: 'テスト車種',
+const spec = (modelName: string, overrides: Record<string, unknown> = {}) => ({
+  modelName,
   grades: [
     {
       name: 'Z',
@@ -76,7 +76,7 @@ describe('ingestSpec', () => {
   it('新しいグレードを change_requests に積む', async () => {
     const { model, document } = await newModelWithDocument();
 
-    const result = await ingestSpec(model.slug, spec());
+    const result = await ingestSpec(model.slug, spec(model.name));
 
     expect(result.created).toBe(1);
     expect(result.specDocumentId).toBe(document.id);
@@ -90,7 +90,7 @@ describe('ingestSpec', () => {
   it('価格と装備は diff に含めない（諸元表に無いため）', async () => {
     const { model, document } = await newModelWithDocument();
 
-    await ingestSpec(model.slug, spec());
+    await ingestSpec(model.slug, spec(model.name));
 
     const [row] = await changesOf(document.id);
     const diff = row.diff as Record<string, unknown>;
@@ -102,8 +102,8 @@ describe('ingestSpec', () => {
   it('二度取り込んでも change_requests が重複しない', async () => {
     const { model, document } = await newModelWithDocument();
 
-    const first = await ingestSpec(model.slug, spec());
-    const second = await ingestSpec(model.slug, spec());
+    const first = await ingestSpec(model.slug, spec(model.name));
+    const second = await ingestSpec(model.slug, spec(model.name));
 
     expect(first.created).toBe(1);
     expect(second.created).toBe(0);
@@ -114,7 +114,7 @@ describe('ingestSpec', () => {
   it('extractions に手動の記録を残す', async () => {
     const { model, document } = await newModelWithDocument();
 
-    await ingestSpec(model.slug, spec());
+    await ingestSpec(model.slug, spec(model.name));
 
     const rows = await db
       .select()
@@ -141,6 +141,21 @@ describe('ingestSpec', () => {
     expect(rows).toHaveLength(0);
   });
 
+  it('車種名が食い違う JSON は取り込まない', async () => {
+    const { model, document } = await newModelWithDocument();
+
+    await expect(ingestSpec(model.slug, spec('別の車種'))).rejects.toThrow(
+      /車種名が一致しません/,
+    );
+
+    expect(await changesOf(document.id)).toHaveLength(0);
+    const rows = await db
+      .select()
+      .from(extractions)
+      .where(eq(extractions.specDocumentId, document.id));
+    expect(rows).toHaveLength(0);
+  });
+
   it('spec_documents が無い車種は取り込めない', async () => {
     const token = rand();
     const [model] = await db
@@ -155,7 +170,7 @@ describe('ingestSpec', () => {
       .returning();
     createdModels.push(model.id);
 
-    await expect(ingestSpec(model.slug, spec())).rejects.toThrow(/諸元表がまだ取得されていません/);
+    await expect(ingestSpec(model.slug, spec(model.name))).rejects.toThrow(/諸元表がまだ取得されていません/);
   });
 
   it('既存グレードと内容が同じなら変更を立てない', async () => {
@@ -176,7 +191,7 @@ describe('ingestSpec', () => {
       transmission: '電気式無段変速機',
     });
 
-    const result = await ingestSpec(model.slug, spec());
+    const result = await ingestSpec(model.slug, spec(model.name));
 
     expect(result.created).toBe(0);
     expect(await changesOf(document.id)).toHaveLength(0);

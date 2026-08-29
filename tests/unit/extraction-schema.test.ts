@@ -139,6 +139,13 @@ describe('extractionJsonSchema', () => {
     expect(features.required).toHaveLength(FEATURE_COLUMNS.length);
     expect(features.required).toContain('sunroof');
   });
+
+  it('LLM向けスキーマでは features が grade の required に入る', () => {
+    const schema = extractionJsonSchema() as {
+      properties: { grades: { items: { required: string[] } } };
+    };
+    expect(schema.properties.grades.items.required).toContain('features');
+  });
 });
 
 describe('normalizeDriveSystem', () => {

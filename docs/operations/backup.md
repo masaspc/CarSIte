@@ -181,15 +181,14 @@ Neonごと失った場合の最後の手段。`backups/` の JSON が唯一の�
 - [ ] `npm run collect -- --dry-run` がDBを変えないことを確認した
 - [x] **暗号化PDFの扱いを決めた（2026-08-24）**
 
-暗号化は「受け付けられるか測る」のではなく「送る前に外す」で解決した。
-`pipeline/decrypt.ts` の `ensureDecrypted` が抽出直前に `qpdf --decrypt` を通す。
-これで Claude API の受け入れ可否にも、メーカーが将来保護設定を変えることにも
-左右されない。実測した暗号化は RC4 / R=4 / P=-3372、ユーザーパスワードは空、
+暗号化は「受け付けられるか測る」のではなく「送る前に外す」で解決する設計だった。
+`pipeline/decrypt.ts` の `createQpdfDecryptor` が `qpdf --decrypt` を通す関数を提供する。
+実測した暗号化は RC4 / R=4 / P=-3372、ユーザーパスワードは空、
 `extract for any purpose: allowed`。
 
-**`qpdf` が実行環境に必要である。** macOS は `brew install qpdf`、
-GitHub Actions は `collect.yml` が `apt-get install -y qpdf` で入れる。
-
-残っているのはトークン数とコストの実測（Task 16）だけで、これは
-`ANTHROPIC_API_KEY` を要する。本実行の直前に行えばよく、収集を始める
-前提条件ではない。
+**現在は不要。** このブランチで収集パイプラインからLLM抽出を外したため、
+`scripts/collect.ts` は `pipeline/decrypt.ts` を呼んでいない（諸元の読み取りは
+対話セッションの Claude が原本PDFをそのまま読む）。`qpdf` は実行環境にもう要らず、
+`collect.yml` からもインストール手順を外してある。**装備の取り込み（先送り分。
+色分けの判定にVision LLMが要る）を行う段階で再び必要になる。** それまで
+`pipeline/decrypt.ts` と単体テストは削除せず残してある。

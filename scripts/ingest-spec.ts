@@ -1,6 +1,6 @@
 import '../load-env';
 import { readFileSync } from 'node:fs';
-import { and, desc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   FEATURE_COLUMNS,
@@ -80,6 +80,17 @@ export async function ingestSpec(modelSlug: string, spec: unknown): Promise<Inge
   if (!parsed.success) {
     throw new IngestError(
       `諸元データの検証に失敗しました: ${JSON.stringify(parsed.error.issues, null, 2)}`,
+    );
+  }
+
+  // JSON と対象車種の取り違えを防ぐ。--model-slug と --file は別々の引数なので
+  // 組み合わせを間違えても構文上は成立してしまう。modelName はこの突き合わせのために
+  // 必須にしてある（ExtractedSpecSchema）
+  if (parsed.data.modelName !== model.name) {
+    throw new IngestError(
+      `車種名が一致しません。JSON の modelName は「${parsed.data.modelName}」、` +
+        `--model-slug ${modelSlug} が指す車種は「${model.name}」です。` +
+        '--model-slug と --file の組み合わせを確認してください',
     );
   }
 
@@ -190,6 +201,12 @@ async function main() {
   console.log(
     `${result.modelName}: 変更 ${result.created} 件を積みました（重複で飛ばした分 ${result.skipped} 件）`,
   );
+  if (result.skipped > 0) {
+    console.log(
+      '【要確認】既に同じ書類・種別・対象の変更が積まれています。値を訂正したい場合は、' +
+        '該当する change_requests 行を削除してから再実行してください（一意制約は diff の中身を見ません）',
+    );
+  }
   if (result.created > 0) {
     console.log('/admin/changes で内容を確認して承認してください');
   }
