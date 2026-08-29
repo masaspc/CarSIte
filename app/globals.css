@@ -8,13 +8,19 @@
   --background-end-rgb: 255, 255, 255;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
+/*
+ * prefers-color-scheme: dark のブロックは置かない。
+ *
+ * このサイトにダークテーマは無い。`dark:` バリアントは1箇所も使っておらず、
+ * tailwind.config.ts の darkMode も未設定で、背景は bg-white / bg-gray-50 /
+ * bg-gray-100 に固定されている。
+ *
+ * その状態で body の色だけを白にすると、自前で色を指定していない文字が
+ * 白背景に白で乗って消える。実際に管理画面の「車種名」列が読めなくなっていた
+ * （雛形から引き継いだこのブロックが原因だった）。
+ *
+ * ダークテーマを入れるなら、背景色と文字色を対で用意すること。片方だけ変えない。
+ */
 
 body {
   color: rgb(var(--foreground-rgb));

@@ -1,0 +1,1 @@
+ALTER TABLE "grades" DROP CONSTRAINT "grades_type_designation_key";

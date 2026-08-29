@@ -1,6 +1,8 @@
-import { asc, eq, sql } from 'drizzle-orm';
+import { asc, count, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { grades, models } from '@/db/schema';
+import { changeRequests, grades, models, specDocuments, specSources } from '@/db/schema';
+import type { ChangeKind } from '@/db/schema';
+import { decideApproval } from '@/pipeline/approval-rules';
 
 /**
  * draft を含む全件。管理画面からのみ使う。
@@ -80,3 +82,124 @@ export async function listModelsWithVerification() {
 }
 
 export type ModelVerificationRow = Awaited<ReturnType<typeof listModelsWithVerification>>[number];
+
+/**
+ * 承認待ちの変更を書類（＝PDF1つ）ごとにまとめて返す。
+ * 承認の粒度は車種単位＝諸元表1つである（設計書7.2）。
+ */
+export interface PendingChange {
+  id: string;
+  kind: ChangeKind;
+  targetKey: string;
+  diff: Record<string, { before: unknown; after: unknown }>;
+  /** 自動承認されなかった理由。列に持っていないので decideApproval で引き直す */
+  reason: string;
+  createdAt: Date;
+}
+
+export interface GroupedChangeRequests {
+  specDocumentId: string;
+  documentMonth: string;
+  pdfUrl: string;
+  modelId: string;
+  manufacturer: string;
+  modelName: string;
+  changes: PendingChange[];
+}
+
+export async function listPendingChangeRequests(): Promise<GroupedChangeRequests[]> {
+  const rows = await db
+    .select({
+      id: changeRequests.id,
+      kind: changeRequests.kind,
+      targetKey: changeRequests.targetKey,
+      diff: changeRequests.diff,
+      reason: changeRequests.reason,
+      createdAt: changeRequests.createdAt,
+      specDocumentId: specDocuments.id,
+      documentMonth: specDocuments.documentMonth,
+      pdfUrl: specDocuments.pdfUrl,
+      modelId: models.id,
+      manufacturer: models.manufacturer,
+      modelName: models.name,
+    })
+    .from(changeRequests)
+    .innerJoin(specDocuments, eq(changeRequests.specDocumentId, specDocuments.id))
+    .innerJoin(specSources, eq(specDocuments.specSourceId, specSources.id))
+    .innerJoin(models, eq(specSources.modelId, models.id))
+    .where(eq(changeRequests.status, 'pending'))
+    .orderBy(asc(models.manufacturer), asc(models.name), asc(changeRequests.createdAt));
+
+  if (rows.length === 0) return [];
+
+  // decideApproval は「この諸元表のグレード総数」を見る。抽出結果は残っていないので
+  // 親の車種の現在のグレード数で代用する。
+  const gradeCounts = new Map<string, number>();
+  for (const row of await db
+    .select({ modelId: grades.modelId, value: count() })
+    .from(grades)
+    .groupBy(grades.modelId)) {
+    gradeCounts.set(row.modelId, row.value);
+  }
+
+  const priceChangeCounts = new Map<string, number>();
+  for (const row of rows) {
+    if (row.kind !== 'price_change') continue;
+    priceChangeCounts.set(row.specDocumentId, (priceChangeCounts.get(row.specDocumentId) ?? 0) + 1);
+  }
+
+  const groups = new Map<string, GroupedChangeRequests>();
+  for (const row of rows) {
+    let group = groups.get(row.specDocumentId);
+    if (!group) {
+      group = {
+        specDocumentId: row.specDocumentId,
+        documentMonth: row.documentMonth,
+        pdfUrl: row.pdfUrl,
+        modelId: row.modelId,
+        manufacturer: row.manufacturer,
+        modelName: row.modelName,
+        changes: [],
+      };
+      groups.set(row.specDocumentId, group);
+    }
+
+    const diff = (row.diff ?? {}) as PendingChange['diff'];
+
+    group.changes.push({
+      id: row.id,
+      kind: row.kind,
+      targetKey: row.targetKey,
+      diff,
+      // 収集時に判定した本人が書き残した理由が正。無い行だけ復元にまわす
+      reason: row.reason ?? recoverReason(row, gradeCounts, priceChangeCounts),
+      createdAt: row.createdAt,
+    });
+  }
+
+  return [...groups.values()];
+}
+
+/**
+ * reason 列が入る前に積まれた行のための復元。
+ *
+ * decideApproval が見る「その諸元表のグレード総数」は当時の値が残っていないため、
+ * 親の車種の現在のグレード数で代用する。近似でしかないので、reason 列がある行では
+ * 使わない。
+ */
+function recoverReason(
+  row: { kind: ChangeKind; targetKey: string; diff: unknown; modelId: string; specDocumentId: string },
+  gradeCounts: Map<string, number>,
+  priceChangeCounts: Map<string, number>,
+): string {
+  const decision = decideApproval(
+    { kind: row.kind, targetKey: row.targetKey, diff: (row.diff ?? {}) as PendingChange['diff'] },
+    {
+      totalGrades: gradeCounts.get(row.modelId) ?? 0,
+      priceChangeCount: priceChangeCounts.get(row.specDocumentId) ?? 0,
+    },
+  );
+  return decision.auto
+    ? '自動承認の条件は満たしていますが、未承認のまま残っています'
+    : decision.reason;
+}

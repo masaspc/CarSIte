@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { db } from '@/db';
 import { grades, models } from '@/db/schema';
 import { requireAdmin } from '@/auth-guard';
-import { assertSlugUnchanged, gradeInputSchema } from '@/lib/validation';
+import { assertModelUnchanged, assertSlugUnchanged, gradeInputSchema } from '@/lib/validation';
 import { assertModelVerifiedForPublish } from '@/lib/publication';
 
 const gradeIdSchema = z.uuid();
@@ -37,7 +37,7 @@ export async function updateGrade(id: string, input: unknown) {
   const data = gradeInputSchema.parse(input);
 
   const [current] = await db
-    .select({ slug: grades.slug })
+    .select({ slug: grades.slug, modelId: grades.modelId })
     .from(grades)
     .where(eq(grades.id, gradeId))
     .limit(1);
@@ -46,10 +46,11 @@ export async function updateGrade(id: string, input: unknown) {
 
   // フォームが編集不可にしていても、Server Action はフォームを信用しない
   assertSlugUnchanged(current.slug, data.slug);
+  assertModelUnchanged(current.modelId, data.modelId);
 
-  // slug は .set() に含めない。値が同一であることは上で確認済みで、
+  // slug と modelId は .set() に含めない。値が同一であることは上で確認済みで、
   // 更新対象から外しておけば将来この経路から書き換わることもない。
-  const { slug: _slug, ...updatable } = data;
+  const { slug: _slug, modelId: _modelId, ...updatable } = data;
 
   await db
     .update(grades)

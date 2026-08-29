@@ -109,6 +109,11 @@ export default function CarForm({ initialData, mode, models }: CarFormProps) {
       <div>
         <h2 className="text-xl font-bold mb-4">基本情報</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 車種は作成時にだけ決められる。公開URLの /cars/{manufacturer}/{model} が
+              ここから来るうえ、公開ゲート（assertModelVerifiedForPublish）は
+              setPublicationStatus でしか働かないため、付け替えられると
+              未検証の車種メタデータが published のまま公開される。
+              Server Action 側でも assertModelUnchanged で拒否する。 */}
           <label className="block text-sm font-medium">
             車種 *
             <select

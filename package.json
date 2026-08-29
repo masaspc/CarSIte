@@ -12,15 +12,20 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "collect": "tsx scripts/collect.ts",
+    "register-source": "tsx scripts/register-source.ts",
+    "snapshot": "tsx scripts/snapshot.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
     "@neondatabase/serverless": "^1.1.0",
     "drizzle-orm": "^0.45.2",
     "next": "^15.5.23",
     "next-auth": "^5.0.0-beta.32",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "unpdf": "^1.8.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -34,3 +34,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# DBスナップショット（取得元サイトの諸元データ。配布しない）
+backups/
+
+# 収集した諸元表PDFの原本（spec_documents.stored_path の実体。配布しない）
+storage/

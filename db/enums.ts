@@ -26,3 +26,17 @@ export const TRANSMISSION_TYPES = [
 export const FEATURE_AVAILABILITIES = ['standard', 'option', 'none', 'unknown'] as const;
 
 export const PUBLICATION_STATUSES = ['draft', 'published', 'archived'] as const;
+
+/** change_requests.kind。承認ルール（pipeline/approval-rules.ts）がこの値で分岐する */
+export const CHANGE_KINDS = [
+  'new_model', 'new_grade', 'price_change', 'spec_change', 'discontinued',
+] as const;
+
+/**
+ * change_requests.status。
+ * stale は「適用しようとしたら対象行が既に変わっていた」状態で、
+ * 上書きせず人間に戻すために使う（トランザクションが無い前提の冪等性、設計書5.4）。
+ */
+export const CHANGE_STATUSES = [
+  'pending', 'approved', 'rejected', 'applied', 'stale',
+] as const;
