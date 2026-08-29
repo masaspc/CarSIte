@@ -131,6 +131,36 @@ export function assertSlugUnchanged(current: string, attempted: string): void {
   if (current !== attempted) throw new SlugImmutableError(current, attempted);
 }
 
+export class ModelImmutableError extends Error {
+  constructor(current: string, attempted: string) {
+    super(
+      `車種は作成後に変更できません（現在: ${current} / 変更しようとした値: ${attempted}）。` +
+        'グレードを別の車種へ移すと公開URLが変わり、公開ゲートも回避できてしまいます。' +
+        '車種を移したい場合は、移動先で作り直してください。',
+    );
+    this.name = 'ModelImmutableError';
+  }
+}
+
+/**
+ * グレードの所属車種は作成後に変更できない。
+ *
+ * slug と同じく公開URLの一部である。公開URLは
+ * `/cars/{manufacturerSlug}/{modelSlug}` で、これは grades ではなく models 側から来る。
+ * slug だけ固定しても車種を付け替えれば URL は変わり、保存済みの参照は壊れる。
+ *
+ * さらに重いのが公開ゲートの回避である。assertModelVerifiedForPublish は
+ * setPublicationStatus でしか働かない。検証済みの車種で published にしたあと
+ * 未検証の車種へ付け替えると、**未検証の車種メタデータが published のまま公開される**。
+ * 車種ページは models.name / description / bodyType / officialUrl も描画し、
+ * description は generateMetadata にも入る。
+ *
+ * slug と同じく「無視」ではなく「拒否」する。
+ */
+export function assertModelUnchanged(current: string, attempted: string): void {
+  if (current !== attempted) throw new ModelImmutableError(current, attempted);
+}
+
 /** シードが insert 直前に通す検証の入力側 */
 export type SeedGradeInput = z.input<typeof seedGradeSchema>;
 

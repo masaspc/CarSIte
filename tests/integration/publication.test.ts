@@ -143,3 +143,80 @@ describe('updateGrade の slug 不変条件', () => {
     expect((await currentGrade()).slug).toBe(row.slug);
   });
 });
+
+describe('updateGrade の modelId 不変条件', () => {
+  const inputOf = (row: typeof grades.$inferSelect) => ({
+    modelId: row.modelId,
+    name: row.name,
+    slug: row.slug,
+    price: row.price,
+    releaseDate: row.releaseDate,
+    discontinuedAt: row.discontinuedAt,
+    engineType: row.engineType,
+    driveSystem: row.driveSystem,
+    transmission: row.transmission,
+    seating: row.seating,
+    displacement: row.displacement,
+    weight: row.weight,
+    wltcMode: row.wltcMode === null ? null : Number(row.wltcMode),
+    cruisingRange: row.cruisingRange,
+    ecoCarTax: row.ecoCarTax,
+    airbags: row.airbags,
+  });
+
+  /** 付け替え先に使う、いま編集している車種とは別の車種 */
+  async function otherModelId() {
+    const rows = await db.select({ id: models.id }).from(models).limit(5);
+    const other = rows.find((row) => row.id !== modelId);
+    if (!other) throw new Error('別の車種が見つかりません');
+    return other.id;
+  }
+
+  it('フォームが modelId を書き換えてきたら拒否する', async () => {
+    const { updateGrade } = await import('@/app/actions/cars');
+    const row = await currentGrade();
+    const target = await otherModelId();
+
+    await expect(
+      updateGrade(gradeId, { ...inputOf(row), modelId: target }),
+    ).rejects.toThrow(/車種は作成後に変更できません/);
+
+    expect((await currentGrade()).modelId).toBe(row.modelId);
+  });
+
+  it('modelId が同じ通常の編集は通る', async () => {
+    const { updateGrade } = await import('@/app/actions/cars');
+    const row = await currentGrade();
+
+    await updateGrade(gradeId, { ...inputOf(row), seating: row.seating });
+
+    expect((await currentGrade()).modelId).toBe(row.modelId);
+  });
+
+  it('公開中のグレードを未検証の車種へ移せない（公開ゲートの回避を塞ぐ）', async () => {
+    /*
+     * assertModelVerifiedForPublish は setPublicationStatus でしか働かない。
+     * 検証済みの車種で公開したあとに未検証の車種へ付け替えられると、
+     * 未検証の車種メタデータが published のまま公開ページに出る。
+     */
+    const { setModelVerified, setPublicationStatus, updateGrade } = await import(
+      '@/app/actions/cars'
+    );
+    await setModelVerified(modelId);
+    await setPublicationStatus(gradeId, 'published');
+
+    const row = await currentGrade();
+    const target = await otherModelId();
+
+    await expect(
+      updateGrade(gradeId, { ...inputOf(row), modelId: target }),
+    ).rejects.toThrow(/車種は作成後に変更できません/);
+
+    const after = await currentGrade();
+    expect(after.modelId).toBe(modelId);
+    expect(after.publicationStatus).toBe('published');
+
+    // 後片付け。afterAll でも戻すが、後続テストに published を残さない
+    await setPublicationStatus(gradeId, 'draft');
+  });
+});
