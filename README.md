@@ -304,6 +304,11 @@ CarSIte/
 - `npm run db:generate` - Drizzleスキーマからマイグレーションファイルを生成
 - `npm run db:migrate` - マイグレーションを適用
 - `npm run db:seed` - `tests/fixtures` のデータをDBに投入（全件 `draft`）。既存データがあると拒否する（`--force` / `--allow-destroying-published` で上書き）
+- `npm run collect` - 諸元表PDFの変更検知（週次ジョブ本体。GitHub Actionsから実行され、APIキー不要）
+- `npm run register-source` - 諸元表PDFのベースパスを新しい車種として登録（`-- --model-slug <slug> --base-url <url>`）
+- `npm run ingest-spec` - 人が読み取った諸元（`tests/fixtures/<model-slug>.spec.json`）を承認キューに取り込む（`-- --model-slug <slug>`）
+
+収集パイプラインの運用手順（変更を検知したときに何をするか、新規グレードが承認できない理由など）は `docs/operations/collect.md` を参照してください。
 
 ## カスタマイズ
 
