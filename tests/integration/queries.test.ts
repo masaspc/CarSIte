@@ -1,37 +1,56 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { grades } from '@/db/schema';
+import { grades, models } from '@/db/schema';
 import { findPublishedModel, listPublishedGrades } from '@/db/queries';
 
+const rand = () => Math.random().toString(36).slice(2, 10);
+
 let publishedSlug: { manufacturer: string; model: string };
-let targetGradeId: string;
-let originalStatus: (typeof grades.$inferSelect)['publicationStatus'];
+const createdModelIds: string[] = [];
 
+/*
+ * 以前は `db.select().from(grades).limit(1)` で ORDER BY 無しに本番の行を1件掴み、
+ * afterAll でその1件を元の publicationStatus に戻していた。これは
+ * tests/integration/publication.test.ts で実際に本番データを壊した事故と同じ形
+ * （ORDER BY 無しの limit(1) で任意の本番行を掴み、publicationStatus を書き換える）。
+ *
+ * 本番の行を一切掴まないよう、テスト用の車種とグレードをここで作成し、
+ * afterAll で models を削除する（grades は cascade で消える）。
+ */
 beforeAll(async () => {
-  // シード直後は全件 draft。1件だけ published にして検証する。
-  // テスト後に元の状態へ戻せるよう、変更前の値を必ず読んでから記録する。
-  const [target] = await db.select().from(grades).limit(1);
-  targetGradeId = target.id;
-  originalStatus = target.publicationStatus;
+  const token = rand();
+  const [model] = await db
+    .insert(models)
+    .values({
+      manufacturer: `テスト自動車${token}`,
+      manufacturerSlug: `test-${token}`,
+      name: `__test_車種${token}`,
+      slug: `model-${token}`,
+      bodyType: 'SUV',
+    })
+    .returning();
+  createdModelIds.push(model.id);
 
-  await db
-    .update(grades)
-    .set({ publicationStatus: 'published' })
-    .where(eq(grades.id, target.id));
+  await db.insert(grades).values({
+    modelId: model.id,
+    name: `__test_Z`,
+    slug: `z-${token}`,
+    price: 3_200_000,
+    engineType: 'ハイブリッド',
+    driveSystem: 'FF',
+    seating: 5,
+    publicationStatus: 'published',
+    sunroof: 'standard',
+  });
 
-  const detail = await db.query.models.findFirst({ where: (m, { eq: e }) => e(m.id, target.modelId) });
-  publishedSlug = { manufacturer: detail!.manufacturerSlug, model: detail!.slug };
+  publishedSlug = { manufacturer: model.manufacturerSlug, model: model.slug };
 });
 
 afterAll(async () => {
-  // データベースをテスト前の状態（全件 draft）に厳密に戻す。
-  // 後続タスクは「新規シード直後は公開件数ゼロ」を前提にするため、
-  // ここで漏らすと別タスクのテストが壊れる。
-  await db
-    .update(grades)
-    .set({ publicationStatus: originalStatus })
-    .where(eq(grades.id, targetGradeId));
+  for (const id of createdModelIds.splice(0)) {
+    await db.delete(models).where(eq(models.id, id));
+  }
 });
 
 describe('listPublishedGrades', () => {

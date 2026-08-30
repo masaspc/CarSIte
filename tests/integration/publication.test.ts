@@ -10,44 +10,86 @@ vi.mock('@/auth', () => ({ auth: vi.fn(async () => ({ user: { githubId: 'test-ad
 
 const ADMIN_ID = 'test-admin';
 
+const rand = () => Math.random().toString(36).slice(2, 10);
+
+/*
+ * このテストは自分専用の車種・グレードを作り、自分で片付ける。
+ *
+ * 以前は `db.select().from(grades).limit(1)` で ORDER BY 無しに1件掴み、
+ * afterAll でその1件と親車種だけを元の値に戻していた。ところが
+ * clearModelVerified は「車種配下の公開中グレード“全部”」を draft に戻すため、
+ * たまたま公開済みの実データを抱えた車種を掴んだ回では、そのテストが触っていない
+ * 公開済みグレードまで巻き添えで draft になり、afterAll では復元できなかった
+ * （本番データを壊す事故が実際に起きた）。
+ *
+ * 本番の行を一切掴まないよう、テスト用の車種2件とグレード1件をここで作成し、
+ * afterAll で models を削除する（grades は cascade で消える）。
+ */
+const createdModelIds: string[] = [];
+
+async function newModel(overrides: Record<string, unknown> = {}) {
+  const token = rand();
+  const [row] = await db
+    .insert(models)
+    .values({
+      manufacturer: `テスト自動車${token}`,
+      manufacturerSlug: `test-${token}`,
+      name: `テスト車種${token}`,
+      slug: `model-${token}`,
+      bodyType: 'SUV',
+      ...overrides,
+    })
+    .returning();
+  createdModelIds.push(row.id);
+  return row;
+}
+
+async function newGrade(modelId: string, overrides: Record<string, unknown> = {}) {
+  const [row] = await db
+    .insert(grades)
+    .values({
+      modelId,
+      name: '__test_Z',
+      // slug に `__test_` は付けられない。lib/validation.ts:18 の SLUG は
+      // 小文字英数字とハイフンだけを許すため、アンダースコアを入れると updateGrade が弾く。
+      // 件数テスト（grade-identity.test.ts）が見るのは name なので、prefix は name 側だけでよい
+      slug: `z-${rand()}`,
+      price: 3_200_000,
+      engineType: 'ハイブリッド',
+      driveSystem: 'FF',
+      seating: 5,
+      ...overrides,
+    })
+    .returning();
+  return row;
+}
+
 let gradeId: string;
 let modelId: string;
-let original: typeof grades.$inferSelect;
-let originalModel: typeof models.$inferSelect;
+let modelManufacturer: string;
+let modelName: string;
+/** updateGrade の modelId 不変条件テストで、付け替え先として使う別の車種 */
+let otherModelId: string;
 
 beforeAll(async () => {
   process.env.ADMIN_GITHUB_IDS = ADMIN_ID;
 
-  const [row] = await db.select().from(grades).limit(1);
-  original = row;
-  gradeId = row.id;
-  modelId = row.modelId;
+  const model = await newModel();
+  modelId = model.id;
+  modelManufacturer = model.manufacturer;
+  modelName = model.name;
 
-  const [model] = await db.select().from(models).where(eq(models.id, modelId)).limit(1);
-  originalModel = model;
+  const grade = await newGrade(modelId);
+  gradeId = grade.id;
+
+  const other = await newModel();
+  otherModelId = other.id;
 });
 
 afterAll(async () => {
-  // 公開件数ゼロ・全件 draft・車種は未検証、というシード直後の状態へ厳密に戻す。
-  // 漏らすと公開ページに未検証データが出たまま残る。
-  await db
-    .update(grades)
-    .set({
-      publicationStatus: original.publicationStatus,
-      verifiedAt: original.verifiedAt,
-      verifiedBy: original.verifiedBy,
-      updatedAt: original.updatedAt,
-    })
-    .where(eq(grades.id, gradeId));
-
-  await db
-    .update(models)
-    .set({
-      verifiedAt: originalModel.verifiedAt,
-      verifiedBy: originalModel.verifiedBy,
-      updatedAt: originalModel.updatedAt,
-    })
-    .where(eq(models.id, modelId));
+  for (const id of createdModelIds.splice(0)) {
+    await db.delete(models).where(eq(models.id, id));
+  }
 });
 
 async function currentGrade() {
@@ -64,7 +106,7 @@ describe('setPublicationStatus の公開ゲート', () => {
 
     const { setPublicationStatus } = await import('@/app/actions/cars');
     await expect(setPublicationStatus(gradeId, 'published')).rejects.toThrow(
-      new RegExp(`${originalModel.manufacturer} ${originalModel.name}`),
+      new RegExp(`${modelManufacturer} ${modelName}`),
     );
 
     // 拒否は「例外を投げるだけ」ではなく、実際に書き込まれていないことまで確かめる
@@ -164,21 +206,12 @@ describe('updateGrade の modelId 不変条件', () => {
     airbags: row.airbags,
   });
 
-  /** 付け替え先に使う、いま編集している車種とは別の車種 */
-  async function otherModelId() {
-    const rows = await db.select({ id: models.id }).from(models).limit(5);
-    const other = rows.find((row) => row.id !== modelId);
-    if (!other) throw new Error('別の車種が見つかりません');
-    return other.id;
-  }
-
   it('フォームが modelId を書き換えてきたら拒否する', async () => {
     const { updateGrade } = await import('@/app/actions/cars');
     const row = await currentGrade();
-    const target = await otherModelId();
 
     await expect(
-      updateGrade(gradeId, { ...inputOf(row), modelId: target }),
+      updateGrade(gradeId, { ...inputOf(row), modelId: otherModelId }),
     ).rejects.toThrow(/車種は作成後に変更できません/);
 
     expect((await currentGrade()).modelId).toBe(row.modelId);
@@ -206,17 +239,16 @@ describe('updateGrade の modelId 不変条件', () => {
     await setPublicationStatus(gradeId, 'published');
 
     const row = await currentGrade();
-    const target = await otherModelId();
 
     await expect(
-      updateGrade(gradeId, { ...inputOf(row), modelId: target }),
+      updateGrade(gradeId, { ...inputOf(row), modelId: otherModelId }),
     ).rejects.toThrow(/車種は作成後に変更できません/);
 
     const after = await currentGrade();
     expect(after.modelId).toBe(modelId);
     expect(after.publicationStatus).toBe('published');
 
-    // 後片付け。afterAll でも戻すが、後続テストに published を残さない
+    // 後片付け。afterAll でも models ごと消すが、後続テストに published を残さない
     await setPublicationStatus(gradeId, 'draft');
   });
 });

@@ -11,9 +11,11 @@ Neon Postgres + Drizzle + Auth.js への移行はほぼ終わっている。
 - 実装計画: `docs/superpowers/plans/2026-08-13-data-foundation.md`
 - 全体は4つのサブプロジェクトに分割されている（データ基盤 → 収集パイプライン → 比較体験 → TCO試算）
 
-現在のDB: models=100 / grades=103 / price_history=40 / dealers=10。
-**全103グレードが `draft`** のため、公開ページは0件表示になる。これは正しい状態であり、
-公開フィルタを外したり行を published にしたりして「直して」はいけない。
+現在のDB: models=100 / grades=109 / price_history=40 / dealers=10。
+grades 109件のうち103件はシードの架空データで**全て `draft`**、残り6件はプリウスの実データで
+**全て `published`**。架空データ103件が draft なのは正しい状態であり、公開フィルタを外したり
+published に「直したり」してはいけない。プリウスの実データ6件が published なのも正しい状態であり、
+draft に「戻して」はいけない。
 
 ## 触る前に知っておくこと
 
