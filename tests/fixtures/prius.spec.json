@@ -1,13 +1,129 @@
 {
   "modelName": "プリウス",
   "grades": [
-    { "name": "Z", "powertrain": "2.0L プラグインハイブリッド車", "driveSystemRaw": "2WD", "typeDesignation": "6LA-MXWH61-AHXHB", "price": null, "seating": 5, "weight": 1570, "displacement": 1986, "wltcMode": 25.9, "engineType": "PHEV", "transmission": "電気式無段変速機" },
-    { "name": "G", "powertrain": "2.0L プラグインハイブリッド車", "driveSystemRaw": "2WD", "typeDesignation": "6LA-MXWH61-AHXGB", "price": null, "seating": 5, "weight": 1560, "displacement": 1986, "wltcMode": 25.9, "engineType": "PHEV", "transmission": "電気式無段変速機" },
-    { "name": "Z", "powertrain": "2.0L ハイブリッド車", "driveSystemRaw": "2WD", "typeDesignation": "6AA-MXWH60-AHXHB", "price": null, "seating": 5, "weight": 1420, "displacement": 1986, "wltcMode": 28.4, "engineType": "ハイブリッド", "transmission": "電気式無段変速機" },
-    { "name": "Z", "powertrain": "2.0L ハイブリッド車", "driveSystemRaw": "E-Four", "typeDesignation": "6AA-MXWH65-AHXHB", "price": null, "seating": 5, "weight": 1480, "displacement": 1986, "wltcMode": 26.8, "engineType": "ハイブリッド", "transmission": "電気式無段変速機" },
-    { "name": "G", "powertrain": "2.0L ハイブリッド車", "driveSystemRaw": "2WD", "typeDesignation": "6AA-MXWH60-AHXGB", "price": null, "seating": 5, "weight": 1400, "displacement": 1986, "wltcMode": 28.4, "engineType": "ハイブリッド", "transmission": "電気式無段変速機" },
-    { "name": "G", "powertrain": "2.0L ハイブリッド車", "driveSystemRaw": "E-Four", "typeDesignation": "6AA-MXWH65-AHXGB", "price": null, "seating": 5, "weight": 1460, "displacement": 1986, "wltcMode": 26.8, "engineType": "ハイブリッド", "transmission": "電気式無段変速機" },
-    { "name": "U", "powertrain": "1.8L ハイブリッド車", "driveSystemRaw": "2WD", "typeDesignation": "6AA-ZVW60-AHXKB", "price": null, "seating": 5, "weight": 1360, "displacement": 1797, "wltcMode": 32.6, "engineType": "ハイブリッド", "transmission": "電気式無段変速機" },
-    { "name": "U", "powertrain": "1.8L ハイブリッド車", "driveSystemRaw": "E-Four", "typeDesignation": "6AA-ZVW65-AHXKB", "price": null, "seating": 5, "weight": 1420, "displacement": 1797, "wltcMode": 30.7, "engineType": "ハイブリッド", "transmission": "電気式無段変速機" }
-  ]
+    {
+      "name": "Z",
+      "powertrain": "2.0L プラグインハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6LA-MXWH61-AHXHB",
+      "price": 4645300,
+      "seating": 5,
+      "weight": 1570,
+      "displacement": 1986,
+      "wltcMode": 25.9,
+      "engineType": "PHEV",
+      "transmission": "電気式無段変速機"
+    },
+    {
+      "name": "G",
+      "powertrain": "2.0L プラグインハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6LA-MXWH61-AHXGB",
+      "price": 3884100,
+      "seating": 5,
+      "weight": 1560,
+      "displacement": 1986,
+      "wltcMode": 25.9,
+      "engineType": "PHEV",
+      "transmission": "電気式無段変速機"
+    },
+    {
+      "name": "Z",
+      "powertrain": "2.0L ハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6AA-MXWH60-AHXHB",
+      "price": 3998500,
+      "seating": 5,
+      "weight": 1420,
+      "displacement": 1986,
+      "wltcMode": 28.4,
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機"
+    },
+    {
+      "name": "Z",
+      "powertrain": "2.0L ハイブリッド車",
+      "driveSystemRaw": "E-Four",
+      "typeDesignation": "6AA-MXWH65-AHXHB",
+      "price": 4251500,
+      "seating": 5,
+      "weight": 1480,
+      "displacement": 1986,
+      "wltcMode": 26.8,
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機"
+    },
+    {
+      "name": "G",
+      "powertrain": "2.0L ハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6AA-MXWH60-AHXGB",
+      "price": 3324200,
+      "seating": 5,
+      "weight": 1400,
+      "displacement": 1986,
+      "wltcMode": 28.4,
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機"
+    },
+    {
+      "name": "G",
+      "powertrain": "2.0L ハイブリッド車",
+      "driveSystemRaw": "E-Four",
+      "typeDesignation": "6AA-MXWH65-AHXGB",
+      "price": 3577200,
+      "seating": 5,
+      "weight": 1460,
+      "displacement": 1986,
+      "wltcMode": 26.8,
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機"
+    },
+    {
+      "name": "U",
+      "powertrain": "1.8L ハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6AA-ZVW60-AHXKB",
+      "price": null,
+      "seating": 5,
+      "weight": 1360,
+      "displacement": 1797,
+      "wltcMode": 32.6,
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機"
+    },
+    {
+      "name": "U",
+      "powertrain": "1.8L ハイブリッド車",
+      "driveSystemRaw": "E-Four",
+      "typeDesignation": "6AA-ZVW65-AHXKB",
+      "price": null,
+      "seating": 5,
+      "weight": 1420,
+      "displacement": 1797,
+      "wltcMode": 30.7,
+      "engineType": "ハイブリッド",
+      "transmission": "電気式無段変速機"
+    }
+  ],
+  "_priceProvenance": {
+    "source": "https://toyota.jp/prius/grade/",
+    "readAt": "2026-08-30",
+    "readBy": "Claude Opus 5 が Chrome 経由でページを描画させて読み取った",
+    "note": "諸元表PDFに車両本体価格は載っていない（原本に「価格は販売店が独自に定めていますので」とある）。メーカーのグレードページはJS描画で機械取得できないため、ブラウザで描画させて読んだ。ページのWLTC値（25.9 / 28.4 / 26.8 / 32.6 / 30.7）が諸元表から起こした値と一致することを確認済み。",
+    "unavailable": {
+      "grades": [
+        "6AA-ZVW60-AHXKB",
+        "6AA-ZVW65-AHXKB"
+      ],
+      "reason": "U は KINTO専用仕様車で、月額（22,770円〜 / 25,080円〜）でしか提供されない。購入価格という概念が存在しないため null。適用時に blocked になる。"
+    },
+    "notInSpecSheet": {
+      "grades": [
+        "ZVW60-AHXEB",
+        "ZVW65-AHXEB"
+      ],
+      "note": "X（ハイブリッド車）2,796,200円 / 3,049,200円 はグレードページに存在するが、2026-07版の諸元表には型式が無い。諸元表とグレードページで対象集合が違う。X の諸元は別途取得が要るため、このファイルには含めていない。"
+    }
+  }
 }

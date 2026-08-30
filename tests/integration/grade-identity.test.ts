@@ -152,7 +152,7 @@ describe('grades の識別単位', () => {
     ).rejects.toThrow();
   });
 
-  it('既存の103件は移行後も無傷で、全て draft のまま', async () => {
+  it('シードの103件と取り込んだ実データが、全て draft のまま', async () => {
     const { rows } = await db.execute(sql`
       select count(*)::int as total,
              count(*) filter (where publication_status = 'draft')::int as drafts
@@ -160,7 +160,9 @@ describe('grades の識別単位', () => {
       where name not like '__test_%'
     `);
 
-    expect(rows[0].total).toBe(103);
-    expect(rows[0].drafts).toBe(103);
+    // 103（シード）+ 6（プリウスの諸元表と実価格から作成した実データ）
+    // U 2件は KINTO専用仕様車で購入価格が無いため作成できず blocked のまま
+    expect(rows[0].total).toBe(109);
+    expect(rows[0].drafts).toBe(109);
   });
 });

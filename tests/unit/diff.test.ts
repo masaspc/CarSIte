@@ -277,19 +277,45 @@ describe('computeChanges の比較オプション', () => {
     expect(changes[0].diff).toEqual({ weight: { before: 1_620, after: 1_500 } });
   });
 
-  it('new_grade の diff からも装備と価格が外れる', () => {
-    const changes = computeChanges([], [incoming()], {
+  it('comparePrice: false でも new_grade には price を含める', () => {
+    /*
+     * 2026-08-30 に意味を分けた。comparePrice は「価格の変化を検知するか」だけを
+     * 指す。new_grade の price は比較データではなく作成データであり、
+     * grades.price は NOT NULL なので、これが無いとグレードを作れない。
+     */
+    const changes = computeChanges([], [incoming({ price: 4_645_300 })], {
       comparePrice: false,
       compareFeatures: false,
     });
 
     expect(changes).toHaveLength(1);
     expect(changes[0].kind).toBe('new_grade');
-    expect(changes[0].diff).not.toHaveProperty('price');
+    expect(changes[0].diff.price).toEqual({ before: null, after: 4_645_300 });
+    // 装備は外れたまま（色でしか読めず、取り込み元が持っていない）
     expect(Object.keys(changes[0].diff).some((k) => k.startsWith('features.'))).toBe(false);
-    // 同定に要る項目は残っている
     expect(changes[0].diff).toHaveProperty('name');
     expect(changes[0].diff).toHaveProperty('powertrain');
+  });
+
+  it('価格が無ければ new_grade の price は null のまま入る', () => {
+    // U（KINTO専用仕様車）のように購入価格が存在しないグレードがある。
+    // 値が無いことを diff に残し、適用時に blocked として人間に見せる
+    const changes = computeChanges([], [incoming({ price: null })], {
+      comparePrice: false,
+      compareFeatures: false,
+    });
+
+    expect(changes[0].diff.price).toEqual({ before: null, after: null });
+  });
+
+  it('comparePrice: false は price_change を立てないことだけを意味する', () => {
+    const changes = computeChanges(
+      [existing({ price: 3_200_000 })],
+      [incoming({ price: 4_000_000 })],
+      { comparePrice: false },
+    );
+
+    expect(changes.filter((c) => c.kind === 'price_change')).toEqual([]);
   });
 });
 

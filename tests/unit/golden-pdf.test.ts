@@ -127,6 +127,26 @@ describe('正解データが原本と一致する', () => {
     expect(String(text)).toContain('プラグインハイブリッド車');
   }, 60_000);
 
+  it('価格は6件に入り、KINTO専用の2件は null', () => {
+    const ingest = JSON.parse(
+      readFileSync(path.resolve(__dirname, '../fixtures/prius.spec.json'), 'utf8'),
+    ) as { grades: Array<{ typeDesignation: string; price: number | null }> };
+
+    const priced = ingest.grades.filter((g) => g.price !== null);
+    expect(priced).toHaveLength(6);
+    for (const grade of priced) {
+      expect(grade.price).toBeGreaterThan(2_000_000);
+      expect(grade.price).toBeLessThan(6_000_000);
+    }
+
+    // U は KINTO専用仕様車で購入価格が存在しない。月額でしか提供されない
+    const unpriced = ingest.grades.filter((g) => g.price === null);
+    expect(unpriced.map((g) => g.typeDesignation).sort()).toEqual([
+      '6AA-ZVW60-AHXKB',
+      '6AA-ZVW65-AHXKB',
+    ]);
+  });
+
   it('取り込み用JSONが正解データと同じ8グレードを指す', () => {
     const ingest = JSON.parse(
       readFileSync(path.resolve(__dirname, '../fixtures/prius.spec.json'), 'utf8'),

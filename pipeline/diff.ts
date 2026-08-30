@@ -144,6 +144,11 @@ function sameValue(a: unknown, b: unknown): boolean {
  * 既定は両方 true。LLM抽出のように全項目を持つ入力ではこれまでどおり動く。
  */
 export interface CompareOptions {
+  /**
+   * 価格の**変化**を検知するか。諸元表には価格が載っていないので、そこから
+   * 起こした入力では false にする。false でも new_grade には price を含める
+   * （作成に要るため。newGradeDiff のコメント参照）。
+   */
   comparePrice?: boolean;
   compareFeatures?: boolean;
 }
@@ -199,7 +204,7 @@ export function computeChanges(
       changes.push({
         kind: 'new_grade',
         targetKey: gradeKey(row),
-        diff: newGradeDiff(row, { comparePrice, compareFeatures }),
+        diff: newGradeDiff(row, compareFeatures),
       });
       continue;
     }
@@ -234,10 +239,17 @@ export function computeChanges(
   return changes;
 }
 
-function newGradeDiff(
-  row: NormalizedGrade,
-  options: { comparePrice: boolean; compareFeatures: boolean },
-): ChangeDraft['diff'] {
+/**
+ * 新規グレードを作るための値。**price は comparePrice に関係なく必ず含める。**
+ *
+ * comparePrice が指すのは「価格の変化を検知するか」だけである。new_grade の
+ * price は比較データではなく作成データであり、grades.price は NOT NULL なので、
+ * これを外すとグレードを作れない。
+ *
+ * 値そのものが無い場合（KINTO専用仕様車のように購入価格が存在しないグレード）は
+ * null のまま入れる。適用時に blocked になり、人間に「価格が無い」ことが伝わる。
+ */
+function newGradeDiff(row: NormalizedGrade, compareFeatures: boolean): ChangeDraft['diff'] {
   const diff: ChangeDraft['diff'] = {};
   const fields: Array<keyof NormalizedGrade> = [
     'name',
@@ -254,10 +266,8 @@ function newGradeDiff(
   for (const field of fields) {
     diff[field] = { before: null, after: row[field] ?? null };
   }
-  if (options.comparePrice) {
-    diff.price = { before: null, after: row.price ?? null };
-  }
-  if (options.compareFeatures) {
+  diff.price = { before: null, after: row.price ?? null };
+  if (compareFeatures) {
     for (const column of FEATURE_COLUMNS) {
       diff[`features.${column}`] = { before: null, after: row.features[column] ?? null };
     }

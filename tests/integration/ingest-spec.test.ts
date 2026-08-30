@@ -87,14 +87,19 @@ describe('ingestSpec', () => {
     expect(rows[0].status).toBe('pending');
   });
 
-  it('価格と装備は diff に含めない（諸元表に無いため）', async () => {
+  it('装備は diff に含めないが、価格は含める（作成に要るため）', async () => {
     const { model, document } = await newModelWithDocument();
 
     await ingestSpec(model.slug, spec(model.name));
 
     const [row] = await changesOf(document.id);
     const diff = row.diff as Record<string, unknown>;
-    expect(diff).not.toHaveProperty('price');
+    /*
+     * price は new_grade の作成に要る（grades.price は NOT NULL）。
+     * 一方 comparePrice: false は「価格の変化を検知しない」ことだけを意味する。
+     * 装備は色でしか読めず取り込み元が持たないので、引き続き外す。
+     */
+    expect(diff).toHaveProperty('price');
     expect(Object.keys(diff).some((k) => k.startsWith('features.'))).toBe(false);
     expect(diff).toHaveProperty('typeDesignation');
   });
