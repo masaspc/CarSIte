@@ -50,7 +50,10 @@ async function newGrade(modelId: string, overrides: Record<string, unknown> = {}
     .values({
       modelId,
       name: '__test_Z',
-      slug: `__test_z-${rand()}`,
+      // slug に `__test_` は付けられない。lib/validation.ts:18 の SLUG は
+      // 小文字英数字とハイフンだけを許すため、アンダースコアを入れると updateGrade が弾く。
+      // 件数テスト（grade-identity.test.ts）が見るのは name なので、prefix は name 側だけでよい
+      slug: `z-${rand()}`,
       price: 3_200_000,
       engineType: 'ハイブリッド',
       driveSystem: 'FF',
