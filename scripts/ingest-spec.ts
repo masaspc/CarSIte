@@ -11,7 +11,7 @@ import {
   specDocuments,
   specSources,
 } from '@/db/schema';
-import { ExtractedSpecSchema } from '@/pipeline/extraction-schema';
+import { ExtractedSpecSchema, type ExtractedSpec } from '@/pipeline/extraction-schema';
 import { computeChanges, normalizeGrades, type ExistingGrade } from '@/pipeline/diff';
 import { decideApproval } from '@/pipeline/approval-rules';
 
@@ -37,11 +37,25 @@ export interface IngestResult {
 }
 
 /**
- * 諸元表には車両本体価格も装備の色分けも載っていないため比較しない。
+ * 諸元表に車両本体価格は載っていないため、価格は比較しない。
  * 載っていないものを null として比較すると、毎回・全グレードに
  * 空振りの変更が立つ（設計書6.0.3）。
+ *
+ * 装備は「全グレードが features を持つときだけ」比較する。
+ *
+ * 装備は諸元表の色分けでしか表現されておらずテキストからは読めないため、
+ * features を持つJSONと持たないJSONの両方が来る。1件でも欠けた状態で
+ * 比較を有効にすると壊れる —— normalizeGrades が features を `{}` に倒すので
+ * `before='unknown'` / `after=null` という空振りの差分が20項目ぶん立ち、
+ * apply.ts の columnValue が null を INVALID と判定して blocked になる。
+ * 「一部だけ読み取った」を「装備を消す変更」と取り違えないための条件である。
  */
-const COMPARE_OPTIONS = { comparePrice: false, compareFeatures: false } as const;
+export function compareOptionsFor(spec: ExtractedSpec) {
+  return {
+    comparePrice: false,
+    compareFeatures: spec.grades.every((grade) => grade.features !== undefined),
+  } as const;
+}
 
 export async function ingestSpec(modelSlug: string, spec: unknown): Promise<IngestResult> {
   const found = await db
@@ -95,7 +109,11 @@ export async function ingestSpec(modelSlug: string, spec: unknown): Promise<Inge
   }
 
   const existing = await loadExistingGrades(model.id);
-  const drafts = computeChanges(existing, normalizeGrades(parsed.data), COMPARE_OPTIONS);
+  const drafts = computeChanges(
+    existing,
+    normalizeGrades(parsed.data),
+    compareOptionsFor(parsed.data),
+  );
 
   await db.insert(extractions).values({
     specDocumentId: document.id,
