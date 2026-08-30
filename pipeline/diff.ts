@@ -1,6 +1,7 @@
 import type { ChangeKind } from '@/db/schema';
 import { FEATURE_COLUMNS } from '@/db/schema';
 import { type ExtractedSpec, normalizeDriveSystem } from './extraction-schema';
+import { sameValue } from '@/lib/same-value';
 
 /** price は price_change、ここに挙げた項目は spec_change に振り分ける */
 const SPEC_FIELDS = [
@@ -103,34 +104,6 @@ export function normalizeGrades(spec: ExtractedSpec): NormalizedGrade[] {
     transmission: grade.transmission,
     features: (grade.features ?? {}) as Record<string, string>,
   }));
-}
-
-/**
- * 同じ値とみなすかどうか。
- *
- * drizzle の numeric 列は文字列で返るため（wltc_mode の "26.0"）、
- * 抽出結果の数値 26 と素朴に比べると毎回違うと判定される。
- * それを放置すると、何も変わっていないのに spec_change が立ち続け、
- * 承認キューが空振りで埋まる。
- */
-function sameValue(a: unknown, b: unknown): boolean {
-  const left = a ?? null;
-  const right = b ?? null;
-  if (left === right) return true;
-  if (left === null || right === null) return false;
-
-  const asNumber = (value: unknown): number | null => {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string' && value.trim() !== '') {
-      const parsed = Number(value);
-      return Number.isNaN(parsed) ? null : parsed;
-    }
-    return null;
-  };
-
-  const numericLeft = asNumber(left);
-  const numericRight = asNumber(right);
-  return numericLeft !== null && numericRight !== null && numericLeft === numericRight;
 }
 
 /**
