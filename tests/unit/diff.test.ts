@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeChanges, gradeKey, normalizeGrades } from '@/pipeline/diff';
+import { computeChanges, diffHash, gradeKey, normalizeGrades } from '@/pipeline/diff';
 import { FEATURE_COLUMNS } from '@/db/schema';
 
 const ALL_FEATURES = Object.fromEntries(
@@ -341,5 +341,105 @@ describe('normalizeGrades の features 省略', () => {
     } as never);
 
     expect(rows[0].features).toEqual({});
+  });
+});
+
+describe('諸元の追加項目（寸法・出力・燃費内訳・エアバッグなど）', () => {
+  const dimensions = { length: 4600, width: 1780, height: 1430 };
+
+  it('取り込み元が持っていない項目は比較しない', () => {
+    /*
+     * 既に取り込んだ車種のJSONにはこれらの項目が無い。比較すると
+     * 「値が消えた」と解釈され、毎回・全グレードに空振りの変更が立つ。
+     * 装備で compareFeatures を条件付きにしたのと同じ理由である。
+     */
+    const found = existing({ dimensions, airbags: 7, cruisingRange: 900 });
+    const changes = computeChanges([found], [incoming()]);
+    expect(changes).toHaveLength(0);
+  });
+
+  it('取り込み元が値を持てば差分が立つ', () => {
+    const found = existing({ dimensions: null, airbags: null });
+    const changes = computeChanges([found], [incoming({ dimensions, airbags: 7 })]);
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].diff.dimensions).toEqual({ before: null, after: dimensions });
+    expect(changes[0].diff.airbags).toEqual({ before: null, after: 7 });
+  });
+
+  it('jsonb はキーの順序が違っても同じとみなす', () => {
+    // DBから返る jsonb はキーの順序が保存時と違う。素朴に JSON.stringify すると
+    // 中身が同じでも毎回「変更あり」になる
+    const found = existing({ dimensions: { height: 1430, length: 4600, width: 1780 } });
+    expect(computeChanges([found], [incoming({ dimensions })])).toHaveLength(0);
+  });
+
+  it('jsonb は null の項目を省略と同じに扱う', () => {
+    const found = existing({ dimensions: { ...dimensions, wheelbase: null } });
+    expect(computeChanges([found], [incoming({ dimensions })])).toHaveLength(0);
+  });
+
+  it('jsonb の中身が違えば塊ごと差分になる', () => {
+    // 項目ごとではなく列ごと入れ替える。適用側でマージすると
+    // 「一部だけ古い値が残る」状態を作るため
+    const found = existing({ dimensions });
+    const changed = { ...dimensions, height: 1435 };
+    const changes = computeChanges([found], [incoming({ dimensions: changed })]);
+
+    expect(changes[0].diff.dimensions).toEqual({ before: dimensions, after: changed });
+    expect(changes[0].diff['dimensions.height']).toBeUndefined();
+  });
+
+  it('新規グレードの diff にも追加項目が入る', () => {
+    const changes = computeChanges(
+      [],
+      [incoming({ dimensions, airbags: 7, transmissionType: 'CVT', gearCount: null })],
+    );
+
+    expect(changes[0].kind).toBe('new_grade');
+    expect(changes[0].diff.dimensions).toEqual({ before: null, after: dimensions });
+    expect(changes[0].diff.transmissionType).toEqual({ before: null, after: 'CVT' });
+    // 値を持たない項目は新規作成の diff にも入れない
+    expect(changes[0].diff.performance).toBeUndefined();
+  });
+
+  it('新規グレードの diff に同じ項目を二度入れない', () => {
+    // fields の配列に name などが二重に現れるため、重複を潰していないと
+    // 同じキーを2回書くことになる
+    const changes = computeChanges([], [incoming({ airbags: 7 })]);
+    const keys = Object.keys(changes[0].diff);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+describe('diffHash', () => {
+  const base = { weight: { before: 1400, after: 1420 } };
+
+  it('同じ内容なら同じハッシュ', () => {
+    expect(diffHash(base)).toBe(diffHash({ weight: { before: 1400, after: 1420 } }));
+  });
+
+  it('キーの順序が違っても同じハッシュ', () => {
+    // DBから返る jsonb はキーの順序が保存時と違う。順序で変わると
+    // 同じ内容を積み直せてしまう
+    const a = { weight: { before: 1, after: 2 }, seating: { before: 4, after: 5 } };
+    const b = { seating: { before: 4, after: 5 }, weight: { before: 1, after: 2 } };
+    expect(diffHash(a)).toBe(diffHash(b));
+  });
+
+  it('内容が違えば違うハッシュ', () => {
+    /*
+     * これが一意制約に入っているおかげで、同じグレードに対する別の内容の変更を
+     * 積める。装備を取り込んだあとに寸法を足すのがこの形になる。
+     */
+    expect(diffHash(base)).not.toBe(diffHash({ weight: { before: 1400, after: 1430 } }));
+    expect(diffHash(base)).not.toBe(diffHash({ ...base, airbags: { before: null, after: 7 } }));
+  });
+
+  it('値の型が違えば違うハッシュ', () => {
+    // 数値の 1 と文字列の "1" を同じにすると、型の取り違えを積み直せなくなる
+    expect(diffHash({ a: { before: null, after: 1 } })).not.toBe(
+      diffHash({ a: { before: null, after: '1' } }),
+    );
   });
 });

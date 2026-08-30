@@ -358,6 +358,18 @@ export const changeRequests = pgTable(
     targetKey: text('target_key').notNull(),
     /** 適用前後の値。ロールバックは これを逆適用する */
     diff: jsonb('diff').notNull(),
+    /**
+     * diff の内容を正規化して取ったハッシュ（pipeline/diff.ts の diffHash）。
+     *
+     * 一意制約に含める。(書類, 種別, 対象) だけで縛ると、同じグレードに対する
+     * 「別の内容の変更」を積めない。実際、装備を取り込んだあとに寸法・出力を
+     * 足そうとしたとき、既存の spec_change 行と衝突して再取り込みできなかった。
+     * 直すには適用済みの監査記録を消すしかなく、項目を増やすたびに同じことが起きる。
+     *
+     * 内容まで見れば、同じ内容の二度押しは今までどおり弾き、違う内容は積める。
+     * 移行前からある行は 'legacy' が入っている。
+     */
+    diffHash: text('diff_hash').notNull().default('legacy'),
     status: changeStatusEnum('status').notNull().default('pending'),
     /**
      * 自動承認しなかった理由（decideApproval の reason）。判定した収集スクリプトが
@@ -372,7 +384,12 @@ export const changeRequests = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    unique('change_requests_document_kind_target_key').on(t.specDocumentId, t.kind, t.targetKey),
+    unique('change_requests_document_kind_target_diff_key').on(
+      t.specDocumentId,
+      t.kind,
+      t.targetKey,
+      t.diffHash,
+    ),
     index('change_requests_status_idx').on(t.status),
   ],
 );

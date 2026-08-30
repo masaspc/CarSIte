@@ -13,6 +13,24 @@
       "wltcMode": 35.4,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 6,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "67（91）/5,500",
+        "maxTorque": "120（12.2）/3,800〜4,800"
+      },
+      "fuelDetail": {
+        "cityMode": 35.8,
+        "suburbanMode": 39.1,
+        "highwayMode": 33.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -48,6 +66,24 @@
       "wltcMode": 30.2,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 6,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1510,
+        "wheelbase": 2550,
+        "groundClearance": 160
+      },
+      "performance": {
+        "maxPower": "67（91）/5,500",
+        "maxTorque": "120（12.2）/3,800〜4,800"
+      },
+      "fuelDetail": {
+        "cityMode": 30.4,
+        "suburbanMode": 32.9,
+        "highwayMode": 28.6
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -83,6 +119,24 @@
       "wltcMode": 35.8,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 6,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "67（91）/5,500",
+        "maxTorque": "120（12.2）/3,800〜4,800"
+      },
+      "fuelDetail": {
+        "cityMode": 36.5,
+        "suburbanMode": 39.6,
+        "highwayMode": 33.4
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -118,6 +172,24 @@
       "wltcMode": 30.2,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 6,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1510,
+        "wheelbase": 2550,
+        "groundClearance": 160
+      },
+      "performance": {
+        "maxPower": "67（91）/5,500",
+        "maxTorque": "120（12.2）/3,800〜4,800"
+      },
+      "fuelDetail": {
+        "cityMode": 30.4,
+        "suburbanMode": 32.9,
+        "highwayMode": 28.6
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -153,6 +225,24 @@
       "wltcMode": 36.0,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 6,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "67（91）/5,500",
+        "maxTorque": "120（12.2）/3,800〜4,800"
+      },
+      "fuelDetail": {
+        "cityMode": 37.1,
+        "suburbanMode": 39.9,
+        "highwayMode": 33.5
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -188,6 +278,24 @@
       "wltcMode": 30.2,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 6,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1510,
+        "wheelbase": 2550,
+        "groundClearance": 160
+      },
+      "performance": {
+        "maxPower": "67（91）/5,500",
+        "maxTorque": "120（12.2）/3,800〜4,800"
+      },
+      "fuelDetail": {
+        "cityMode": 30.4,
+        "suburbanMode": 32.9,
+        "highwayMode": 28.6
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -223,6 +331,24 @@
       "wltcMode": 35.4,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 6,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "67（91）/5,500",
+        "maxTorque": "120（12.2）/3,800〜4,800"
+      },
+      "fuelDetail": {
+        "cityMode": 35.8,
+        "suburbanMode": 39.1,
+        "highwayMode": 33.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -258,6 +384,24 @@
       "wltcMode": 30.2,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 6,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1510,
+        "wheelbase": 2550,
+        "groundClearance": 160
+      },
+      "performance": {
+        "maxPower": "67（91）/5,500",
+        "maxTorque": "120（12.2）/3,800〜4,800"
+      },
+      "fuelDetail": {
+        "cityMode": 30.4,
+        "suburbanMode": 32.9,
+        "highwayMode": 28.6
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -293,6 +437,24 @@
       "wltcMode": 20.3,
       "engineType": "ガソリン",
       "transmission": "ギヤ機構付自動無段変速機",
+      "airbags": 6,
+      "transmissionType": "CVT",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 15.3,
+        "suburbanMode": 20.7,
+        "highwayMode": 23.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -328,6 +490,24 @@
       "wltcMode": 18.6,
       "engineType": "ガソリン",
       "transmission": "ギヤ機構付自動無段変速機",
+      "airbags": 6,
+      "transmissionType": "CVT",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1510,
+        "wheelbase": 2550,
+        "groundClearance": 130
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 14.0,
+        "suburbanMode": 19.0,
+        "highwayMode": 21.3
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -363,6 +543,24 @@
       "wltcMode": 20.0,
       "engineType": "ガソリン",
       "transmission": "ギヤ機構付自動無段変速機",
+      "airbags": 6,
+      "transmissionType": "CVT",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 15.1,
+        "suburbanMode": 20.4,
+        "highwayMode": 22.9
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -398,6 +596,24 @@
       "wltcMode": 18.6,
       "engineType": "ガソリン",
       "transmission": "ギヤ機構付自動無段変速機",
+      "airbags": 6,
+      "transmissionType": "CVT",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1510,
+        "wheelbase": 2550,
+        "groundClearance": 130
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 14.0,
+        "suburbanMode": 19.0,
+        "highwayMode": 21.3
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -433,6 +649,24 @@
       "wltcMode": 20.3,
       "engineType": "ガソリン",
       "transmission": "ギヤ機構付自動無段変速機",
+      "airbags": 6,
+      "transmissionType": "CVT",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 15.3,
+        "suburbanMode": 20.7,
+        "highwayMode": 23.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -468,6 +702,24 @@
       "wltcMode": 18.6,
       "engineType": "ガソリン",
       "transmission": "ギヤ機構付自動無段変速機",
+      "airbags": 6,
+      "transmissionType": "CVT",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1510,
+        "wheelbase": 2550,
+        "groundClearance": 130
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 14.0,
+        "suburbanMode": 19.0,
+        "highwayMode": 21.3
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -503,6 +755,24 @@
       "wltcMode": 20.2,
       "engineType": "ガソリン",
       "transmission": "自動無段変速機",
+      "airbags": 6,
+      "transmissionType": "CVT",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 140
+      },
+      "performance": {
+        "maxPower": "51（69）/6,000",
+        "maxTorque": "92（9.4）/4,400"
+      },
+      "fuelDetail": {
+        "cityMode": 15.1,
+        "suburbanMode": 21.5,
+        "highwayMode": 22.7
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -538,6 +808,24 @@
       "wltcMode": 20.2,
       "engineType": "ガソリン",
       "transmission": "自動無段変速機",
+      "airbags": 6,
+      "transmissionType": "CVT",
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 140
+      },
+      "performance": {
+        "maxPower": "51（69）/6,000",
+        "maxTorque": "92（9.4）/4,400"
+      },
+      "fuelDetail": {
+        "cityMode": 15.1,
+        "suburbanMode": 21.5,
+        "highwayMode": 22.7
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -573,6 +861,25 @@
       "wltcMode": 19.1,
       "engineType": "ガソリン",
       "transmission": "6速マニュアル",
+      "airbags": 6,
+      "transmissionType": "MT",
+      "gearCount": 6,
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 14.0,
+        "suburbanMode": 19.6,
+        "highwayMode": 22.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -608,6 +915,25 @@
       "wltcMode": 19.1,
       "engineType": "ガソリン",
       "transmission": "6速マニュアル",
+      "airbags": 6,
+      "transmissionType": "MT",
+      "gearCount": 6,
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 14.0,
+        "suburbanMode": 19.6,
+        "highwayMode": 22.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "none",
@@ -643,6 +969,25 @@
       "wltcMode": 19.1,
       "engineType": "ガソリン",
       "transmission": "6速マニュアル",
+      "airbags": 6,
+      "transmissionType": "MT",
+      "gearCount": 6,
+      "dimensions": {
+        "length": 3950,
+        "width": 1695,
+        "height": 1495,
+        "wheelbase": 2550,
+        "groundClearance": 145
+      },
+      "performance": {
+        "maxPower": "88（120）/6,600",
+        "maxTorque": "145（14.8）/4,800〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 14.0,
+        "suburbanMode": 19.6,
+        "highwayMode": 22.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "none",
@@ -684,7 +1029,11 @@
     "source": "storage/pdfs/876872b259b742d2595f311ca28fd4ea8b8176ff5f307afad8deb0cd9655c45f.pdf（トヨタ ヤリス 主要諸元表 2026-04版）1ページ",
     "columns": "諸元表は12列（HV 1.5L: Z/G/X/U、ガソリン1.5L CVT: Z/G/X、ガソリン1.0L CVT: G/X、ガソリン1.5L 6MT: Z/G/X）。各列に 2WD と E-Four/4WD の型式が別々に載っており、4WD が「ー」の列は 2WD のみ。展開して19グレードになる。",
     "method": "型式・車両重量・WLTCモードは pdftotext では列が落ちるため（12列のうち10列しか出ない）、300dpiの画像に書き出して目視で読んだ。",
-    "featuresNotRead": "装備は未取得。ヤリスの装備一覧表は7列（HV Z/G/X/U・ガソリン Z/G/X）で、ガソリン列に「CVT」「6MT」「1.5L」という変速機・排気量ごとの限定が注記として書き込まれている。7列を19グレードへ割り当てるにはこの注記を1つずつ判断する必要があるため、諸元とは分けて別途行う。"
+    "featuresNotRead": "装備は未取得。ヤリスの装備一覧表は7列（HV Z/G/X/U・ガソリン Z/G/X）で、ガソリン列に「CVT」「6MT」「1.5L」という変速機・排気量ごとの限定が注記として書き込まれている。7列を19グレードへ割り当てるにはこの注記を1つずつ判断する必要があるため、諸元とは分けて別途行う。",
+    "readAt2": "2026-08-31（寸法・出力・燃費内訳・エアバッグを追加）",
+    "airbags": "SRSエアバッグ（運転席・助手席）＋SRSサイドエアバッグ（運転席・助手席）＋SRSカーテンシールドエアバッグ（前後席）＝6個。プリウスと違いニーエアバッグが無い。",
+    "minTurningRadius": "最小回転半径は入れていない。12列に対して値の塊が7つしかなく、どの塊がどの列に掛かるかを画像から一意に決められなかった。比較表はこの項目を表示しないため、確かめられないものを書くより空にした。",
+    "cruisingRange": "諸元表に航続可能距離の記載が無いため null のまま。"
   },
   "_featureProvenance": {
     "source": "storage/pdfs/876872b259b742d2595f311ca28fd4ea8b8176ff5f307afad8deb0cd9655c45f.pdf（トヨタ ヤリス 主要装備一覧表 2026-04版）の3〜5ページ",

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { ChangeKind } from '@/db/schema';
 import { FEATURE_COLUMNS } from '@/db/schema';
 import { type ExtractedSpec, normalizeDriveSystem } from './extraction-schema';
@@ -13,7 +14,20 @@ const SPEC_FIELDS = [
   'wltcMode',
   'engineType',
   'transmission',
+  'cruisingRange',
+  'airbags',
+  'transmissionType',
+  'gearCount',
 ] as const;
+
+/**
+ * jsonb 列は塊ごと入れ替える。
+ *
+ * 中の項目ごとに差分を立てる形にはしない。適用側で既存の値へマージすることになり、
+ * 「一部だけ古い値が残る」という追跡しにくい状態を作る。諸元表はこの塊全体の
+ * 出典なので、丸ごと置き換えるほうが出所と一致する。
+ */
+const JSON_FIELDS = ['dimensions', 'performance', 'fuelDetail'] as const;
 
 export type FeatureKey = (typeof FEATURE_COLUMNS)[number];
 
@@ -24,7 +38,17 @@ export interface GradeIdentity {
   driveSystem: string;
 }
 
-export interface NormalizedGrade extends GradeIdentity {
+export interface SpecExtras {
+  cruisingRange?: number | null;
+  airbags?: number | null;
+  transmissionType?: string | null;
+  gearCount?: number | null;
+  dimensions?: Record<string, unknown> | null;
+  performance?: Record<string, unknown> | null;
+  fuelDetail?: Record<string, unknown> | null;
+}
+
+export interface NormalizedGrade extends GradeIdentity, SpecExtras {
   price: number | null;
   seating: number;
   weight: number | null;
@@ -35,7 +59,7 @@ export interface NormalizedGrade extends GradeIdentity {
   features: Record<string, string>;
 }
 
-export interface ExistingGrade extends GradeIdentity {
+export interface ExistingGrade extends GradeIdentity, SpecExtras {
   id: string;
   price: number | null;
   seating: number;
@@ -102,6 +126,13 @@ export function normalizeGrades(spec: ExtractedSpec): NormalizedGrade[] {
     wltcMode: grade.wltcMode,
     engineType: grade.engineType,
     transmission: grade.transmission,
+    cruisingRange: grade.cruisingRange,
+    airbags: grade.airbags,
+    transmissionType: grade.transmissionType,
+    gearCount: grade.gearCount,
+    dimensions: grade.dimensions,
+    performance: grade.performance,
+    fuelDetail: grade.fuelDetail,
     features: (grade.features ?? {}) as Record<string, string>,
   }));
 }
@@ -235,8 +266,10 @@ function newGradeDiff(row: NormalizedGrade, compareFeatures: boolean): ChangeDra
     'wltcMode',
     'engineType',
     'transmission',
+    ...SPEC_FIELDS.filter((field) => row[field] !== undefined),
+    ...JSON_FIELDS.filter((field) => row[field] !== undefined),
   ];
-  for (const field of fields) {
+  for (const field of new Set(fields)) {
     diff[field] = { before: null, after: row[field] ?? null };
   }
   diff.price = { before: null, after: row.price ?? null };
@@ -248,6 +281,43 @@ function newGradeDiff(row: NormalizedGrade, compareFeatures: boolean): ChangeDra
   return diff;
 }
 
+/**
+ * diff の内容から決まるハッシュ。
+ *
+ * change_requests の一意制約 (書類, 種別, 対象, diff_hash) に使う。
+ * (書類, 種別, 対象) だけで縛ると、同じグレードに対する「別の内容の変更」を
+ * 積めない。内容まで見れば、同じ内容の二度押しは弾いたまま、項目を足した
+ * 取り込みは通る（db/schema.ts の diffHash のコメントに経緯がある）。
+ *
+ * キーの順序に依存させないため canonical を通す。
+ */
+export function diffHash(diff: ChangeDraft['diff']): string {
+  return createHash('sha256').update(canonical(diff)).digest('hex').slice(0, 32);
+}
+
+/**
+ * jsonb の値を比べる。キーの順序に依存させない。
+ *
+ * DBから返る jsonb はキーの順序が保存時と違うことがある。素朴に
+ * JSON.stringify すると、中身が同じでも毎回「変更あり」になってしまう。
+ */
+function sameJson(a: unknown, b: unknown): boolean {
+  return canonical(a) === canonical(b);
+}
+
+function canonical(value: unknown): string {
+  if (value === null || value === undefined) return 'null';
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      // null と未設定を同じに扱う。片方が省略しただけで差分を立てない
+      .filter(([, item]) => item !== null && item !== undefined)
+      .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0));
+    return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${canonical(item)}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
 function specChanges(
   found: ExistingGrade,
   row: NormalizedGrade,
@@ -256,9 +326,20 @@ function specChanges(
   const diff: ChangeDraft['diff'] = {};
 
   for (const field of SPEC_FIELDS) {
+    // 取り込み元がその項目を持っていなければ比較しない。
+    // 「まだ読んでいない」を「値が消えた」と取り違えると、毎回・全グレードに
+    // 空振りの変更が立つ（装備で compareFeatures を条件付きにしたのと同じ理由）
+    if (row[field] === undefined) continue;
     const before = found[field] ?? null;
     const after = row[field] ?? null;
     if (!sameValue(before, after)) diff[field] = { before, after };
+  }
+
+  for (const field of JSON_FIELDS) {
+    if (row[field] === undefined) continue;
+    const before = found[field] ?? null;
+    const after = row[field] ?? null;
+    if (!sameJson(before, after)) diff[field] = { before, after };
   }
 
   // 既存側に装備が無い（読み出していない）場合は装備を比較しない。

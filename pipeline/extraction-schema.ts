@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { DRIVE_SYSTEMS, ENGINE_TYPES, FEATURE_AVAILABILITIES } from '@/db/enums';
+import {
+  DRIVE_SYSTEMS,
+  ENGINE_TYPES,
+  FEATURE_AVAILABILITIES,
+  TRANSMISSION_TYPES,
+} from '@/db/enums';
 import { FEATURE_COLUMNS } from '@/db/schema';
 
 export class UnknownEnumValueError extends Error {
@@ -59,6 +64,39 @@ function featureShape(): FeatureShape {
   return shape;
 }
 
+/**
+ * 寸法。grades.dimensions（jsonb）にそのまま入る。
+ *
+ * 列を足さず jsonb にしてあるのは、車種によって載っている項目が違うためである。
+ * 比較表が読むのは length / width / height の3つで、残りは持っていれば表示に使える。
+ */
+const DimensionsSchema = z.object({
+  length: z.number().int().positive(),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  wheelbase: z.number().int().positive().nullish(),
+  groundClearance: z.number().int().positive().nullish(),
+  minTurningRadius: z.number().positive().nullish(),
+});
+
+/**
+ * 出力・トルク。単位付きの文字列で持つ。
+ *
+ * 諸元表の表記は「67kW（91PS）/5,500r.p.m.」のように出力と回転数が一体で、
+ * 数値に分解すると元の情報が落ちる。比較表もそのまま表示する。
+ */
+const PerformanceSchema = z.object({
+  maxPower: z.string().min(1),
+  maxTorque: z.string().min(1),
+});
+
+/** WLTCの内訳。wltcMode（総合値）は別に持つ */
+const FuelDetailSchema = z.object({
+  cityMode: z.number().positive(),
+  suburbanMode: z.number().positive().nullish(),
+  highwayMode: z.number().positive(),
+});
+
 const ExtractedGradeSchema = z.object({
   /** 諸元表に印字されたグレード名。「Z」「G」など */
   name: z.string().min(1),
@@ -75,6 +113,23 @@ const ExtractedGradeSchema = z.object({
   wltcMode: z.number().positive().nullable(),
   engineType: z.enum(ENGINE_TYPES),
   transmission: z.string().nullable(),
+  /**
+   * ここから下は任意である。
+   *
+   * 既に取り込んだ車種のJSONにこれらが無いため、必須にすると再検証で落ちる。
+   * 任意にしておけば「まだ読んでいない」を「値が無い」と取り違えずに済む —
+   * computeChanges は undefined の項目を比較対象から外す。
+   *
+   * ただし LLM に渡すJSONスキーマ側では必須にする（extractionJsonSchema）。
+   * 省略を許すと「判断できないものを明示する」という指示が骨抜きになる。
+   */
+  cruisingRange: z.number().int().positive().nullish(),
+  airbags: z.number().int().min(0).max(20).nullish(),
+  transmissionType: z.enum(TRANSMISSION_TYPES).nullish(),
+  gearCount: z.number().int().min(1).max(10).nullish(),
+  dimensions: DimensionsSchema.optional(),
+  performance: PerformanceSchema.optional(),
+  fuelDetail: FuelDetailSchema.optional(),
   /**
    * 20項目すべてを必須にしてある。
    *
@@ -163,7 +218,19 @@ export function extractionJsonSchema(): unknown {
     >
   );
   const required = grade.required as string[] | undefined;
-  if (required && !required.includes('features')) required.push('features');
+  // 任意にしてあるのは人が書く入力のためであって、モデルには全項目を要求する
+  for (const key of [
+    'features',
+    'cruisingRange',
+    'airbags',
+    'transmissionType',
+    'gearCount',
+    'dimensions',
+    'performance',
+    'fuelDetail',
+  ]) {
+    if (required && !required.includes(key)) required.push(key);
+  }
 
   return schema;
 }

@@ -175,3 +175,72 @@ describe('ヤリスの取り込み用JSON', () => {
     expect(raw._featureProvenance?.appliedExceptions).toBeTruthy();
   });
 });
+
+describe('ヤリスの諸元（寸法・出力・燃費内訳）', () => {
+  it('全19グレードが寸法・出力・燃費内訳・エアバッグを持つ', () => {
+    for (const g of spec.grades) {
+      expect(g.dimensions, g.name).toBeDefined();
+      expect(g.performance, g.name).toBeDefined();
+      expect(g.fuelDetail, g.name).toBeDefined();
+      expect(g.airbags, g.name).toBe(6);
+    }
+  });
+
+  it('4WD は 2WD より全高が高く、燃費が悪い', () => {
+    // 目視で読んだ値が列を取り違えていないかの検算
+    for (const g of spec.grades) {
+      const twoWheel = g.driveSystemRaw === '2WD';
+      expect(g.dimensions!.height, `${g.name}/${g.driveSystemRaw}`).toBe(twoWheel ? 1495 : 1510);
+    }
+
+    const cityOf = (name: string, powertrain: string, drive: string) =>
+      spec.grades.find(
+        (g) => g.name === name && g.powertrain === powertrain && g.driveSystemRaw === drive,
+      )!.fuelDetail!.cityMode;
+
+    expect(cityOf('Z', '1.5L ハイブリッド車', '2WD')).toBeGreaterThan(
+      cityOf('Z', '1.5L ハイブリッド車', 'E-Four'),
+    );
+  });
+
+  it('燃費の総合値が市街地と高速道路のあいだに収まる', () => {
+    /*
+     * WLTCモードは3モードの重み付き平均なので、必ず最小と最大のあいだに入る。
+     * 列を1つずらして読んでいれば、この関係が壊れる可能性が高い。
+     */
+    for (const g of spec.grades) {
+      const { cityMode, suburbanMode, highwayMode } = g.fuelDetail!;
+      const modes = [cityMode, suburbanMode, highwayMode].filter(
+        (v): v is number => typeof v === 'number',
+      );
+      expect(g.wltcMode!, `${g.name}/${g.powertrain}/${g.driveSystemRaw}`).toBeGreaterThanOrEqual(
+        Math.min(...modes),
+      );
+      expect(g.wltcMode!, `${g.name}/${g.powertrain}/${g.driveSystemRaw}`).toBeLessThanOrEqual(
+        Math.max(...modes),
+      );
+    }
+  });
+
+  it('エンジン出力がパワートレインと対応する', () => {
+    for (const g of spec.grades) {
+      const expected =
+        g.engineType === 'ハイブリッド'
+          ? '67（91）/5,500'
+          : g.displacement === 996
+            ? '51（69）/6,000'
+            : '88（120）/6,600';
+      expect(g.performance!.maxPower, `${g.name}/${g.powertrain}`).toBe(expected);
+    }
+  });
+
+  it('6MT だけが段数を持つ', () => {
+    for (const g of spec.grades) {
+      const mt = g.powertrain.includes('6MT');
+      expect(g.transmissionType, g.powertrain).toBe(
+        g.engineType === 'ハイブリッド' ? '電気式無段変速機' : mt ? 'MT' : 'CVT',
+      );
+      expect(g.gearCount ?? null, g.powertrain).toBe(mt ? 6 : null);
+    }
+  });
+});
