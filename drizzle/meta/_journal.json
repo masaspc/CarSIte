@@ -57,6 +57,13 @@
       "when": 1788131202466,
       "tag": "0007_colossal_night_nurse",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788132889784,
+      "tag": "0008_real_stark_industries",
+      "breakpoints": true
     }
   ]
 }

@@ -30,16 +30,37 @@ function parseArgs(argv: string[]): Record<string, string> {
 
 export class RegistrationError extends Error {}
 
-/** ベースパスの形を検査する。年月を後ろに付ける前提が崩れると全件404になる */
-export function assertBaseUrlShape(baseUrl: string): void {
+export type UrlKind = 'monthly' | 'fixed';
+
+/**
+ * URLの形から取得方式を決める。
+ *
+ * トヨタは車種ごとのベースパスに年月を足す（prius_spec_ ＋ 202607.pdf）ので
+ * 末尾が `_` になる。ホンダとスズキは年月を持たない固定URLで、
+ * 同じURLの中身が差し替わる（fit_spec_list.pdf / detail.pdf）。
+ *
+ * 取り違えると全件404になるか、逆に年月を足した存在しないURLを叩き続けるので、
+ * 推測した結果を必ず表示して人が確かめられるようにする。
+ */
+export function inferUrlKind(url: string): UrlKind {
+  return url.endsWith('_') ? 'monthly' : 'fixed';
+}
+
+/** URLの形を検査する。方式ごとに要求が違う */
+export function assertBaseUrlShape(baseUrl: string, kind: UrlKind = inferUrlKind(baseUrl)): void {
   if (!/^https?:\/\//.test(baseUrl)) {
     throw new RegistrationError(
-      `ベースパスは http(s) で始めてください: ${baseUrl}`,
+      `URLは http(s) で始めてください: ${baseUrl}`,
     );
   }
-  if (!baseUrl.endsWith('_')) {
+  if (kind === 'monthly' && !baseUrl.endsWith('_')) {
     throw new RegistrationError(
-      `ベースパスの末尾は "_" にしてください（年月を後ろに付けるため）: ${baseUrl}`,
+      `monthly のベースパスは末尾を "_" にしてください（年月を後ろに付けるため）: ${baseUrl}`,
+    );
+  }
+  if (kind === 'fixed' && !/\.pdf(?:$|[?#])/i.test(baseUrl)) {
+    throw new RegistrationError(
+      `fixed はPDFの完全なURLを指定してください（.pdf で終わる）: ${baseUrl}`,
     );
   }
 }
@@ -51,11 +72,19 @@ async function main() {
 
   if (!modelSlug || !baseUrl) {
     throw new RegistrationError(
-      '使い方: npm run register-source -- --model-slug <slug> --base-url <url>',
+      '使い方: npm run register-source -- --model-slug <slug> --base-url <url> [--url-kind monthly|fixed]\n' +
+        '  monthly … 年月を足す（トヨタ）。末尾が "_" のベースパス\n' +
+        '  fixed   … 年月を持たない固定URL（ホンダ・スズキ）。.pdf で終わる完全なURL\n' +
+        '  省略するとURLの形から推測する',
     );
   }
 
-  assertBaseUrlShape(baseUrl);
+  const kindArg = args['url-kind'];
+  if (kindArg !== undefined && kindArg !== 'monthly' && kindArg !== 'fixed') {
+    throw new RegistrationError(`--url-kind は monthly か fixed です: ${kindArg}`);
+  }
+  const urlKind: UrlKind = kindArg ?? inferUrlKind(baseUrl);
+  assertBaseUrlShape(baseUrl, urlKind);
 
   const found = await db
     .select({
@@ -115,10 +144,11 @@ async function main() {
 
   const [created] = await db
     .insert(specSources)
-    .values({ modelId: model.id, pdfBaseUrl: baseUrl })
+    .values({ modelId: model.id, pdfBaseUrl: baseUrl, urlKind })
     .returning({ id: specSources.id });
 
   console.log(`登録しました: ${model.manufacturer} ${model.name} -> ${baseUrl}`);
+  console.log(`取得方式: ${urlKind}${kindArg === undefined ? '（URLの形から推測）' : ''}`);
   console.log(`spec_sources.id = ${created.id}`);
 }
 
