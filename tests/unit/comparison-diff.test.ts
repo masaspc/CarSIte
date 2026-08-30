@@ -88,6 +88,18 @@ describe('buildComparison — 三値判定', () => {
     const nav = sections.flatMap((s) => s.rows).find((r) => r.label === 'カーナビ');
     expect(nav?.state).toBe('different');
   });
+
+  it('airbags: 0 は不明ではなく既知の値として扱う（意図的な仕様。旧実装のtruthy判定には戻さない）', () => {
+    // 書き換え前の ComparisonTable は `grade.airbags ? ... : undefined` という
+    // truthy 判定だったため、airbags: 0（0個という既知の事実）を「不明」に
+    // 潰していた。新実装は isUnknown で null/undefined/''/'unknown' だけを
+    // 不明として扱うため、0 は '0個' という値として表示・比較される。
+    const sections = buildComparison([row({ airbags: 0 }), row({ airbags: 6 })]);
+    const airbags = sections.flatMap((s) => s.rows).find((r) => r.label === 'エアバッグ');
+    expect(airbags?.state).toBe('different');
+    expect(airbags?.cells[0].text).toBe('0個');
+    expect(airbags?.cells[1].text).toBe('6個');
+  });
 });
 
 describe('buildComparison — 3台のとき', () => {
@@ -130,11 +142,74 @@ describe('buildComparison — 生値で比較する', () => {
   });
 
   it('整形後の文字列で比較していない', () => {
-    // "¥3,998,500" は数値に落ちないので、表示値で比較すると
-    // sameValue の numeric 吸収が効かなくなる
-    const sections = buildComparison([row({ price: 100 }), row({ price: 100 })]);
-    const price = sections.flatMap((s) => s.rows).find((r) => r.label === '価格');
-    expect(price?.state).toBe('same');
+    // ecoCarTax は真偽値 true と文字列 'true' のどちらも「対象」に整形されるため
+    // 表示文字列は一致する。しかし生値としては型が異なり sameValue は different と
+    // 判定する。表示文字列の比較ではこの違いを検出できないため、これは
+    // judge() が整形後の文字列ではなく生値を見ていることの実証になる。
+    const sections = buildComparison([row({ ecoCarTax: true }), row({ ecoCarTax: 'true' })]);
+    const ecoTax = sections.flatMap((s) => s.rows).find((r) => r.label === 'エコカー減税');
+    expect(ecoTax?.cells[0].text).toBe(ecoTax?.cells[1].text);
+    expect(ecoTax?.state).toBe('different');
+  });
+});
+
+describe('buildComparison — セクションと行ラベルの並び', () => {
+  it('書き換え前の ComparisonTable と一字一句同じセクション・行ラベル・順序を保つ', () => {
+    // リテラルで固定する。buildComparison から生成すると何も守らないテストになる。
+    const expected = [
+      { label: '基本情報', rows: ['価格', 'ボディタイプ', '発売年月', '乗車定員'] },
+      { label: 'サイズ', rows: ['全長 (mm)', '全幅 (mm)', '全高 (mm)', '車両重量 (kg)'] },
+      {
+        label: 'エンジン・性能',
+        rows: ['エンジンタイプ', '総排気量 (cc)', '最高出力', '最大トルク', 'トランスミッション', '駆動方式'],
+      },
+      {
+        label: '燃費性能',
+        rows: [
+          'WLTCモード (km/L)',
+          '市街地モード (km/L)',
+          '高速道路モード (km/L)',
+          '航続可能距離 (km)',
+          'エコカー減税',
+          'エアバッグ',
+        ],
+      },
+      {
+        label: '安全装備',
+        rows: [
+          '衝突被害軽減ブレーキ',
+          '誤発進抑制機能',
+          '車線逸脱警報',
+          '車線維持支援',
+          'ACC',
+          'ブラインドスポットモニター',
+          '360度カメラ',
+          '駐車支援システム',
+        ],
+      },
+      {
+        label: '快適装備',
+        rows: [
+          'カーナビ',
+          'ETC',
+          'バックカメラ',
+          'パワーシート',
+          'シートヒーター',
+          'ステアリングヒーター',
+          'オートエアコン',
+          'LEDヘッドライト',
+          'スマートキー',
+          'パワーバックドア',
+          'ハンズフリーバックドア',
+          'サンルーフ',
+        ],
+      },
+    ];
+
+    const sections = buildComparison([row(), row({ price: 4_251_500 })]);
+    const actual = sections.map((s) => ({ label: s.label, rows: s.rows.map((r) => r.label) }));
+
+    expect(actual).toEqual(expected);
   });
 });
 

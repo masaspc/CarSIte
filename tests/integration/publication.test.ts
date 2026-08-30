@@ -25,6 +25,8 @@ const rand = () => Math.random().toString(36).slice(2, 10);
  * 本番の行を一切掴まないよう、テスト用の車種2件とグレード1件をここで作成し、
  * afterAll で models を削除する（grades は cascade で消える）。
  */
+const createdModelIds: string[] = [];
+
 async function newModel(overrides: Record<string, unknown> = {}) {
   const token = rand();
   const [row] = await db
@@ -47,8 +49,8 @@ async function newGrade(modelId: string, overrides: Record<string, unknown> = {}
     .insert(grades)
     .values({
       modelId,
-      name: 'Z',
-      slug: `z-${rand()}`,
+      name: '__test_Z',
+      slug: `__test_z-${rand()}`,
       price: 3_200_000,
       engineType: 'ハイブリッド',
       driveSystem: 'FF',
@@ -58,8 +60,6 @@ async function newGrade(modelId: string, overrides: Record<string, unknown> = {}
     .returning();
   return row;
 }
-
-const createdModelIds: string[] = [];
 
 let gradeId: string;
 let modelId: string;

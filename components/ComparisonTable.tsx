@@ -59,7 +59,7 @@ export default function ComparisonTable({ grades, onRemove, showAll, onToggleSho
           {canToggle ? (
             <>
               {total}項目中 {different}項目が異なります
-              {unknown > 0 && `（うち${unknown}項目は情報が不足しています）`}
+              {unknown > 0 && `（ほかに${unknown}項目は情報が不足しています）`}
             </>
           ) : (
             'もう1台追加すると違いを表示できます'
