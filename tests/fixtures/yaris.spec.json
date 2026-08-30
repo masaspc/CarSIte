@@ -1062,6 +1062,28 @@
         "adaptiveCruiseControl←none(G/X列の注記「CVT」)",
         "falseStartSuppression←none(G/X列の注記「CVT」)"
       ]
+    },
+    "rowMapping": {
+      "collisionMitigationBrake": "プリクラッシュセーフティ（歩行者［昼夜］・自転車［昼夜］・自動二輪車［昼］検知機能付衝突回避支援タイプ/ミリ波レーダー＋単眼カメラ方式）",
+      "falseStartSuppression": "パーキングサポートブレーキ（前後方静止物）。G・X列は「CVT」と限定されており、6MT版には代わりにクリアランスソナー＆バックソナーが入る",
+      "laneDepartureWarning": "レーンディパーチャーアラート（ステアリング制御機能付）［LDA］",
+      "laneKeepingAssist": "レーントレーシングアシスト［LTA］。ガソリンX列は「1.5L」と限定されており、1.0Lは none",
+      "adaptiveCruiseControl": "レーダークルーズ（全車速追従機能付）。脚注＊33により1.0Lは設定なし",
+      "blindSpotMonitor": "ブラインドスポットモニター［BSM］",
+      "camera360": "パノラミックビューモニター",
+      "parkingAssist": "記載なし。ヤリスにアドバンストパークの設定が無いため全グレード none",
+      "navigation": "ディスプレイオーディオ Plus（10.5インチ）/ 同（8インチ）/ ディスプレイオーディオ（8インチ）の3行の和。全グレードがいずれかを標準装備する",
+      "etc": "ETC2.0ユニット（VICS機能付）と ETC車載器 の2行の和。Z/G/U は ETC2.0、X は ETC車載器",
+      "backCamera": "バックガイドモニター",
+      "powerSeat": "記載なし。ヤリスに電動シートの設定が無いため全グレード none",
+      "seatHeater": "シートヒーター（運転席・助手席）",
+      "steeringHeater": "記載なし。ヤリスにステアリングヒーターの設定が無いため全グレード none",
+      "autoAircon": "オートエアコン＆ダイヤル式ヒーターコントロールパネル（ピアノブラックパネル）。無い列は下の行のマニュアルエアコンになる",
+      "ledHeadlight": "3灯式フルLEDヘッドランプ（マニュアルレベリング機能付）",
+      "smartKey": "スマートエントリー（運転席・助手席・バックドア/アンサーバック機能付）",
+      "powerBackDoor": "記載なし。ヤリスにパワーバックドアの設定が無いため全グレード none",
+      "handsFreeBackDoor": "記載なし。ヤリスにハンズフリー開閉の設定が無いため全グレード none",
+      "sunroof": "記載なし。ヤリスにサンルーフの設定が無いため全グレード none"
     }
   }
 }

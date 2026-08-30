@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { matchFeature } from '@/lib/feature-vocabulary';
 import {
   DEFAULT_LEGEND,
   classify,
@@ -121,7 +122,7 @@ function report(reading: PageReading): void {
   const { page, columns, bands, words } = reading;
   console.log(`\n=== ${page}ページ  列: ${columns.map((c) => c.label).join(' / ')}`);
   console.log(
-    `${'帯 (pt)'.padEnd(15)} ${columns.map((c) => c.label.padEnd(9)).join('')} 行ラベルの候補`,
+    `${'帯 (pt)'.padEnd(14)} ${columns.map((c) => c.label.padEnd(9)).join('')} ${'行ラベルの候補'.padEnd(48)} 装備列の候補`,
   );
 
   for (const band of bands) {
@@ -133,9 +134,11 @@ function report(reading: PageReading): void {
       : band.values
           .map((value) => (value === null ? '???' : toFeatureAvailability(value)).padEnd(9))
           .join('');
-    const labels = labelsNear(words, band, LABEL_RIGHT_OF).join(' / ').slice(0, 60);
+    const candidates = labelsNear(words, band, LABEL_RIGHT_OF);
+    const labels = candidates.join(' / ').slice(0, 52);
     const range = `${band.top.toFixed(1)}-${band.bottom.toFixed(1)}`;
-    console.log(`${range.padEnd(15)} ${cells} ${labels}`);
+    const suggestion = sectionHeader ? '' : suggest(candidates);
+    console.log(`${range.padEnd(14)} ${cells} ${labels.padEnd(54)} ${suggestion}`);
   }
 
   const unsure = bands.filter(
@@ -147,6 +150,24 @@ function report(reading: PageReading): void {
         '凡例の色が既定と違う可能性がある（DEFAULT_LEGEND を確認すること）',
     );
   }
+}
+
+/**
+ * 行ラベルから装備列の候補を出す（lib/feature-vocabulary.ts）。
+ *
+ * 1つに決めない。決めると取り違えたときに気づけない。
+ * 何も当たらなければ空にする。それは「その表記を知らない」という意味であり、
+ * 新しいメーカーの初回は必ずそうなる。
+ */
+function suggest(labels: string[]): string {
+  const found = new Map<string, string>();
+  for (const label of [...labels, labels.join('')]) {
+    for (const match of matchFeature(label)) {
+      if (!found.has(match.column)) found.set(match.column, match.term);
+    }
+  }
+  if (found.size === 0) return '';
+  return `→ ${[...found.keys()].join(' / ')}`;
 }
 
 function parseArgs(argv: string[]): Record<string, string> {
