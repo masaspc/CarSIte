@@ -1,4 +1,5 @@
 import { FEATURE_COLUMNS, type FeatureColumn } from '@/db/schema';
+import { FEATURE_VOCABULARY } from '@/lib/feature-vocabulary';
 import type { ComparisonRow } from '@/db/queries';
 import { sameValue } from '@/lib/same-value';
 
@@ -38,28 +39,15 @@ const FEATURE_LABEL: Record<string, string> = {
   unknown: EMPTY,
 };
 
-const FEATURE_NAME: Record<FeatureColumn, string> = {
-  collisionMitigationBrake: '衝突被害軽減ブレーキ',
-  falseStartSuppression: '誤発進抑制機能',
-  laneDepartureWarning: '車線逸脱警報',
-  laneKeepingAssist: '車線維持支援',
-  adaptiveCruiseControl: 'ACC',
-  blindSpotMonitor: 'ブラインドスポットモニター',
-  camera360: '360度カメラ',
-  parkingAssist: '駐車支援システム',
-  navigation: 'カーナビ',
-  etc: 'ETC',
-  backCamera: 'バックカメラ',
-  powerSeat: 'パワーシート',
-  seatHeater: 'シートヒーター',
-  steeringHeater: 'ステアリングヒーター',
-  autoAircon: 'オートエアコン',
-  ledHeadlight: 'LEDヘッドライト',
-  smartKey: 'スマートキー',
-  powerBackDoor: 'パワーバックドア',
-  handsFreeBackDoor: 'ハンズフリーバックドア',
-  sunroof: 'サンルーフ',
-};
+/**
+ * 装備の表示名は lib/feature-vocabulary.ts が持つ。
+ *
+ * 以前はここに20項目を直書きしていたが、辞書側にも同じ名前が要る。
+ * 二重に持つと、画面の名前と取り込み時に使う名前が食い違っても気づけない。
+ */
+const FEATURE_NAME: Record<FeatureColumn, string> = Object.fromEntries(
+  FEATURE_COLUMNS.map((column) => [column, FEATURE_VOCABULARY[column].label]),
+) as Record<FeatureColumn, string>;
 
 const SAFETY_FEATURES: FeatureColumn[] = [
   'collisionMitigationBrake', 'falseStartSuppression', 'laneDepartureWarning',
