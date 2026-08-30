@@ -101,7 +101,8 @@ export interface PendingChange {
 
 export interface GroupedChangeRequests {
   specDocumentId: string;
-  documentMonth: string;
+  /** URLに年月を持たないメーカー（ホンダ・スズキ等）では null */
+  documentMonth: string | null;
   pdfUrl: string;
   modelId: string;
   manufacturer: string;

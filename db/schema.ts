@@ -33,6 +33,15 @@ export const driveSystemEnum = pgEnum('drive_system', DRIVE_SYSTEMS);
 export const transmissionTypeEnum = pgEnum('transmission_type', TRANSMISSION_TYPES);
 export const featureAvailabilityEnum = pgEnum('feature_availability', FEATURE_AVAILABILITIES);
 export const publicationStatusEnum = pgEnum('publication_status', PUBLICATION_STATUSES);
+/**
+ * 諸元表PDFのURLの作り方。
+ *
+ * トヨタは車種ごとのベースパスに年月を足す（prius_spec_202607.pdf）。
+ * ホンダとスズキは年月を持たない固定URLで、同じURLの中身が差し替わる
+ * （fit_spec_list.pdf / detail.pdf）。前者は最新の年月を探す必要があるが、
+ * 後者は取りに行って sha256 を比べるだけでよい。
+ */
+export const sourceUrlKindEnum = pgEnum('source_url_kind', ['monthly', 'fixed']);
 
 export type BodyType = (typeof bodyTypeEnum.enumValues)[number];
 export type EngineType = (typeof engineTypeEnum.enumValues)[number];
@@ -269,9 +278,13 @@ export const specSources = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     modelId: uuid('model_id').notNull().references(() => models.id, { onDelete: 'cascade' }),
-    /** 例: https://toyota.jp/pages/contents/prius/005_p_001/pdf/prius_spec_ */
+    /**
+     * monthly なら年月を足す前のベースパス
+     * （https://toyota.jp/.../prius_spec_）、fixed ならPDFの完全なURL。
+     */
     pdfBaseUrl: text('pdf_base_url').notNull(),
-    /** 前回200が返った年月。初回は null で、maxLookback ぶん遡って探す */
+    urlKind: sourceUrlKindEnum('url_kind').notNull().default('monthly'),
+    /** 前回200が返った年月。初回は null で、maxLookback ぶん遡って探す。fixed では常に null */
     knownMonth: text('known_month'),
     registeredAt: timestamp('registered_at', { withTimezone: true }).notNull().defaultNow(),
     lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
@@ -301,7 +314,8 @@ export const specDocuments = pgTable(
       .notNull()
       .references(() => specSources.id, { onDelete: 'cascade' }),
     pdfUrl: text('pdf_url').notNull(),
-    documentMonth: text('document_month').notNull(),
+    /** 諸元表の版を表す年月。URLに年月を持たないメーカー（fixed）では null */
+    documentMonth: text('document_month'),
     sha256: text('sha256').notNull(),
     byteSize: integer('byte_size').notNull(),
     pageCount: smallint('page_count').notNull(),
@@ -311,6 +325,7 @@ export const specDocuments = pgTable(
   (t) => [
     unique('spec_documents_source_sha_key').on(t.specSourceId, t.sha256),
     index('spec_documents_source_id_idx').on(t.specSourceId),
+    // NULL は CHECK が NULL に評価されるため通る。年月を持たないメーカーはこれで良い
     check('spec_documents_month_check', sql`${t.documentMonth} ~ '^[0-9]{4}-[0-9]{2}$'`),
   ],
 );

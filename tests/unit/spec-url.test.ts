@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { assertBaseUrlShape, inferUrlKind } from '@/scripts/register-source';
 import {
   buildPdfUrl,
   candidateMonths,
@@ -76,5 +77,49 @@ describe('isStale', () => {
   it('18か月未満なら古くない', () => {
     expect(isStale('2026-07', '2026-08')).toBe(false);
     expect(isStale('2025-03', '2026-08')).toBe(false); // 17か月
+  });
+});
+
+describe('inferUrlKind / assertBaseUrlShape', () => {
+  it('末尾が _ なら monthly（トヨタ）', () => {
+    expect(inferUrlKind('https://toyota.jp/pages/contents/prius/005_p_001/pdf/prius_spec_')).toBe(
+      'monthly',
+    );
+  });
+
+  it('.pdf で終わるなら fixed（ホンダ・スズキ）', () => {
+    // 年月を持たず、同じURLの中身が差し替わる
+    expect(inferUrlKind('https://www.honda.co.jp/Fit/common/pdf/fit_spec_list.pdf')).toBe('fixed');
+    expect(inferUrlKind('https://www.suzuki.co.jp/car/alto/assets/pdf/detail.pdf')).toBe('fixed');
+  });
+
+  it('monthly なのに .pdf を渡したら弾く', () => {
+    // 年月を足すと fit_spec_list.pdf202607.pdf になり全件404になる
+    expect(() =>
+      assertBaseUrlShape('https://www.honda.co.jp/Fit/common/pdf/fit_spec_list.pdf', 'monthly'),
+    ).toThrow(/末尾を "_"/);
+  });
+
+  it('fixed なのにベースパスを渡したら弾く', () => {
+    // 年月を足さずに叩くと prius_spec_ という存在しないURLになる
+    expect(() => assertBaseUrlShape('https://toyota.jp/.../prius_spec_', 'fixed')).toThrow(
+      /\.pdf で終わる/,
+    );
+  });
+
+  it('http(s) 以外は弾く', () => {
+    expect(() => assertBaseUrlShape('ftp://example.com/a.pdf')).toThrow(/http\(s\)/);
+  });
+
+  it('実物の3社のURLがそれぞれの検査を通る', () => {
+    const cases: Array<[string, 'monthly' | 'fixed']> = [
+      ['https://toyota.jp/pages/contents/prius/005_p_001/pdf/prius_spec_', 'monthly'],
+      ['https://www.honda.co.jp/Fit/common/pdf/fit_spec_list.pdf', 'fixed'],
+      ['https://www.suzuki.co.jp/car/alto/assets/pdf/detail.pdf', 'fixed'],
+    ];
+    for (const [url, kind] of cases) {
+      expect(inferUrlKind(url)).toBe(kind);
+      expect(() => assertBaseUrlShape(url)).not.toThrow();
+    }
   });
 });

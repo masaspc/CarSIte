@@ -42,7 +42,7 @@ export const FEATURE_VOCABULARY: Record<FeatureColumn, FeatureTerms> = {
     label: '衝突被害軽減ブレーキ',
     toyota: ['プリクラッシュセーフティ'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['衝突軽減ブレーキ', 'CMBS'] },
   },
   falseStartSuppression: {
     label: '誤発進抑制機能',
@@ -50,38 +50,38 @@ export const FEATURE_VOCABULARY: Record<FeatureColumn, FeatureTerms> = {
     // （周囲静止物）はアドバンストパークと同じ行にあり、別の列に入る
     toyota: ['パーキングサポートブレーキ（前後方静止物）'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['誤発進抑制機能'] },
   },
   laneDepartureWarning: {
     label: '車線逸脱警報',
     toyota: ['レーンディパーチャーアラート'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['路外逸脱抑制機能'] },
   },
   laneKeepingAssist: {
     label: '車線維持支援',
     toyota: ['レーントレーシングアシスト'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['車線維持支援システム', 'LKAS'] },
   },
   adaptiveCruiseControl: {
     label: 'ACC',
     // ヤリスは行ラベルが「レーダークルーズ」で改行され、続きが別セルにある
     toyota: ['レーダークルーズコントロール', 'レーダークルーズ'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['アダプティブクルーズコントロール', 'ACC'] },
   },
   blindSpotMonitor: {
     label: 'ブラインドスポットモニター',
     toyota: ['ブラインドスポットモニター'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['ブラインドスポットインフォメーション'] },
   },
   camera360: {
     label: '360度カメラ',
     toyota: ['パノラミックビューモニター'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['マルチビューカメラシステム'] },
   },
   parkingAssist: {
     label: '駐車支援システム',
@@ -93,14 +93,14 @@ export const FEATURE_VOCABULARY: Record<FeatureColumn, FeatureTerms> = {
     label: 'カーナビ',
     toyota: ['ディスプレイオーディオ'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['Honda CONNECTディスプレー', 'ナビ装着用スペシャルパッケージ'] },
   },
   etc: {
     label: 'ETC',
     // X系グレードは ETC2.0 ではなく素の ETC車載器 が標準になる
     toyota: ['ETC2.0ユニット', 'ETC車載器'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['ETC2.0車載器'] },
   },
   backCamera: {
     label: 'バックカメラ',
@@ -119,31 +119,31 @@ export const FEATURE_VOCABULARY: Record<FeatureColumn, FeatureTerms> = {
     label: 'シートヒーター',
     toyota: ['シートヒーター'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['シートヒーター'] },
   },
   steeringHeater: {
     label: 'ステアリングヒーター',
     toyota: ['ステアリングヒーター'],
     observedIn: ['prius_spec_202607'],
-    others: {},
+    others: { ホンダ: ['ステアリングヒーター'] },
   },
   autoAircon: {
     label: 'オートエアコン',
     toyota: ['オートエアコン'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['フルオート・エアコンディショナー'] },
   },
   ledHeadlight: {
     label: 'LEDヘッドライト',
     toyota: ['Bi-Beam LEDヘッドランプ', '3灯式フルLEDヘッドランプ', 'LEDヘッドランプ'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['LEDヘッドライト'] },
   },
   smartKey: {
     label: 'スマートキー',
     toyota: ['スマートエントリー'],
     observedIn: ['prius_spec_202607', 'yaris_spec_202604'],
-    others: {},
+    others: { ホンダ: ['Hondaスマートキーシステム'] },
   },
   powerBackDoor: {
     label: 'パワーバックドア',

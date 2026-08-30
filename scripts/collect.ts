@@ -67,6 +67,7 @@ export async function collect(deps: CollectDeps): Promise<CollectSummary> {
       id: specSources.id,
       modelId: specSources.modelId,
       pdfBaseUrl: specSources.pdfBaseUrl,
+      urlKind: specSources.urlKind,
       knownMonth: specSources.knownMonth,
       consecutiveFailures: specSources.consecutiveFailures,
       manufacturer: models.manufacturer,
@@ -108,6 +109,7 @@ type SourceRow = {
   id: string;
   modelId: string;
   pdfBaseUrl: string;
+  urlKind: 'monthly' | 'fixed';
   knownMonth: string | null;
   consecutiveFailures: number;
 };
@@ -119,33 +121,51 @@ async function collectOne(
   deps: CollectDeps,
   label: string,
 ): Promise<OneOutcome> {
-  // 1. 最新の年月を突き止める
-  const found = await findLatestMonth(
-    { pdfBaseUrl: source.pdfBaseUrl, knownMonth: source.knownMonth },
-    deps.http,
-    deps.now,
-  );
+  /*
+   * 1. 取りに行くURLを決める
+   *
+   * monthly（トヨタ）は最新の年月を探す必要がある。同時に存在する年月は1つで、
+   * 古い版は消えるため「200が返った年月が最新版」と言い切れる。
+   *
+   * fixed（ホンダ・スズキ）は年月を持たず、同じURLの中身が差し替わる。
+   * 探索は要らず、取りに行って sha256 を比べるだけでよい。
+   */
+  let month: string | null = null;
+  let url: string;
 
-  if ('deadBaseUrl' in found) {
-    const message = `ベースパスが見つかりません（サイト構成が変わった可能性）: ${source.pdfBaseUrl}`;
-    deps.log(`  ${label}: ${message}`);
-    if (deps.dryRun) return 'needs_attention';
-    const escalated = await recordFailure(source.id, source.consecutiveFailures, message);
-    return escalated ? 'needs_attention' : 'unchanged';
-  }
+  if (source.urlKind === 'fixed') {
+    url = source.pdfBaseUrl;
+  } else {
+    const found = await findLatestMonth(
+      { pdfBaseUrl: source.pdfBaseUrl, knownMonth: source.knownMonth },
+      deps.http,
+      deps.now,
+    );
 
-  const month = found.found;
-  const url = buildPdfUrl(source.pdfBaseUrl, month);
-
-  // 見つかった年月が古すぎる。別セクションIDに移った可能性がある
-  if (isStale(month, deps.now)) {
-    const message = `${NEEDS_ATTENTION} 最新の諸元表が ${month} で止まっています（別のセクションIDに移った可能性）`;
-    deps.log(`  ${label}: ${message}`);
-    if (!deps.dryRun) {
-      await db.update(specSources).set({ lastError: message }).where(eq(specSources.id, source.id));
+    if ('deadBaseUrl' in found) {
+      const message = `ベースパスが見つかりません（サイト構成が変わった可能性）: ${source.pdfBaseUrl}`;
+      deps.log(`  ${label}: ${message}`);
+      if (deps.dryRun) return 'needs_attention';
+      const escalated = await recordFailure(source.id, source.consecutiveFailures, message);
+      return escalated ? 'needs_attention' : 'unchanged';
     }
-    return 'needs_attention';
+
+    month = found.found;
+    url = buildPdfUrl(source.pdfBaseUrl, month);
+
+    // 見つかった年月が古すぎる。別セクションIDに移った可能性がある
+    if (isStale(month, deps.now)) {
+      const message = `${NEEDS_ATTENTION} 最新の諸元表が ${month} で止まっています（別のセクションIDに移った可能性）`;
+      deps.log(`  ${label}: ${message}`);
+      if (!deps.dryRun) {
+        await db.update(specSources).set({ lastError: message }).where(eq(specSources.id, source.id));
+      }
+      return 'needs_attention';
+    }
   }
+
+  /** ログの見出し。fixed は年月を持たないので「最新版」と書く */
+  const version = month ?? '最新版';
 
   // 2. 取得して検査する
   const pdf = await fetchAndValidate(url, deps.http, deps.countPages);
@@ -158,7 +178,7 @@ async function collectOne(
 
   if (duplicate) {
     // 中身が変わっていない
-    deps.log(`  ${label}: ${month} は前回と同じ内容`);
+    deps.log(`  ${label}: ${version} は前回と同じ内容`);
     if (!deps.dryRun) {
       await db
         .update(specSources)
@@ -169,7 +189,7 @@ async function collectOne(
   }
 
   if (deps.dryRun) {
-    deps.log(`  ${label}: ${month} は前回と内容が違う（${pdf.byteSize} バイト / ${pdf.pageCount} ページ）`);
+    deps.log(`  ${label}: ${version} は前回と内容が違う（${pdf.byteSize} バイト / ${pdf.pageCount} ページ）`);
     return 'unchanged';
   }
 
@@ -201,14 +221,15 @@ async function collectOne(
   await db
     .update(specSources)
     .set({
-      knownMonth: month,
+      // fixed は年月を持たないので更新しない（常に null のまま）
+      ...(month === null ? {} : { knownMonth: month }),
       lastCheckedAt: new Date(),
       consecutiveFailures: 0,
       lastError: null,
     })
     .where(eq(specSources.id, source.id));
 
-  deps.log(`  ${label}: ${month} は前回と内容が違う。取り込み待ち（npm run ingest-spec -- --model-slug <slug>）`);
+  deps.log(`  ${label}: ${version} は前回と内容が違う。取り込み待ち（npm run ingest-spec -- --model-slug <slug>）`);
   return 'detected';
 }
 

@@ -88,7 +88,7 @@ export default function ChangeRequestList({ groups }: { groups: GroupedChangeReq
                 {group.manufacturer} {group.modelName}
               </h2>
               <p className="mt-1 text-sm text-gray-600">
-                {group.documentMonth} の諸元表 / {group.changes.length} 件の変更
+                {group.documentMonth ?? '最新版'} の諸元表 / {group.changes.length} 件の変更
                 <a
                   href={group.pdfUrl}
                   target="_blank"

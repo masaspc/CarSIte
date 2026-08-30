@@ -36,10 +36,25 @@ describe('辞書の完全性', () => {
     expect(unverified).toEqual(['handsFreeBackDoor']);
   });
 
-  it('他社の表記はまだ入っていない（読んでから足す）', () => {
-    // 読まずに書くと推測が混ざる。実際にその諸元表を読んだときに足す
+  it('表記を入れてよいのは、実際に諸元表を読んだメーカーだけ', () => {
+    /*
+     * 読まずに書くと推測が混ざり、その推測に他社を合わせることになる。
+     * 読んだメーカーはここに足し、経緯を docs/research/ に残す。
+     *   ホンダ … 2026-08-31-honda-structure.md（fit_equipment_list.pdf）
+     */
+    const READ = new Set(['ホンダ']);
     for (const column of FEATURE_COLUMNS) {
-      expect(Object.keys(FEATURE_VOCABULARY[column].others), column).toEqual([]);
+      for (const maker of Object.keys(FEATURE_VOCABULARY[column].others)) {
+        expect(READ, `${column} の ${maker}`).toContain(maker);
+      }
+    }
+  });
+
+  it('入れた表記は空配列でない', () => {
+    for (const column of FEATURE_COLUMNS) {
+      for (const [maker, terms] of Object.entries(FEATURE_VOCABULARY[column].others)) {
+        expect(terms?.length, `${column} の ${maker}`).toBeGreaterThan(0);
+      }
     }
   });
 });
@@ -119,5 +134,55 @@ describe('matchFeature — 実物の行ラベル', () => {
      */
     expect(matchFeature('パーキングサポートブレーキ（後方接近車両）')).toEqual([]);
     expect(matchFeature('パーキングサポートブレーキ（周囲静止物）')).toEqual([]);
+  });
+});
+
+describe('ホンダ — 1行が複数の装備を覆う', () => {
+  it('Honda SENSING の1行が5つの列を埋める', () => {
+    /*
+     * ホンダは運転支援をまとめて1行にする。トヨタは Toyota Safety Sense の
+     * 中身を1行ずつ別の行に書くので1行1機能で対応がついていた。
+     *
+     * matchFeature が当たった列を全部返す作りだからこの形を扱える。
+     * 1つに絞る作りにしていたら、ここで作り直しになっていた。
+     */
+    const label =
+      'Honda SENSING（衝突軽減ブレーキ（CMBS）、誤発進抑制機能※1、後方誤発進抑制機能※1、' +
+      '近距離衝突軽減ブレーキ※1、歩行者事故低減ステアリング、路外逸脱抑制機能、' +
+      '渋滞追従機能付アダプティブクルーズコントロール（ACC）、車線維持支援システム（LKAS））';
+
+    const columns = new Set(matchFeature(label).map((m) => m.column));
+    for (const expected of [
+      'collisionMitigationBrake',
+      'falseStartSuppression',
+      'laneDepartureWarning',
+      'laneKeepingAssist',
+      'adaptiveCruiseControl',
+    ] as const) {
+      expect(columns, expected).toContain(expected);
+    }
+  });
+
+  it('ホンダの単独行もそれぞれ当たる', () => {
+    const cases: Array<[string, string]> = [
+      ['ブラインドスポットインフォメーション', 'blindSpotMonitor'],
+      ['マルチビューカメラシステム', 'camera360'],
+      ['Honda CONNECTディスプレー＋ETC2.0車載器〈ナビゲーション連動〉', 'navigation'],
+      ['運転席＆助手席シートヒーター', 'seatHeater'],
+      ['フルオート・エアコンディショナー', 'autoAircon'],
+      ['LEDヘッドライト〈デイタイムランニングランプ付〉', 'ledHeadlight'],
+      ['Hondaスマートキーシステム（降車時オートドアロック機能/キー2個付）', 'smartKey'],
+    ];
+    for (const [label, column] of cases) {
+      expect(matchFeature(label).map((m) => m.column), label).toContain(column);
+    }
+  });
+
+  it('ETC の行はナビとETCの両方に当たる（同じ行で両方が付く）', () => {
+    const columns = matchFeature('Honda CONNECTディスプレー＋ETC2.0車載器〈ナビゲーション連動〉').map(
+      (m) => m.column,
+    );
+    expect(columns).toContain('navigation');
+    expect(columns).toContain('etc');
   });
 });
