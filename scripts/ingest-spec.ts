@@ -12,7 +12,7 @@ import {
   specSources,
 } from '@/db/schema';
 import { ExtractedSpecSchema, type ExtractedSpec } from '@/pipeline/extraction-schema';
-import { computeChanges, normalizeGrades, type ExistingGrade } from '@/pipeline/diff';
+import { computeChanges, diffHash, normalizeGrades, type ExistingGrade } from '@/pipeline/diff';
 import { decideApproval } from '@/pipeline/approval-rules';
 
 /**
@@ -142,6 +142,7 @@ export async function ingestSpec(modelSlug: string, spec: unknown): Promise<Inge
         kind: draft.kind,
         targetKey: draft.targetKey,
         diff: draft.diff,
+        diffHash: diffHash(draft.diff),
         status: decision.auto ? 'approved' : 'pending',
         reason: decision.auto ? null : decision.reason,
         decidedBy: decision.auto ? 'system' : null,
@@ -178,6 +179,13 @@ async function loadExistingGrades(modelId: string): Promise<ExistingGrade[]> {
       wltcMode: row.wltcMode,
       engineType: row.engineType,
       transmission: row.transmission,
+      cruisingRange: row.cruisingRange,
+      airbags: row.airbags,
+      transmissionType: row.transmissionType,
+      gearCount: row.gearCount,
+      dimensions: row.dimensions as Record<string, unknown> | null,
+      performance: row.performance as Record<string, unknown> | null,
+      fuelDetail: row.fuelDetail as Record<string, unknown> | null,
       discontinuedAt: row.discontinuedAt,
       features,
     };

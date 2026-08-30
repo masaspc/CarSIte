@@ -215,3 +215,75 @@ describe.runIf(hasApiKey)('ゴールデンPDFの抽出', () => {
     expect(rows.every((row) => row.price === null)).toBe(true);
   }, 300_000);
 });
+
+describe('プリウスの諸元（寸法・出力・燃費内訳）', () => {
+  const spec = JSON.parse(
+    readFileSync(path.resolve(__dirname, '../fixtures/prius.spec.json'), 'utf8'),
+  ) as {
+    grades: Array<{
+      name: string;
+      powertrain: string;
+      driveSystemRaw: string;
+      displacement: number;
+      wltcMode: number;
+      airbags?: number;
+      dimensions?: { height: number; groundClearance?: number | null };
+      performance?: { maxPower: string };
+      fuelDetail?: { cityMode: number; suburbanMode?: number | null; highwayMode: number };
+    }>;
+  };
+
+  it('全8グレードが寸法・出力・燃費内訳・エアバッグを持つ', () => {
+    for (const grade of spec.grades) {
+      expect(grade.dimensions, grade.name).toBeDefined();
+      expect(grade.performance, grade.name).toBeDefined();
+      expect(grade.fuelDetail, grade.name).toBeDefined();
+      // 運転席・助手席＋運転席ニー＋前席サイド＋前後席カーテンシールド
+      expect(grade.airbags, grade.name).toBe(7);
+    }
+  });
+
+  it('1.8L は 2.0L と全高・最低地上高・出力が違う', () => {
+    /*
+     * 諸元表で 1.8L（U）は右端の別の列にあり、2.0L と値が違う。
+     * 列を取り違えると全部 2.0L の値になる。実際に間違えやすい箇所なので固定する。
+     */
+    for (const grade of spec.grades) {
+      const small = grade.displacement === 1797;
+      expect(grade.dimensions!.height, grade.name).toBe(small ? 1420 : 1430);
+      expect(grade.dimensions!.groundClearance, grade.name).toBe(small ? 145 : 150);
+      if (small) expect(grade.performance!.maxPower).toBe('72（98）/5,200');
+    }
+  });
+
+  it('PHEV と HV でエンジン出力が違う', () => {
+    const power = (powertrain: string) =>
+      spec.grades.find((g) => g.powertrain === powertrain)!.performance!.maxPower;
+    expect(power('2.0L プラグインハイブリッド車')).toBe('113（154）/6,000');
+    expect(power('2.0L ハイブリッド車')).toBe('114（155）/6,000');
+  });
+
+  it('燃費の総合値が3モードの範囲に収まる', () => {
+    // WLTCモードは3モードの重み付き平均。列をずらして読んでいれば壊れる
+    for (const grade of spec.grades) {
+      const modes = [
+        grade.fuelDetail!.cityMode,
+        grade.fuelDetail!.suburbanMode,
+        grade.fuelDetail!.highwayMode,
+      ].filter((v): v is number => typeof v === 'number');
+      const label = `${grade.name}/${grade.powertrain}/${grade.driveSystemRaw}`;
+      expect(grade.wltcMode, label).toBeGreaterThanOrEqual(Math.min(...modes));
+      expect(grade.wltcMode, label).toBeLessThanOrEqual(Math.max(...modes));
+    }
+  });
+
+  it('E-Four は 2WD より燃費が悪い', () => {
+    const city = (name: string, powertrain: string, drive: string) =>
+      spec.grades.find(
+        (g) => g.name === name && g.powertrain === powertrain && g.driveSystemRaw === drive,
+      )!.fuelDetail!.cityMode;
+    expect(city('Z', '2.0L ハイブリッド車', '2WD')).toBeGreaterThan(
+      city('Z', '2.0L ハイブリッド車', 'E-Four'),
+    );
+  });
+});

@@ -13,6 +13,25 @@
       "wltcMode": 25.9,
       "engineType": "PHEV",
       "transmission": "電気式無段変速機",
+      "airbags": 7,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 4600,
+        "width": 1780,
+        "height": 1430,
+        "wheelbase": 2750,
+        "groundClearance": 150,
+        "minTurningRadius": 5.4
+      },
+      "performance": {
+        "maxPower": "113（154）/6,000",
+        "maxTorque": "188（19.2）/4,400〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 23.4,
+        "suburbanMode": 28.4,
+        "highwayMode": 25.6
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -48,6 +67,25 @@
       "wltcMode": 25.9,
       "engineType": "PHEV",
       "transmission": "電気式無段変速機",
+      "airbags": 7,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 4600,
+        "width": 1780,
+        "height": 1430,
+        "wheelbase": 2750,
+        "groundClearance": 150,
+        "minTurningRadius": 5.4
+      },
+      "performance": {
+        "maxPower": "113（154）/6,000",
+        "maxTorque": "188（19.2）/4,400〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 23.4,
+        "suburbanMode": 28.4,
+        "highwayMode": 25.6
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -83,6 +121,25 @@
       "wltcMode": 28.4,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 7,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 4600,
+        "width": 1780,
+        "height": 1430,
+        "wheelbase": 2750,
+        "groundClearance": 150,
+        "minTurningRadius": 5.4
+      },
+      "performance": {
+        "maxPower": "114（155）/6,000",
+        "maxTorque": "188（19.2）/4,400〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 25.6,
+        "suburbanMode": 30.7,
+        "highwayMode": 28.4
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -118,6 +175,25 @@
       "wltcMode": 26.8,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 7,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 4600,
+        "width": 1780,
+        "height": 1430,
+        "wheelbase": 2750,
+        "groundClearance": 150,
+        "minTurningRadius": 5.4
+      },
+      "performance": {
+        "maxPower": "114（155）/6,000",
+        "maxTorque": "188（19.2）/4,400〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 24.4,
+        "suburbanMode": 28.3,
+        "highwayMode": 27.0
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -153,6 +229,25 @@
       "wltcMode": 28.4,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 7,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 4600,
+        "width": 1780,
+        "height": 1430,
+        "wheelbase": 2750,
+        "groundClearance": 150,
+        "minTurningRadius": 5.4
+      },
+      "performance": {
+        "maxPower": "114（155）/6,000",
+        "maxTorque": "188（19.2）/4,400〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 25.6,
+        "suburbanMode": 30.7,
+        "highwayMode": 28.4
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -188,6 +283,25 @@
       "wltcMode": 26.8,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 7,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 4600,
+        "width": 1780,
+        "height": 1430,
+        "wheelbase": 2750,
+        "groundClearance": 150,
+        "minTurningRadius": 5.4
+      },
+      "performance": {
+        "maxPower": "114（155）/6,000",
+        "maxTorque": "188（19.2）/4,400〜5,200"
+      },
+      "fuelDetail": {
+        "cityMode": 24.4,
+        "suburbanMode": 28.3,
+        "highwayMode": 27.0
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -223,6 +337,25 @@
       "wltcMode": 32.6,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 7,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 4600,
+        "width": 1780,
+        "height": 1420,
+        "wheelbase": 2750,
+        "groundClearance": 145,
+        "minTurningRadius": 5.3
+      },
+      "performance": {
+        "maxPower": "72（98）/5,200",
+        "maxTorque": "142（14.5）/3,600"
+      },
+      "fuelDetail": {
+        "cityMode": 29.9,
+        "suburbanMode": 37.3,
+        "highwayMode": 31.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -258,6 +391,25 @@
       "wltcMode": 30.7,
       "engineType": "ハイブリッド",
       "transmission": "電気式無段変速機",
+      "airbags": 7,
+      "transmissionType": "電気式無段変速機",
+      "dimensions": {
+        "length": 4600,
+        "width": 1780,
+        "height": 1420,
+        "wheelbase": 2750,
+        "groundClearance": 145,
+        "minTurningRadius": 5.3
+      },
+      "performance": {
+        "maxPower": "72（98）/5,200",
+        "maxTorque": "142（14.5）/3,600"
+      },
+      "fuelDetail": {
+        "cityMode": 27.8,
+        "suburbanMode": 33.9,
+        "highwayMode": 30.2
+      },
       "features": {
         "collisionMitigationBrake": "standard",
         "falseStartSuppression": "standard",
@@ -336,5 +488,12 @@
       "sunroof": "パノラマルーフ（手動サンシェード付）"
     },
     "dealerOptionPolicy": "青（販売店装着オプション）は option に含める。DBの feature_availability は standard/option/none/unknown の3値＋不明で、工場装着かどうかを区別する値を持たない。買い手から見た「追加費用を払えば付く」という点でメーカーオプションと同じであり、設計書の「標準で付く最安グレード」対「オプションで選べる最安グレード」の対比はこの写像で成立する。なおプリウスの20項目には青のものは無く（ETC2.0は緑）、この方針が実際に効くのは他車種から。"
+  },
+  "_specProvenance": {
+    "source": "storage/pdfs/392d766fcd286955c5193c8595a0e41a6925c40759972af37a80c711fde96bb6.pdf（トヨタ プリウス 主要諸元表 2026-07版）1ページ",
+    "readAt": "2026-08-31",
+    "method": "300dpiの画像に書き出して目視で読んだ。1.8L（U）の列は 2.0L と全高・最低地上高・最小回転半径・エンジン出力が違うため、列の取り違えに注意が要る。",
+    "airbags": "SRSエアバッグシステム（運転席・助手席＋運転席ニー＋前席サイド＋前後席カーテンシールド）＝7個。全車標準装備の欄に記載。",
+    "cruisingRange": "諸元表に航続可能距離の記載が無いため null のまま。PHEV の「EV走行換算距離 86km」はEV走行のみの距離であり、航続可能距離とは別のものなので入れない。"
   }
 }

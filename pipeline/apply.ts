@@ -7,6 +7,7 @@ import {
   driveSystemEnum,
   engineTypeEnum,
   featureAvailabilityEnum,
+  transmissionTypeEnum,
   grades,
   models,
   specDocuments,
@@ -209,6 +210,9 @@ const NON_NULLABLE_GRADE_COLUMNS = new Set<string>([
   ...FEATURE_COLUMNS,
 ]);
 
+/** 塊ごと入れ替える jsonb 列。中の項目ごとのマージはしない（pipeline/diff.ts 参照） */
+const JSON_GRADE_COLUMNS = new Set<string>(['dimensions', 'performance', 'fuelDetail']);
+
 /** jsonb から来る diff は信用できない入力なので、書き込める列を白名簿で縛る */
 const UPDATABLE_GRADE_COLUMNS = new Set<string>([
   'name',
@@ -220,8 +224,14 @@ const UPDATABLE_GRADE_COLUMNS = new Set<string>([
   'wltcMode',
   'engineType',
   'transmission',
+  'cruisingRange',
+  'airbags',
+  'transmissionType',
+  'gearCount',
+  ...JSON_GRADE_COLUMNS,
   ...FEATURE_COLUMNS,
 ]);
+
 
 /**
  * diff の before が現在値と全て一致するときだけ patch を返す。上書きはしない。
@@ -274,6 +284,16 @@ function columnValue(column: string, value: unknown): unknown | typeof INVALID {
   }
   if ((FEATURE_COLUMNS as readonly string[]).includes(column)) {
     return isFeatureAvailability(value) ? value : INVALID;
+  }
+  if (column === 'transmissionType') {
+    return value === null || value === undefined || isTransmissionType(value) ? (value ?? null) : INVALID;
+  }
+  if (JSON_GRADE_COLUMNS.has(column)) {
+    // jsonb 列に配列やスカラーを書き込ませない。読み出す側（比較表）は
+    // オブジェクトとして扱うため、形が違うと描画で落ちる
+    if (value === null || value === undefined) return null;
+    if (typeof value !== 'object' || Array.isArray(value)) return INVALID;
+    return value;
   }
   return value ?? null;
 }
@@ -429,6 +449,13 @@ function isDriveSystem(value: unknown): value is (typeof driveSystemEnum.enumVal
 
 function isBodyType(value: unknown): value is (typeof bodyTypeEnum.enumValues)[number] {
   return typeof value === 'string' && (bodyTypeEnum.enumValues as readonly string[]).includes(value);
+}
+
+function isTransmissionType(value: unknown): boolean {
+  return (
+    typeof value === 'string' &&
+    (transmissionTypeEnum.enumValues as readonly string[]).includes(value)
+  );
 }
 
 function isFeatureAvailability(
