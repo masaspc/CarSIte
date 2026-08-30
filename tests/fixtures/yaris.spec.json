@@ -12,7 +12,29 @@
       "displacement": 1490,
       "wltcMode": 35.4,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "Z",
@@ -25,7 +47,29 @@
       "displacement": 1490,
       "wltcMode": 30.2,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "G",
@@ -38,7 +82,29 @@
       "displacement": 1490,
       "wltcMode": 35.8,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "option",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "G",
@@ -51,7 +117,29 @@
       "displacement": 1490,
       "wltcMode": 30.2,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "option",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "X",
@@ -64,7 +152,29 @@
       "displacement": 1490,
       "wltcMode": 36.0,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "none",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "none",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "X",
@@ -77,7 +187,29 @@
       "displacement": 1490,
       "wltcMode": 30.2,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "none",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "none",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "U",
@@ -90,7 +222,29 @@
       "displacement": 1490,
       "wltcMode": 35.4,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "none",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "option",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "U",
@@ -103,7 +257,29 @@
       "displacement": 1490,
       "wltcMode": 30.2,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "none",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "option",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "Z",
@@ -116,7 +292,29 @@
       "displacement": 1490,
       "wltcMode": 20.3,
       "engineType": "ガソリン",
-      "transmission": "ギヤ機構付自動無段変速機"
+      "transmission": "ギヤ機構付自動無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "Z",
@@ -129,7 +327,29 @@
       "displacement": 1490,
       "wltcMode": 18.6,
       "engineType": "ガソリン",
-      "transmission": "ギヤ機構付自動無段変速機"
+      "transmission": "ギヤ機構付自動無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "G",
@@ -142,7 +362,29 @@
       "displacement": 1490,
       "wltcMode": 20.0,
       "engineType": "ガソリン",
-      "transmission": "ギヤ機構付自動無段変速機"
+      "transmission": "ギヤ機構付自動無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "option",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "G",
@@ -155,7 +397,29 @@
       "displacement": 1490,
       "wltcMode": 18.6,
       "engineType": "ガソリン",
-      "transmission": "ギヤ機構付自動無段変速機"
+      "transmission": "ギヤ機構付自動無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "option",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "X",
@@ -168,7 +432,29 @@
       "displacement": 1490,
       "wltcMode": 20.3,
       "engineType": "ガソリン",
-      "transmission": "ギヤ機構付自動無段変速機"
+      "transmission": "ギヤ機構付自動無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "none",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "none",
+        "ledHeadlight": "none",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "X",
@@ -181,7 +467,29 @@
       "displacement": 1490,
       "wltcMode": 18.6,
       "engineType": "ガソリン",
-      "transmission": "ギヤ機構付自動無段変速機"
+      "transmission": "ギヤ機構付自動無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "none",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "none",
+        "ledHeadlight": "none",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "G",
@@ -194,7 +502,29 @@
       "displacement": 996,
       "wltcMode": 20.2,
       "engineType": "ガソリン",
-      "transmission": "自動無段変速機"
+      "transmission": "自動無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "none",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "option",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "X",
@@ -207,7 +537,29 @@
       "displacement": 996,
       "wltcMode": 20.2,
       "engineType": "ガソリン",
-      "transmission": "自動無段変速機"
+      "transmission": "自動無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "none",
+        "adaptiveCruiseControl": "none",
+        "blindSpotMonitor": "none",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "none",
+        "ledHeadlight": "none",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "Z",
@@ -220,7 +572,29 @@
       "displacement": 1490,
       "wltcMode": 19.1,
       "engineType": "ガソリン",
-      "transmission": "6速マニュアル"
+      "transmission": "6速マニュアル",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "G",
@@ -233,7 +607,29 @@
       "displacement": 1490,
       "wltcMode": 19.1,
       "engineType": "ガソリン",
-      "transmission": "6速マニュアル"
+      "transmission": "6速マニュアル",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "none",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "none",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "option",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "X",
@@ -246,7 +642,29 @@
       "displacement": 1490,
       "wltcMode": 19.1,
       "engineType": "ガソリン",
-      "transmission": "6速マニュアル"
+      "transmission": "6速マニュアル",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "none",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "none",
+        "blindSpotMonitor": "none",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "none",
+        "steeringHeater": "none",
+        "autoAircon": "none",
+        "ledHeadlight": "none",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     }
   ],
   "_priceProvenance": {
@@ -267,5 +685,34 @@
     "columns": "諸元表は12列（HV 1.5L: Z/G/X/U、ガソリン1.5L CVT: Z/G/X、ガソリン1.0L CVT: G/X、ガソリン1.5L 6MT: Z/G/X）。各列に 2WD と E-Four/4WD の型式が別々に載っており、4WD が「ー」の列は 2WD のみ。展開して19グレードになる。",
     "method": "型式・車両重量・WLTCモードは pdftotext では列が落ちるため（12列のうち10列しか出ない）、300dpiの画像に書き出して目視で読んだ。",
     "featuresNotRead": "装備は未取得。ヤリスの装備一覧表は7列（HV Z/G/X/U・ガソリン Z/G/X）で、ガソリン列に「CVT」「6MT」「1.5L」という変速機・排気量ごとの限定が注記として書き込まれている。7列を19グレードへ割り当てるにはこの注記を1つずつ判断する必要があるため、諸元とは分けて別途行う。"
+  },
+  "_featureProvenance": {
+    "source": "storage/pdfs/876872b259b742d2595f311ca28fd4ea8b8176ff5f307afad8deb0cd9655c45f.pdf（トヨタ ヤリス 主要装備一覧表 2026-04版）の3〜5ページ",
+    "readAt": "2026-08-31",
+    "readBy": "Claude Opus 5 が PDF を 300dpi の画像に書き出し、セル背景色を判定して読み取った",
+    "columns": "装備一覧表は7列（HV: Z/G/X/U、ガソリン: Z/G/X）。ガソリン列は 1.5L CVT・1.5L 6MT・1.0L CVT を1列にまとめている。諸元表の12列とは粒度が違う。",
+    "method": "列の値はピクセル判定、行の同定は目視。行の帯はラベルの上端より3〜5pt下から始まるため、ラベル位置をそのまま使うと1行ずれる。y方向に0.5pt刻みで走査して帯の境界を確定し、20項目すべてを画像でも確認した。",
+    "absent": "アドバンストパーク・パワーシート・ステアリングヒーター・パワーバックドア・ハンズフリーバックドア・サンルーフは、PDF全体を検索しても記載が無い。ヤリスに設定が存在しないため全グレード none。",
+    "etc": "ETC は「ETC2.0ユニット（VICS機能付）」と「ETC車載器」の2行の和。Z/G/U は ETC2.0、X は ETC車載器が標準で、どのグレードにも何らかのETCが付く。",
+    "navigation": "ナビは「ディスプレイオーディオ Plus（10.5インチ）」「同（8インチ）」「ディスプレイオーディオ（8インチ）」の3行の和。Z が10.5インチ、G が8インチPlus、X/U が無印で、全グレードがコネクティッドナビ対応を標準装備する。",
+    "variantNotes": "ガソリン列のセルには「CVT」「1.5L（CVT）」「1.5L」という注記があり、その変速機・排気量の版にだけ適用されることを示す。6MT版にはパーキングサポートブレーキ（前後方静止物）の代わりにクリアランスソナー＆バックソナーが入る対の行があり、この読み方の裏付けになっている。適用した限定は appliedExceptions を参照。",
+    "ambiguity": "レーダークルーズの G 列「CVT 停止保持機能なし」・X 列「1.5L（CVT）停止保持機能なし」は、(a) 適用される版を示すのか (b) 停止保持機能の有無だけを述べるのか、原本からは一意に決まらない。(a) を採って G/X の6MT版を none にした。1.0L は脚注＊33が明示的に「設定がありません」としているため、どちらの読み方でも none。この判断が誤っていた場合、G/X の6MT版のACCが実際より少なく出る。",
+    "appliedExceptions": {
+      "G/1.0L ガソリン車・CVT/2WD": [
+        "adaptiveCruiseControl←none(＊33: 1.0Lは設定なし)"
+      ],
+      "X/1.0L ガソリン車・CVT/2WD": [
+        "adaptiveCruiseControl←none(＊33: 1.0Lは設定なし)",
+        "laneKeepingAssist←none(X列の注記「1.5L」)"
+      ],
+      "G/1.5L ガソリン車・6MT/2WD": [
+        "adaptiveCruiseControl←none(G/X列の注記「CVT」)",
+        "falseStartSuppression←none(G/X列の注記「CVT」)"
+      ],
+      "X/1.5L ガソリン車・6MT/2WD": [
+        "adaptiveCruiseControl←none(G/X列の注記「CVT」)",
+        "falseStartSuppression←none(G/X列の注記「CVT」)"
+      ]
+    }
   }
 }

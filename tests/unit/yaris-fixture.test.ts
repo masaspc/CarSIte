@@ -98,16 +98,80 @@ describe('ヤリスの取り込み用JSON', () => {
     }
   });
 
-  it('装備はまだ読み取っていない（読み取ったら全19グレードに入れること）', () => {
+  it('全19グレードが装備20項目を持ち、unknown を残していない', () => {
+    // 部分的に入れてはいけない。ingest-spec は全グレードが features を持つときだけ
+    // 装備を比較する（compareOptionsFor）
+    for (const g of spec.grades) {
+      expect(Object.keys(g.features ?? {})).toHaveLength(20);
+      expect(Object.values(g.features ?? {})).not.toContain('unknown');
+    }
+  });
+
+  it('ヤリスに設定の無い装備は全グレード none', () => {
+    // PDF全体を検索しても記載が無い6項目。ヤリスはコンパクトカーで、
+    // アドバンストパークやパワーバックドアの設定そのものが存在しない
+    for (const column of [
+      'parkingAssist',
+      'powerSeat',
+      'steeringHeater',
+      'powerBackDoor',
+      'handsFreeBackDoor',
+      'sunroof',
+    ] as const) {
+      for (const g of spec.grades) {
+        expect(g.features?.[column], `${g.name} の ${column}`).toBe('none');
+      }
+    }
+  });
+
+  it('装備の数がグレードの序列と矛盾しない', () => {
+    // 20項目×7列を目視で読み取っているため、上位グレードが下位より
+    // 標準装備が少ないという結果は読み違いの兆候になる
+    const count = (name: string, powertrain: string) => {
+      const row = spec.grades.find((g) => g.name === name && g.powertrain === powertrain);
+      if (!row?.features) throw new Error(`${powertrain} の ${name} が見つかりません`);
+      return Object.values(row.features).filter((v) => v === 'standard').length;
+    };
+
+    for (const powertrain of ['1.5L ハイブリッド車', '1.5L ガソリン車・CVT'] as const) {
+      expect(count('Z', powertrain)).toBeGreaterThan(count('X', powertrain));
+    }
+  });
+
+  it('1.0L はレーダークルーズを持たない（脚注＊33）', () => {
+    // 「1.0Lには、レーダークルーズコントロールの設定がありません」
+    const litre10 = spec.grades.filter((g) => g.displacement === 996);
+    expect(litre10).toHaveLength(2);
+    for (const g of litre10) expect(g.features?.adaptiveCruiseControl).toBe('none');
+  });
+
+  it('6MT の G と X は駐車支援系を持たない（装備表の「CVT」注記）', () => {
     /*
-     * ヤリスの装備一覧表は7列で、ガソリン列に「CVT」「6MT」「1.5L」という
-     * 変速機・排気量ごとの限定が注記されている。7列を19グレードへ割り当てるには
-     * 注記を1つずつ判断する必要があるため、諸元とは分けてある。
-     *
-     * 部分的に入れてはいけない。ingest-spec は全グレードが features を持つときだけ
-     * 装備を比較する（compareOptionsFor）。
+     * ガソリンの G/X 列のセルには「CVT」と注記があり、その版にだけ適用される
+     * ことを示す。6MT版には代わりにクリアランスソナー＆バックソナーが入る
+     * 対の行があり、この読み方の裏付けになっている。
      */
-    const withFeatures = spec.grades.filter((g) => g.features !== undefined);
-    expect(withFeatures.length === 0 || withFeatures.length === spec.grades.length).toBe(true);
+    const mt = spec.grades.filter(
+      (g) => g.powertrain.includes('6MT') && (g.name === 'G' || g.name === 'X'),
+    );
+    expect(mt).toHaveLength(2);
+    for (const g of mt) {
+      expect(g.features?.falseStartSuppression).toBe('none');
+      expect(g.features?.adaptiveCruiseControl).toBe('none');
+    }
+
+    // Z の6MTには注記が無いので限定を及ぼさない
+    const zmt = spec.grades.find((g) => g.powertrain.includes('6MT') && g.name === 'Z');
+    expect(zmt?.features?.falseStartSuppression).toBe('standard');
+  });
+
+  it('読み取りの根拠と、判断が割れた点が記録されている', () => {
+    const raw = JSON.parse(
+      readFileSync(path.resolve(__dirname, '../fixtures/yaris.spec.json'), 'utf8'),
+    ) as { _featureProvenance?: Record<string, unknown> };
+
+    // レーダークルーズの注記は原本から一意に読めない。どう判断したかを残す
+    expect(raw._featureProvenance?.ambiguity).toBeTruthy();
+    expect(raw._featureProvenance?.appliedExceptions).toBeTruthy();
   });
 });
