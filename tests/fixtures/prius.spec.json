@@ -12,7 +12,29 @@
       "displacement": 1986,
       "wltcMode": 25.9,
       "engineType": "PHEV",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "standard",
+        "camera360": "standard",
+        "parkingAssist": "standard",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "standard",
+        "seatHeater": "standard",
+        "steeringHeater": "standard",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "standard",
+        "handsFreeBackDoor": "none",
+        "sunroof": "option"
+      }
     },
     {
       "name": "G",
@@ -25,7 +47,29 @@
       "displacement": 1986,
       "wltcMode": 25.9,
       "engineType": "PHEV",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "standard",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "Z",
@@ -38,7 +82,29 @@
       "displacement": 1986,
       "wltcMode": 28.4,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "standard",
+        "camera360": "standard",
+        "parkingAssist": "standard",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "standard",
+        "seatHeater": "standard",
+        "steeringHeater": "standard",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "standard",
+        "handsFreeBackDoor": "none",
+        "sunroof": "option"
+      }
     },
     {
       "name": "Z",
@@ -51,7 +117,29 @@
       "displacement": 1986,
       "wltcMode": 26.8,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "standard",
+        "camera360": "standard",
+        "parkingAssist": "standard",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "standard",
+        "seatHeater": "standard",
+        "steeringHeater": "standard",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "standard",
+        "handsFreeBackDoor": "none",
+        "sunroof": "option"
+      }
     },
     {
       "name": "G",
@@ -64,7 +152,29 @@
       "displacement": 1986,
       "wltcMode": 28.4,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "standard",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "G",
@@ -77,7 +187,29 @@
       "displacement": 1986,
       "wltcMode": 26.8,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "standard",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "none",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "U",
@@ -90,7 +222,29 @@
       "displacement": 1797,
       "wltcMode": 32.6,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "option",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "option",
+        "steeringHeater": "option",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     },
     {
       "name": "U",
@@ -103,7 +257,29 @@
       "displacement": 1797,
       "wltcMode": 30.7,
       "engineType": "ハイブリッド",
-      "transmission": "電気式無段変速機"
+      "transmission": "電気式無段変速機",
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "standard",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "option",
+        "navigation": "standard",
+        "etc": "standard",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "option",
+        "steeringHeater": "option",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
     }
   ],
   "_priceProvenance": {
@@ -125,5 +301,40 @@
       ],
       "note": "X（ハイブリッド車）2,796,200円 / 3,049,200円 はグレードページに存在するが、2026-07版の諸元表には型式が無い。諸元表とグレードページで対象集合が違う。X の諸元は別途取得が要るため、このファイルには含めていない。"
     }
+  },
+  "_featureProvenance": {
+    "source": "storage/pdfs/392d766fcd286955c5193c8595a0e41a6925c40759972af37a80c711fde96bb6.pdf（トヨタ プリウス 主要装備一覧表 2026-07版）の3〜5ページ",
+    "readAt": "2026-08-30",
+    "readBy": "Claude Opus 5 が PDF を 300dpi の画像に書き出し、セル背景色を判定して読み取った",
+    "legend": {
+      "standard": "緑 RGB(193,223,196) = 標準装備",
+      "option": "橙 RGB(255,233,192) = メーカーオプション、および 青 RGB(188,228,250) = 販売店装着オプション",
+      "none": "白 = 設定なし"
+    },
+    "columnMapping": "装備一覧表の列は PHEV(Z/G) と HEV(Z/G/U) の5つ。HEV は「2WD/E-Four」が1列に統合されており、装備は駆動方式で変わらない。よって FF と 4WD には同じ値を割り当てている。",
+    "method": "行の同定は目視、色の判定はピクセル。罫線から行の帯を検出する方式も試したが、複数行ラベルの開始位置が行の上端より上に出るため帯とラベルの対応が1行ずれる箇所があり、20項目すべてを画像で確認した。",
+    "rowMapping": {
+      "collisionMitigationBrake": "プリクラッシュセーフティ（歩行者［昼夜］・自転車［昼夜］・自動二輪車［昼］検知機能付）",
+      "falseStartSuppression": "パーキングサポートブレーキ（前後方静止物）",
+      "laneDepartureWarning": "レーンディパーチャーアラート［LDA］（レーントレーシングアシストと同一セル）",
+      "laneKeepingAssist": "レーントレーシングアシスト［LTA］",
+      "adaptiveCruiseControl": "レーダークルーズコントロール（全車速追従機能付）",
+      "blindSpotMonitor": "ブラインドスポットモニター［BSM］＋安心降車アシスト［SEA］",
+      "camera360": "パノラミックビューモニター（床下透過表示機能付）",
+      "parkingAssist": "トヨタ チームメイト［アドバンスト パーク］（リモート機能付）",
+      "navigation": "ディスプレイオーディオ（コネクティッドナビ対応）Plus / 同（8インチ）の和。全グレードがいずれかを標準装備する",
+      "etc": "ETC2.0ユニット（VICS機能付）",
+      "backCamera": "バックガイドモニター。ただし Z は代わりにパノラミックビューモニターが標準で、諸元表の脚注*6が「パノラミックビューモニターを選択した場合、標準装備のバックガイドモニターはパノラミックビューモニターに変更となる」としている。Z の当該セルは空白だが後方カメラ機能は存在するため standard とした",
+      "powerSeat": "運転席8ウェイパワースポーティ（前後スライド・リクライニング・シート上下・チルトアジャスター）",
+      "seatHeater": "前席シートヒーター（3段階温度設定）",
+      "steeringHeater": "合成皮革巻き3本スポークステアリングホイールの「ステアリングヒーター・タッチセンサー付」小行",
+      "autoAircon": "オートエアコン",
+      "ledHeadlight": "Bi-Beam LEDヘッドランプ＋LEDターンランプ＋LEDクリアランスランプ＋LEDデイライト",
+      "smartKey": "スマートエントリー＆スタートシステム（スマートキー×2）。個別行ではなく「全車標準装備」欄に記載",
+      "powerBackDoor": "パワーバックドア",
+      "handsFreeBackDoor": "諸元表の3〜5ページに記載が無い。ハンズフリー開閉の設定自体が無いため none",
+      "sunroof": "パノラマルーフ（手動サンシェード付）"
+    },
+    "dealerOptionPolicy": "青（販売店装着オプション）は option に含める。DBの feature_availability は standard/option/none/unknown の3値＋不明で、工場装着かどうかを区別する値を持たない。買い手から見た「追加費用を払えば付く」という点でメーカーオプションと同じであり、設計書の「標準で付く最安グレード」対「オプションで選べる最安グレード」の対比はこの写像で成立する。なおプリウスの20項目には青のものは無く（ETC2.0は緑）、この方針が実際に効くのは他車種から。"
   }
 }
