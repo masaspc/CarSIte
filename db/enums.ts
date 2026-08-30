@@ -34,9 +34,17 @@ export const CHANGE_KINDS = [
 
 /**
  * change_requests.status。
+ *
  * stale は「適用しようとしたら対象行が既に変わっていた」状態で、
  * 上書きせず人間に戻すために使う（トランザクションが無い前提の冪等性、設計書5.4）。
+ *
+ * blocked は「承認されているが、必要な値が欠けていて適用できない」状態。
+ * stale と分けているのは、対処がまったく違うためである。
+ * stale は人間が差分を見直す話で、blocked は欠けている値を入れれば解決する。
+ * 実例: 諸元表に車両本体価格が載っていないため、そこから起こした new_grade は
+ * grades.price（NOT NULL）を埋められず blocked になる。
+ * blocked は approved と同じく再適用できる。値が揃えば押し直せばよい。
  */
 export const CHANGE_STATUSES = [
-  'pending', 'approved', 'rejected', 'applied', 'stale',
+  'pending', 'approved', 'rejected', 'applied', 'stale', 'blocked',
 ] as const;

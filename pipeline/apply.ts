@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   FEATURE_COLUMNS,
@@ -14,7 +14,15 @@ import {
 } from '@/db/schema';
 import { gradeSlug, manufacturerSlug, modelSlug } from '@/lib/slug';
 
-export type ApplyResult = 'applied' | 'noop' | 'stale' | 'not_approved';
+export type ApplyResult = 'applied' | 'noop' | 'stale' | 'not_approved' | 'blocked';
+
+/**
+ * 適用できなかった理由。stale と blocked は対処がまったく違うので分ける。
+ *
+ * - `stale`   … 対象データが動いていた。人間が差分を見直す
+ * - `blocked` … 必要な値が欠けている。値を入れれば解決する
+ */
+type Unappliable = 'stale' | 'blocked';
 
 interface DiffEntry {
   before: unknown;
@@ -42,20 +50,23 @@ export async function applyChangeRequest(id: string, decidedBy: string): Promise
 
   const { request, modelId, documentMonth } = context;
   if (request.status === 'applied') return 'noop';
-  if (request.status !== 'approved') return 'not_approved';
+  // blocked は「値が欠けていた」だけなので、揃っていれば再適用してよい
+  if (request.status !== 'approved' && request.status !== 'blocked') return 'not_approved';
 
   const diff = asDiff(request.diff);
-  if (!diff) return markStale(id);
+  // diff が壊れている。データの問題であってデータが動いたわけではない
+  if (!diff) return markUnappliable(id, 'blocked');
 
   if (request.kind === 'new_grade') return applyNewGrade(id, diff, modelId, decidedBy);
   if (request.kind === 'new_model') return applyNewModel(id, diff, decidedBy);
 
   const grade = await findGrade(modelId, request.targetKey);
-  if (!grade) return markStale(id);
+  // 対象が見つからない＝世界のほうが変わった
+  if (!grade) return markUnappliable(id, 'stale');
 
   if (request.kind === 'discontinued') {
     // 既に廃止済みの行を上書きしない。before=false と食い違っている
-    if (grade.discontinuedAt) return markStale(id);
+    if (grade.discontinuedAt) return markUnappliable(id, 'stale');
     if (!(await claim(id, decidedBy))) return 'noop';
     // publication_status は触らない。非公開にするかは別の判断である
     await db
@@ -66,12 +77,12 @@ export async function applyChangeRequest(id: string, decidedBy: string): Promise
   }
 
   const patch = buildGradePatch(diff, grade as unknown as Record<string, unknown>);
-  if (!patch) return markStale(id);
+  if ('reason' in patch) return markUnappliable(id, patch.reason);
   if (!(await claim(id, decidedBy))) return 'noop';
 
   await db
     .update(grades)
-    .set({ ...patch, updatedAt: new Date() })
+    .set({ ...patch.values, updatedAt: new Date() })
     .where(eq(grades.id, grade.id));
   return 'applied';
 }
@@ -108,22 +119,28 @@ async function loadContext(id: string) {
   return row;
 }
 
-/** 承認済みのものだけを applied にする。取れなければ他が先に適用している */
+/**
+ * 適用してよい状態。blocked は「値が欠けていて適用できなかった」だけなので、
+ * 値が揃えば approved と同じく再適用できる。
+ */
+const APPLIABLE = inArray(changeRequests.status, ['approved', 'blocked']);
+
+/** 適用してよいものだけを applied にする。取れなければ他が先に適用している */
 async function claim(id: string, decidedBy: string): Promise<boolean> {
   const rows = await db
     .update(changeRequests)
     .set({ status: 'applied', appliedAt: new Date(), decidedBy })
-    .where(and(eq(changeRequests.id, id), eq(changeRequests.status, 'approved')))
+    .where(and(eq(changeRequests.id, id), APPLIABLE))
     .returning({ id: changeRequests.id });
   return rows.length > 0;
 }
 
-async function markStale(id: string): Promise<'stale'> {
+async function markUnappliable<R extends Unappliable>(id: string, reason: R): Promise<R> {
   await db
     .update(changeRequests)
-    .set({ status: 'stale' })
-    .where(and(eq(changeRequests.id, id), eq(changeRequests.status, 'approved')));
-  return 'stale';
+    .set({ status: reason })
+    .where(and(eq(changeRequests.id, id), APPLIABLE));
+  return reason;
 }
 
 /** claim した後に本体の書き込みが失敗したときだけ使う。applied を取り消す */
@@ -206,27 +223,39 @@ const UPDATABLE_GRADE_COLUMNS = new Set<string>([
 ]);
 
 /**
- * diff の before が現在値と全て一致するときだけ patch を返す。
- * 1つでも食い違えば null（= stale）。上書きはしない。
+ * diff の before が現在値と全て一致するときだけ patch を返す。上書きはしない。
+ *
+ * 失敗の理由を2つに分ける。`stale` は対象データが動いていた場合で、人間が
+ * 差分を見直す必要がある。`blocked` は diff の中身が書き込めない場合で、
+ * 値を直せば解決する。
  */
 function buildGradePatch(
   diff: Diff,
   grade: Record<string, unknown>,
-): Record<string, unknown> | null {
+): { values: Record<string, unknown> } | { reason: Unappliable } {
   const patch: Record<string, unknown> = {};
 
   for (const [key, entry] of Object.entries(diff)) {
     const column = key.startsWith('features.') ? key.slice('features.'.length) : key;
-    if (!UPDATABLE_GRADE_COLUMNS.has(column)) return null;
-    if (!sameValue(grade[column], entry.before)) return null;
-    if (entry.after === null && NON_NULLABLE_GRADE_COLUMNS.has(column)) return null;
+
+    // 知らない列。diff の作りが壊れている
+    if (!UPDATABLE_GRADE_COLUMNS.has(column)) return { reason: 'blocked' };
+
+    // 現在値が before と違う。これだけが本当の stale である
+    if (!sameValue(grade[column], entry.before)) return { reason: 'stale' };
+
+    // NOT NULL 列に null は書けない（諸元表に価格が無い場合など）
+    if (entry.after === null && NON_NULLABLE_GRADE_COLUMNS.has(column)) {
+      return { reason: 'blocked' };
+    }
 
     const value = columnValue(column, entry.after);
-    if (value === INVALID) return null;
+    if (value === INVALID) return { reason: 'blocked' };
     patch[column] = value;
   }
 
-  return Object.keys(patch).length > 0 ? patch : null;
+  if (Object.keys(patch).length === 0) return { reason: 'blocked' };
+  return { values: patch };
 }
 
 const INVALID = Symbol('invalid');
@@ -255,11 +284,13 @@ async function applyNewGrade(
   decidedBy: string,
 ): Promise<ApplyResult> {
   const values = buildNewGradeValues(diff, modelId);
-  if (!values) return markStale(id);
+  // 必要な値が欠けている（諸元表に価格が無いなど）。値が揃えば適用できる
+  if (!values) return markUnappliable(id, 'blocked');
 
   // 既に同じキーの行があるなら、別経路で入っている。黙って上書きしない
   const key = `${values.name}/${values.powertrain}/${values.driveSystem}`;
-  if (await findGrade(modelId, key)) return markStale(id);
+  // 既に同じキーの行がある＝別経路で入っていた。世界のほうが変わった
+  if (await findGrade(modelId, key)) return markUnappliable(id, 'stale');
 
   if (!(await claim(id, decidedBy))) return 'noop';
 
@@ -323,9 +354,9 @@ async function applyNewModel(id: string, diff: Diff, decidedBy: string): Promise
   const manufacturer = after('manufacturer');
   const name = after('name');
   const bodyType = after('bodyType');
-  if (typeof manufacturer !== 'string' || manufacturer === '') return markStale(id);
-  if (typeof name !== 'string' || name === '') return markStale(id);
-  if (!isBodyType(bodyType)) return markStale(id);
+  if (typeof manufacturer !== 'string' || manufacturer === '') return markUnappliable(id, 'blocked');
+  if (typeof name !== 'string' || name === '') return markUnappliable(id, 'blocked');
+  if (!isBodyType(bodyType)) return markUnappliable(id, 'blocked');
 
   const officialUrl = asNullableString(after('officialUrl'));
 

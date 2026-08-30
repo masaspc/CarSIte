@@ -1,11 +1,12 @@
 'use server';
 
 import { revalidateTag } from 'next/cache';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db';
 import { changeRequests } from '@/db/schema';
 import { requireAdmin } from '@/auth-guard';
+import { applyChangeRequest } from '@/pipeline/apply';
 
 const documentIdSchema = z.uuid();
 
@@ -13,12 +14,13 @@ const documentIdSchema = z.uuid();
  * 承認・却下は書類（＝諸元表1つ）単位でまとめて行う。設計書7.2 のとおり、
  * グレード単位にすると初回だけで数千回の操作になり現実的でない。
  *
- * ここは承認までしか行わない。approved を実際に grades へ反映するのは
- * pipeline/apply.ts の applyChangeRequest で、二重適用を防ぐ条件付き UPDATE を持つ。
+ * 承認と適用は別の操作にしてある。承認だけでは grades は変わらない。
  *
- * ただし現時点では applyChangeRequest を呼び出す本番コード（スクリプト・cron）が
- * 存在しない。ここで承認しても change_requests.status が approved になるだけで、
- * grades は自動更新されない（docs/operations/collect.md 参照）。
+ * 分けている理由は、適用できないものを承認で壊さないためである。諸元表に
+ * 車両本体価格が載っていないため、そこから起こした new_grade は grades.price
+ * （NOT NULL）を埋められない。1操作にすると、承認した瞬間にそれらが適用不能に
+ * 落ちて承認キューから消える。分けておけば、適用を押した結果を見てから
+ * 次にどうするかを決められる。
  */
 export async function approveDocument(specDocumentId: string): Promise<void> {
   await decideDocument(specDocumentId, 'approved');
@@ -26,6 +28,35 @@ export async function approveDocument(specDocumentId: string): Promise<void> {
 
 export async function rejectDocument(specDocumentId: string): Promise<void> {
   await decideDocument(specDocumentId, 'rejected');
+}
+
+/**
+ * 承認済み（および blocked）の変更を grades へ反映する。
+ *
+ * neon-http にトランザクションが無いため、1件ずつ独立に適用する。途中で
+ * 失敗しても他は進む。applyChangeRequest 自体が条件付き UPDATE で冪等なので、
+ * 二度押しても二重には当たらない。
+ */
+export async function applyDocument(specDocumentId: string): Promise<void> {
+  const session = await requireAdmin();
+  const id = documentIdSchema.parse(specDocumentId);
+  const decidedBy = (session.user as Record<string, unknown>).githubId as string;
+
+  const targets = await db
+    .select({ id: changeRequests.id })
+    .from(changeRequests)
+    .where(
+      and(
+        eq(changeRequests.specDocumentId, id),
+        inArray(changeRequests.status, ['approved', 'blocked']),
+      ),
+    );
+
+  for (const target of targets) {
+    await applyChangeRequest(target.id, decidedBy);
+  }
+
+  revalidateTag('cars');
 }
 
 async function decideDocument(specDocumentId: string, status: 'approved' | 'rejected') {

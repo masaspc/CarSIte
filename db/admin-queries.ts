@@ -1,7 +1,7 @@
-import { asc, count, eq, sql } from 'drizzle-orm';
+import { asc, count, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { changeRequests, grades, models, specDocuments, specSources } from '@/db/schema';
-import type { ChangeKind } from '@/db/schema';
+import type { ChangeKind, ChangeStatus } from '@/db/schema';
 import { decideApproval } from '@/pipeline/approval-rules';
 
 /**
@@ -90,6 +90,8 @@ export type ModelVerificationRow = Awaited<ReturnType<typeof listModelsWithVerif
 export interface PendingChange {
   id: string;
   kind: ChangeKind;
+  /** pending / approved / blocked のいずれか。承認と適用が別操作なので状態を出す */
+  status: ChangeStatus;
   targetKey: string;
   diff: Record<string, { before: unknown; after: unknown }>;
   /** 自動承認されなかった理由。列に持っていないので decideApproval で引き直す */
@@ -114,6 +116,7 @@ export async function listPendingChangeRequests(): Promise<GroupedChangeRequests
       kind: changeRequests.kind,
       targetKey: changeRequests.targetKey,
       diff: changeRequests.diff,
+      status: changeRequests.status,
       reason: changeRequests.reason,
       createdAt: changeRequests.createdAt,
       specDocumentId: specDocuments.id,
@@ -127,7 +130,13 @@ export async function listPendingChangeRequests(): Promise<GroupedChangeRequests
     .innerJoin(specDocuments, eq(changeRequests.specDocumentId, specDocuments.id))
     .innerJoin(specSources, eq(specDocuments.specSourceId, specSources.id))
     .innerJoin(models, eq(specSources.modelId, models.id))
-    .where(eq(changeRequests.status, 'pending'))
+    /*
+     * pending だけでなく approved と blocked も出す。承認と適用が別操作なので、
+     * approved を隠すと「適用」ボタンの対象が画面から消えてしまう。
+     * blocked は「値が欠けていて適用できなかった」もので、人間の対応を待っている。
+     * applied / rejected / stale は決着済みなので出さない。
+     */
+    .where(inArray(changeRequests.status, ['pending', 'approved', 'blocked']))
     .orderBy(asc(models.manufacturer), asc(models.name), asc(changeRequests.createdAt));
 
   if (rows.length === 0) return [];
@@ -169,6 +178,7 @@ export async function listPendingChangeRequests(): Promise<GroupedChangeRequests
     group.changes.push({
       id: row.id,
       kind: row.kind,
+      status: row.status,
       targetKey: row.targetKey,
       diff,
       // 収集時に判定した本人が書き残した理由が正。無い行だけ復元にまわす

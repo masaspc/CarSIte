@@ -153,7 +153,7 @@ describe('applyChangeRequest — price_change', () => {
     expect((await readGrade(grade.id)).price).toBe(3_400_000);
   });
 
-  it('NOT NULL 列に null を書こうとしたら stale にする（DBエラーで落とさない）', async () => {
+  it('NOT NULL 列に null を書こうとしたら blocked にする（DBエラーで落とさない）', async () => {
     // 諸元表に車両本体価格は載っていない（実物で確認済み）。抽出結果の price は
     // null になり、computeChanges は「値 -> null」を price_change として立てる。
     // それを適用すると grades.price の NOT NULL 制約に当たる。
@@ -165,9 +165,11 @@ describe('applyChangeRequest — price_change', () => {
       diff: { price: { before: 3_200_000, after: null } },
     });
 
-    expect(await applyChangeRequest(request.id, 'tester')).toBe('stale');
+    // 2026-08-30: stale から blocked に変えた。値が欠けているだけで対象データは
+    // 動いていない。価格を補えば再適用できる（下の「blocked と stale の区別」参照）
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('blocked');
     expect((await readGrade(grade.id)).price).toBe(3_200_000);
-    expect((await readRequest(request.id)).status).toBe('stale');
+    expect((await readRequest(request.id)).status).toBe('blocked');
   });
 
   it('null を許す列なら null を書ける', async () => {
@@ -366,5 +368,107 @@ describe('approveChangeRequest / rejectChangeRequest', () => {
 
     expect(await rejectChangeRequest(request.id, 'masa')).toBe(true);
     expect((await readRequest(request.id)).status).toBe('rejected');
+  });
+});
+
+/*
+ * blocked は「承認されているが必要な値が欠けていて適用できない」状態。
+ * stale（対象データが動いていた）とは対処が違う。stale は差分を見直す話、
+ * blocked は欠けている値を入れれば解決する話である。
+ */
+describe('applyChangeRequest — blocked と stale の区別', () => {
+  it('NOT NULL 列に null を書こうとしたら blocked（stale ではない）', async () => {
+    const model = await newModel();
+    const grade = await newGrade(model.id);
+    const request = await newChangeRequest(model.id, {
+      kind: 'price_change',
+      targetKey: `Z/${POWERTRAIN}/FF`,
+      diff: { price: { before: 3_200_000, after: null } },
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('blocked');
+    expect((await readRequest(request.id)).status).toBe('blocked');
+    expect((await readGrade(grade.id)).price).toBe(3_200_000);
+  });
+
+  it('現在値が diff.before と食い違うのは stale のまま', async () => {
+    const model = await newModel();
+    await newGrade(model.id, { price: 3_500_000 });
+    const request = await newChangeRequest(model.id, {
+      kind: 'price_change',
+      targetKey: `Z/${POWERTRAIN}/FF`,
+      diff: priceDiff(3_200_000, 3_400_000),
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('stale');
+  });
+
+  it('価格の無い new_grade は blocked', async () => {
+    // 諸元表に車両本体価格は載っていない。そこから起こした new_grade は
+    // grades.price を埋められない
+    const model = await newModel();
+    const request = await newChangeRequest(model.id, {
+      kind: 'new_grade',
+      targetKey: `G/${POWERTRAIN}/4WD`,
+      diff: {
+        name: { before: null, after: 'G' },
+        powertrain: { before: null, after: POWERTRAIN },
+        driveSystem: { before: null, after: '4WD' },
+        seating: { before: null, after: 5 },
+        engineType: { before: null, after: 'ハイブリッド' },
+      },
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('blocked');
+    expect((await readRequest(request.id)).status).toBe('blocked');
+    expect(await countGrades(model.id)).toBe(0);
+  });
+
+  it('blocked は値が揃えば再適用できる', async () => {
+    const model = await newModel();
+    const request = await newChangeRequest(model.id, {
+      kind: 'new_grade',
+      targetKey: `G/${POWERTRAIN}/4WD`,
+      diff: {
+        name: { before: null, after: 'G' },
+        powertrain: { before: null, after: POWERTRAIN },
+        driveSystem: { before: null, after: '4WD' },
+        seating: { before: null, after: 5 },
+        engineType: { before: null, after: 'ハイブリッド' },
+      },
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('blocked');
+
+    // 人間が価格を補ったとみなして diff を更新する
+    await db
+      .update(changeRequests)
+      .set({
+        diff: {
+          name: { before: null, after: 'G' },
+          powertrain: { before: null, after: POWERTRAIN },
+          driveSystem: { before: null, after: '4WD' },
+          seating: { before: null, after: 5 },
+          engineType: { before: null, after: 'ハイブリッド' },
+          price: { before: null, after: 2_900_000 },
+        },
+      })
+      .where(eq(changeRequests.id, request.id));
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('applied');
+    expect(await countGrades(model.id)).toBe(1);
+  });
+
+  it('既に applied なら blocked にはならず noop', async () => {
+    const model = await newModel();
+    await newGrade(model.id);
+    const request = await newChangeRequest(model.id, {
+      kind: 'price_change',
+      targetKey: `Z/${POWERTRAIN}/FF`,
+      diff: priceDiff(3_200_000, 3_400_000),
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('applied');
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('noop');
   });
 });

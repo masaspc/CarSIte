@@ -293,3 +293,112 @@ describe('listPendingChangeRequests', () => {
     }
   });
 });
+
+describe('applyDocument', () => {
+  it('未認証なら AuthorizationError', async () => {
+    await asAnonymous();
+    const model = await newModel();
+    const document = await newDocument(model.id);
+
+    const { applyDocument } = await import('@/app/actions/changes');
+    await expect(applyDocument(document.id)).rejects.toThrow('認証が必要です');
+  });
+
+  it('許可リストに無い GitHub ID なら AuthorizationError', async () => {
+    await asOutsider();
+    const model = await newModel();
+    const document = await newDocument(model.id);
+
+    const { applyDocument } = await import('@/app/actions/changes');
+    await expect(applyDocument(document.id)).rejects.toThrow('管理者権限がありません');
+  });
+
+  it('承認しただけでは grades は変わらない（承認と適用は別操作）', async () => {
+    await asAdmin();
+    const model = await newModel();
+    const grade = await newGrade(model.id);
+    const document = await newDocument(model.id);
+    await newChangeRequest(document.id, {
+      kind: 'price_change',
+      targetKey: `Z/${POWERTRAIN}/FF`,
+      diff: { price: { before: 3_200_000, after: 3_400_000 } },
+    });
+
+    const { approveDocument } = await import('@/app/actions/changes');
+    await approveDocument(document.id);
+
+    const [after] = await db.select().from(grades).where(eq(grades.id, grade.id));
+    expect(after.price).toBe(3_200_000);
+  });
+
+  it('適用すると grades に反映される', async () => {
+    await asAdmin();
+    const model = await newModel();
+    const grade = await newGrade(model.id);
+    const document = await newDocument(model.id);
+    await newChangeRequest(document.id, {
+      kind: 'price_change',
+      targetKey: `Z/${POWERTRAIN}/FF`,
+      diff: { price: { before: 3_200_000, after: 3_400_000 } },
+    });
+
+    const { applyDocument, approveDocument } = await import('@/app/actions/changes');
+    await approveDocument(document.id);
+    await applyDocument(document.id);
+
+    const [after] = await db.select().from(grades).where(eq(grades.id, grade.id));
+    expect(after.price).toBe(3_400_000);
+    // 公開状態は触らない
+    expect(after.publicationStatus).toBe('draft');
+  });
+
+  it('価格の無い new_grade は blocked になり、承認キューに残る', async () => {
+    await asAdmin();
+    const model = await newModel();
+    await newGrade(model.id);
+    const document = await newDocument(model.id);
+    // 諸元表から起こした new_grade は price を持たない（諸元表に価格が無いため）
+    const { price: _price, ...withoutPrice } = NEW_GRADE_DIFF;
+    const request = await newChangeRequest(document.id, {
+      kind: 'new_grade',
+      targetKey: `G/${POWERTRAIN}/4WD`,
+      diff: withoutPrice,
+    });
+
+    const { applyDocument, approveDocument } = await import('@/app/actions/changes');
+    await approveDocument(document.id);
+    await applyDocument(document.id);
+
+    expect((await readRequest(request.id)).status).toBe('blocked');
+
+    // グレードは増えていない
+    const rows = await db.select().from(grades).where(eq(grades.modelId, model.id));
+    expect(rows).toHaveLength(1);
+
+    // blocked は画面に出続ける（listPendingChangeRequests が拾う）
+    const { listPendingChangeRequests } = await import('@/db/admin-queries');
+    const groups = await listPendingChangeRequests();
+    const group = groups.find((g) => g.specDocumentId === document.id);
+    expect(group?.changes.some((c) => c.status === 'blocked')).toBe(true);
+  });
+
+  it('二度適用しても二重には当たらない', async () => {
+    await asAdmin();
+    const model = await newModel();
+    const grade = await newGrade(model.id);
+    const document = await newDocument(model.id);
+    await newChangeRequest(document.id, {
+      kind: 'price_change',
+      targetKey: `Z/${POWERTRAIN}/FF`,
+      diff: { price: { before: 3_200_000, after: 3_400_000 } },
+    });
+
+    const { applyDocument, approveDocument } = await import('@/app/actions/changes');
+    await approveDocument(document.id);
+    await applyDocument(document.id);
+    await applyDocument(document.id);
+
+    const [after] = await db.select().from(grades).where(eq(grades.id, grade.id));
+    expect(after.price).toBe(3_400_000);
+  });
+});
