@@ -152,7 +152,7 @@ describe('grades の識別単位', () => {
     ).rejects.toThrow();
   });
 
-  it('シードの103件と取り込んだ実データが、全て draft のまま', async () => {
+  it('シードの103件と取り込んだ実データが揃い、プリウスの実データ6件だけ公開されている', async () => {
     const { rows } = await db.execute(sql`
       select count(*)::int as total,
              count(*) filter (where publication_status = 'draft')::int as drafts
@@ -160,9 +160,15 @@ describe('grades の識別単位', () => {
       where name not like '__test_%'
     `);
 
-    // 103（シード）+ 6（プリウスの諸元表と実価格から作成した実データ）
+    // 103（シード。全て draft の架空データ）+ 6（プリウスの諸元表と実価格から作成した実データ）
     // U 2件は KINTO専用仕様車で購入価格が無いため作成できず blocked のまま
+    //
+    // プリウスの実データ6件（型式を持つグレード）は運用者が確認・検証のうえ
+    // published にしている（tests/integration/publication.test.ts はテスト専用の
+    // 車種・グレードを使うようになり、この6件を巻き添えで draft に戻すことはない）。
+    // drafts が 103 なのはテストを緩めたのではなく、この実データが正しく
+    // 公開された事実に合わせた期待値である。
     expect(rows[0].total).toBe(109);
-    expect(rows[0].drafts).toBe(109);
+    expect(rows[0].drafts).toBe(103);
   });
 });
