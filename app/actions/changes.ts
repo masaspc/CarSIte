@@ -15,6 +15,10 @@ const documentIdSchema = z.uuid();
  *
  * ここは承認までしか行わない。approved を実際に grades へ反映するのは
  * pipeline/apply.ts の applyChangeRequest で、二重適用を防ぐ条件付き UPDATE を持つ。
+ *
+ * ただし現時点では applyChangeRequest を呼び出す本番コード（スクリプト・cron）が
+ * 存在しない。ここで承認しても change_requests.status が approved になるだけで、
+ * grades は自動更新されない（docs/operations/collect.md 参照）。
  */
 export async function approveDocument(specDocumentId: string): Promise<void> {
   await decideDocument(specDocumentId, 'approved');

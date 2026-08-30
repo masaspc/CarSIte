@@ -15,6 +15,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "collect": "tsx scripts/collect.ts",
     "register-source": "tsx scripts/register-source.ts",
+    "ingest-spec": "tsx scripts/ingest-spec.ts",
     "snapshot": "tsx scripts/snapshot.ts"
   },
   "dependencies": {

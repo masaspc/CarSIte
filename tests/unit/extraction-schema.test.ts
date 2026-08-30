@@ -139,6 +139,13 @@ describe('extractionJsonSchema', () => {
     expect(features.required).toHaveLength(FEATURE_COLUMNS.length);
     expect(features.required).toContain('sunroof');
   });
+
+  it('LLM向けスキーマでは features が grade の required に入る', () => {
+    const schema = extractionJsonSchema() as {
+      properties: { grades: { items: { required: string[] } } };
+    };
+    expect(schema.properties.grades.items.required).toContain('features');
+  });
 });
 
 describe('normalizeDriveSystem', () => {
@@ -165,5 +172,39 @@ describe('normalizeDriveSystem', () => {
   it('未知の表記は例外にする。黙って既定値に倒さない', () => {
     expect(() => normalizeDriveSystem('6WD')).toThrow(UnknownEnumValueError);
     expect(() => normalizeDriveSystem('6WD')).toThrow(/6WD/);
+  });
+});
+
+describe('features を持たない入力', () => {
+  const gradeWithoutFeatures = {
+    name: 'Z',
+    powertrain: '2.0L ハイブリッド車',
+    driveSystemRaw: '2WD',
+    typeDesignation: '6AA-MXWH60-AHXHB',
+    price: null,
+    seating: 5,
+    weight: 1420,
+    displacement: 1986,
+    wltcMode: 28.4,
+    engineType: 'ハイブリッド',
+    transmission: '電気式無段変速機',
+  };
+
+  it('features を省略しても検証を通る', () => {
+    const parsed = ExtractedSpecSchema.safeParse({
+      modelName: 'プリウス',
+      grades: [gradeWithoutFeatures],
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it('features があれば従来どおり検証する', () => {
+    const parsed = ExtractedSpecSchema.safeParse({
+      modelName: 'プリウス',
+      grades: [{ ...gradeWithoutFeatures, features: { navigation: 'まちがった値' } }],
+    });
+
+    expect(parsed.success).toBe(false);
   });
 });

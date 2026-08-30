@@ -126,6 +126,28 @@ describe('正解データが原本と一致する', () => {
     // 書いていたが、実際には壊れずに取れる。前提が変わったことを固定しておく
     expect(String(text)).toContain('プラグインハイブリッド車');
   }, 60_000);
+
+  it('取り込み用JSONが正解データと同じ8グレードを指す', () => {
+    const ingest = JSON.parse(
+      readFileSync(path.resolve(__dirname, '../fixtures/prius.spec.json'), 'utf8'),
+    ) as { grades: Array<{ typeDesignation: string; weight: number }> };
+
+    expect(ingest.grades).toHaveLength(expected.gradeCount);
+
+    const wanted = new Set(expected.grades.map((g) => g.typeDesignation));
+    for (const grade of ingest.grades) {
+      expect(wanted).toContain(grade.typeDesignation);
+    }
+
+    const byType = new Map(expected.grades.map((g) => [g.typeDesignation, g.weight]));
+    for (const grade of ingest.grades) {
+      expect(grade.weight).toBe(byType.get(grade.typeDesignation));
+    }
+
+    // 8件すべてが同じ型式を指していても上記の検証は通ってしまうため、
+    // 型式が一意であることを別途確かめる
+    expect(new Set(ingest.grades.map((g) => g.typeDesignation)).size).toBe(ingest.grades.length);
+  });
 });
 
 const hasApiKey = Boolean(process.env.ANTHROPIC_API_KEY);
