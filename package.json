@@ -16,7 +16,10 @@
     "collect": "tsx scripts/collect.ts",
     "register-source": "tsx scripts/register-source.ts",
     "ingest-spec": "tsx scripts/ingest-spec.ts",
-    "snapshot": "tsx scripts/snapshot.ts"
+    "snapshot": "tsx scripts/snapshot.ts",
+    "read-equipment": "tsx scripts/read-equipment.ts",
+    "decide": "tsx scripts/decide-changes.ts",
+    "publish-model": "tsx scripts/publish-model.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
