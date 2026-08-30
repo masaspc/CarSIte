@@ -66,11 +66,33 @@ export interface GradeDiscriminator {
 }
 
 /**
+ * パワートレイン表記に現れる変速機と、slug に使う短縮形。
+ *
+ * 排気量と動力源だけでは足りない。ヤリスには「1.5L ガソリン車・CVT」と
+ * 「1.5L ガソリン車・6MT」が同じ Z/G/X で並び、どちらも 15gas になって
+ * unique(model_id, slug) に衝突した。
+ */
+const TRANSMISSION_TOKENS: ReadonlyArray<readonly [RegExp, string]> = [
+  // 「6MT」「5MT」「MT」およびカタカナ表記。DCT を先に見ないと MT に食われる
+  [/DCT|デュアルクラッチ/i, 'dct'],
+  [/\d*\s*MT(?![A-Za-z])|マニュアル/i, 'mt'],
+  [/CVT|無段変速/i, 'cvt'],
+  [/\d*\s*AT(?![A-Za-z])|オートマチック/i, 'at'],
+];
+
+/**
  * パワートレイン表記を slug 用の短い記号にする。
  * 「2.0L プラグインハイブリッド車」→「20phev」
+ * 「1.5L ガソリン車・6MT」→「15gas-mt」
  *
  * 排気量まで含めるのは、同じ動力源で排気量だけが違う設定があるためである
  * （プリウスの 2.0L ハイブリッドと 1.8L ハイブリッド）。
+ * 変速機まで含めるのは、同じ動力源・同じ排気量で変速機だけが違う設定が
+ * あるためである（ヤリスの 1.5L ガソリン CVT と 6MT）。
+ *
+ * 変速機の記載が無い表記には何も足さない。既に発行済みの slug を変えないためで、
+ * プリウスの「2.0L ハイブリッド車」は 20hv のままである。
+ *
  * どの規則にも当てはまらない表記はハッシュにする。捨てて衝突させるより、
  * 読めない文字列でも区別できるほうがよい。
  */
@@ -78,8 +100,16 @@ function powertrainToken(powertrain: string): string {
   const displacement = /(\d)\.(\d)\s*L/i.exec(powertrain);
   const size = displacement ? `${displacement[1]}${displacement[2]}` : '';
 
+  let transmission = '';
+  for (const [pattern, token] of TRANSMISSION_TOKENS) {
+    if (pattern.test(powertrain)) {
+      transmission = `-${token}`;
+      break;
+    }
+  }
+
   for (const [pattern, token] of POWERTRAIN_TOKENS) {
-    if (pattern.test(powertrain)) return `${size}${token}`;
+    if (pattern.test(powertrain)) return `${size}${token}${transmission}`;
   }
   return shortHash(powertrain);
 }

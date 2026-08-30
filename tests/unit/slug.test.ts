@@ -109,6 +109,64 @@ describe('gradeSlug — パワートレイン・駆動方式による識別', ()
     );
   });
 
+  it('変速機だけが違うパワートレインを区別する', () => {
+    /*
+     * ヤリスの実データで実際に衝突した。1.5L ガソリンの Z/G/X には CVT と 6MT が
+     * あり、どちらも 15gas に潰れて unique(model_id, slug) に弾かれ、
+     * 適用が stale になっていた（先に適用された6MT側が z-15gas-ff を取った）。
+     */
+    const cvt = gradeSlug('Z', { powertrain: '1.5L ガソリン車・CVT', driveSystem: 'FF' });
+    const mt = gradeSlug('Z', { powertrain: '1.5L ガソリン車・6MT', driveSystem: 'FF' });
+
+    expect(cvt).toBe('z-15gas-cvt-ff');
+    expect(mt).toBe('z-15gas-mt-ff');
+    expect(cvt).not.toBe(mt);
+  });
+
+  it('変速機の記載が無ければ何も足さない（発行済みの slug を変えない）', () => {
+    // slug は一度発行したら変えないという規約がある。プリウスは既に公開中で、
+    // ここが変わると共有URLと訪問者の localStorage の参照が壊れる
+    expect(gradeSlug('Z', { powertrain: '2.0L ハイブリッド車', driveSystem: 'FF' })).toBe(
+      'z-20hv-ff',
+    );
+    expect(gradeSlug('Z', { powertrain: '2.0L プラグインハイブリッド車', driveSystem: 'FF' })).toBe(
+      'z-20phev-ff',
+    );
+    expect(gradeSlug('G', { powertrain: '1.5L ガソリン車', driveSystem: 'FF' })).toBe('g-15gas-ff');
+  });
+
+  it('DCT を MT に食わせない', () => {
+    // 「デュアルクラッチ」も「MT」の正規表現に当たりうるため、判定順が要る
+    expect(gradeSlug('S', { powertrain: '1.6L ガソリン車・DCT', driveSystem: 'FF' })).toBe(
+      's-16gas-dct-ff',
+    );
+  });
+
+  it('実物のヤリスの全19構成が衝突しない', () => {
+    // yaris_spec_202604.pdf の12列を 2WD / E-Four・4WD に展開したもの
+    const rows: Array<readonly [string, string, string]> = [];
+    for (const name of ['Z', 'G', 'X', 'U']) {
+      rows.push([name, '1.5L ハイブリッド車', 'FF'], [name, '1.5L ハイブリッド車', '4WD']);
+    }
+    for (const name of ['Z', 'G', 'X']) {
+      rows.push(
+        [name, '1.5L ガソリン車・CVT', 'FF'],
+        [name, '1.5L ガソリン車・CVT', '4WD'],
+        [name, '1.5L ガソリン車・6MT', 'FF'],
+      );
+    }
+    for (const name of ['G', 'X']) rows.push([name, '1.0L ガソリン車・CVT', 'FF']);
+
+    const slugs = rows.map(([name, powertrain, driveSystem]) =>
+      gradeSlug(name, { powertrain, driveSystem }),
+    );
+
+    expect(new Set(slugs).size).toBe(rows.length);
+    expect(slugs).toContain('z-15gas-cvt-ff');
+    expect(slugs).toContain('z-15gas-mt-ff');
+    expect(slugs).toContain('g-10gas-cvt-ff');
+  });
+
   it('未知のパワートレイン表記はハッシュで区別する（衝突させない）', () => {
     const a = gradeSlug('Z', { powertrain: '謎の動力源A', driveSystem: 'FF' });
     const b = gradeSlug('Z', { powertrain: '謎の動力源B', driveSystem: 'FF' });

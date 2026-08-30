@@ -293,6 +293,25 @@ async function applyNewGrade(
   // 既に同じキーの行がある＝別経路で入っていた。世界のほうが変わった
   if (await findGrade(modelId, key)) return markUnappliable(id, 'stale');
 
+  /*
+   * slug の衝突は stale ではない。
+   *
+   * 識別子（名前/パワートレイン/駆動方式）が違っても slug が同じになることがある。
+   * gradeSlug は排気量・動力源・変速機・駆動方式しか見ないため、それ以外の点でしか
+   * 違わないパワートレイン表記は同じ slug に潰れる。
+   *
+   * これを stale と報告すると「対象データが動いた」という誤った診断になり、
+   * 運用者は差分を見直しに行って何も見つけられない。実際にはパワートレイン表記か
+   * gradeSlug を直せば解決する話なので blocked にする（blocked は承認キューに残り、
+   * 直して「適用」を押し直せる）。
+   */
+  const [slugTaken] = await db
+    .select({ id: grades.id })
+    .from(grades)
+    .where(and(eq(grades.modelId, modelId), eq(grades.slug, values.slug)))
+    .limit(1);
+  if (slugTaken) return markUnappliable(id, 'blocked');
+
   if (!(await claim(id, decidedBy))) return 'noop';
 
   try {

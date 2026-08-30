@@ -160,15 +160,35 @@ describe('grades の識別単位', () => {
       where name not like '__test_%'
     `);
 
-    // 103（シード。全て draft の架空データ）+ 6（プリウスの諸元表と実価格から作成した実データ）
-    // U 2件は KINTO専用仕様車で購入価格が無いため作成できず blocked のまま
+    // 103（シード。架空データ）+ 6（プリウス）+ 17（ヤリス）= 126
     //
-    // プリウスの実データ6件（型式を持つグレード）は運用者が確認・検証のうえ
-    // published にしている（tests/integration/publication.test.ts はテスト専用の
-    // 車種・グレードを使うようになり、この6件を巻き添えで draft に戻すことはない）。
-    // drafts が 103 なのはテストを緩めたのではなく、この実データが正しく
-    // 公開された事実に合わせた期待値である。
-    expect(rows[0].total).toBe(109);
-    expect(rows[0].drafts).toBe(103);
+    // プリウスは 8グレードのうち6件。ヤリスは 19グレードのうち17件。
+    // どちらも残りは U で、KINTO専用仕様車のため購入価格が存在せず、
+    // grades.price が NOT NULL である以上作成できない（blocked のまま承認キューに残る）。
+    //
+    // プリウスの実データ6件だけが運用者の確認・検証を経て published になっている。
+    // ヤリスの17件は取り込んだばかりで draft。
+    // drafts の値はテストを緩めた結果ではなく、公開された6件を差し引いた事実である。
+    expect(rows[0].total).toBe(126);
+    expect(rows[0].drafts).toBe(120);
+  });
+
+  it('ヤリスの17グレードが変速機まで区別された slug を持つ', async () => {
+    /*
+     * 1.5L ガソリンの CVT と 6MT は排気量も動力源も駆動方式も同じで、
+     * 旧 gradeSlug ではどちらも 15gas に潰れて unique(model_id, slug) に衝突し、
+     * 適用が stale になっていた。
+     */
+    const { rows } = await db.execute(sql`
+      select g.slug
+      from grades g join models m on m.id = g.model_id
+      where m.slug = 'yaris' and g.type_designation is not null
+    `);
+
+    const slugs = rows.map((r) => r.slug);
+    expect(slugs).toHaveLength(17);
+    expect(new Set(slugs).size).toBe(17);
+    expect(slugs).toContain('z-15gas-cvt-ff');
+    expect(slugs).toContain('z-15gas-mt-ff');
   });
 });
