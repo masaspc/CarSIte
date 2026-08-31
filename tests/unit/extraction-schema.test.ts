@@ -219,6 +219,10 @@ describe('normalizeDriveSystem — メーカーごとの表記', () => {
     expect(normalizeDriveSystem('2WD（前2輪駆動）')).toBe('FF');
   });
 
+  it('マツダの「2WD（FF）」を FF に写す', () => {
+    expect(normalizeDriveSystem('2WD（FF）')).toBe('FF');
+  });
+
   it('知らない表記は黙って FF に倒さず失敗する', () => {
     // 誤った駆動方式で公開するより、取り込みを止めるほうがよい
     expect(() => normalizeDriveSystem('謎の駆動')).toThrow(/解釈できません/);

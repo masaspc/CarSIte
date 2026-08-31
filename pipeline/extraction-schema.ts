@@ -25,6 +25,8 @@ export class UnknownEnumValueError extends Error {
 const DRIVE_SYSTEM_ALIASES: Record<string, (typeof DRIVE_SYSTEMS)[number]> = {
   '2WD': 'FF',
   '2WD（前2輪駆動）': 'FF',
+  // マツダは「2WD（FF）」と書く（MAZDA2の諸元表）
+  '2WD（FF）': 'FF',
   'E-FOUR': '4WD',
   // スズキは「フルタイム4WD」と書く（アルトの諸元表）
   'フルタイム4WD': '4WD',
