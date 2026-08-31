@@ -184,6 +184,14 @@ describe('gradeSlug — パワートレイン・駆動方式による識別', ()
     );
   });
 
+  it('ローマ数字をASCIIに写す（公開URLとして読めるように）', () => {
+    // マツダの「15C Ⅱ」。そのままだと非ASCII扱いでハッシュ混じりになる
+    expect(gradeSlug('15C Ⅱ', { powertrain: '1.5L ガソリン車・AT', driveSystem: 'FF' })).toBe(
+      '15c-ii-15gas-at-ff',
+    );
+    expect(gradeSlug('S Ⅲ')).toBe('s-iii');
+  });
+
   it('未知のパワートレイン表記はハッシュで区別する（衝突させない）', () => {
     const a = gradeSlug('Z', { powertrain: '謎の動力源A', driveSystem: 'FF' });
     const b = gradeSlug('Z', { powertrain: '謎の動力源B', driveSystem: 'FF' });

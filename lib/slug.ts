@@ -21,9 +21,24 @@ function hasNonAscii(value: string): boolean {
   return /[^\x00-\x7F]/.test(value);
 }
 
+/**
+ * ローマ数字はグレード名によく出る（マツダの「15C Ⅱ」など）。
+ *
+ * 非ASCIIなので、そのままだと slug がハッシュ混じりになる（15c-adfbd1）。
+ * 公開URLとして読めないので、ASCII に写してから slug にする。
+ */
+const ROMAN_NUMERALS: Record<string, string> = {
+  '\u2160': 'i', '\u2161': 'ii', '\u2162': 'iii', '\u2163': 'iv', '\u2164': 'v',
+  '\u2165': 'vi', '\u2166': 'vii', '\u2167': 'viii', '\u2168': 'ix', '\u2169': 'x',
+};
+
+function expandRomanNumerals(value: string): string {
+  return value.replace(/[\u2160-\u2169]/g, (letter) => ROMAN_NUMERALS[letter] ?? letter);
+}
+
 /** ASCII英数字だけを残したslug。作れないときは空文字 */
 function asciiSlug(value: string): string {
-  return value
+  return expandRomanNumerals(value)
     .replace(/[^0-9A-Za-z]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .toLowerCase();
@@ -128,7 +143,8 @@ function powertrainToken(powertrain: string): string {
  */
 export function gradeSlug(grade: string, discriminator?: GradeDiscriminator): string {
   const ascii = asciiSlug(grade);
-  const base = hasNonAscii(grade)
+  // ローマ数字を写したあとで判定する。写せた文字はハッシュで区別する必要が無い
+  const base = hasNonAscii(expandRomanNumerals(grade))
     ? ascii
       ? `${ascii}-${shortHash(grade)}`
       : `grade-${shortHash(grade)}`
