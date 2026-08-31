@@ -167,6 +167,23 @@ describe('gradeSlug — パワートレイン・駆動方式による識別', ()
     expect(slugs).toContain('g-10gas-cvt-ff');
   });
 
+  it('軽自動車の小数2桁の排気量も slug に入る', () => {
+    // 0.66L は小数1桁しか見ない規則だと排気量が落ちて a-gas-ff になっていた
+    expect(gradeSlug('HYBRID X', { powertrain: '0.66L ハイブリッド車', driveSystem: 'FF' })).toBe(
+      'hybrid-x-066hv-ff',
+    );
+    expect(gradeSlug('L', { powertrain: '0.66L ガソリン車', driveSystem: '4WD' })).toBe(
+      'l-066gas-4wd',
+    );
+  });
+
+  it('小数1桁の既存表記は変わらない（発行済みの slug を守る）', () => {
+    expect(gradeSlug('Z', { powertrain: '2.0L ハイブリッド車', driveSystem: 'FF' })).toBe('z-20hv-ff');
+    expect(gradeSlug('Z', { powertrain: '1.5L ガソリン車・CVT', driveSystem: 'FF' })).toBe(
+      'z-15gas-cvt-ff',
+    );
+  });
+
   it('未知のパワートレイン表記はハッシュで区別する（衝突させない）', () => {
     const a = gradeSlug('Z', { powertrain: '謎の動力源A', driveSystem: 'FF' });
     const b = gradeSlug('Z', { powertrain: '謎の動力源B', driveSystem: 'FF' });

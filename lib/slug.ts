@@ -97,7 +97,8 @@ const TRANSMISSION_TOKENS: ReadonlyArray<readonly [RegExp, string]> = [
  * 読めない文字列でも区別できるほうがよい。
  */
 function powertrainToken(powertrain: string): string {
-  const displacement = /(\d)\.(\d)\s*L/i.exec(powertrain);
+  // 軽自動車は 0.66L のように小数2桁で書く。1桁しか見ないと排気量が slug から落ちる
+  const displacement = /(\d)\.(\d{1,2})\s*L/i.exec(powertrain);
   const size = displacement ? `${displacement[1]}${displacement[2]}` : '';
 
   let transmission = '';

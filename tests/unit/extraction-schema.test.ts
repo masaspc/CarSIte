@@ -208,3 +208,19 @@ describe('features を持たない入力', () => {
     expect(parsed.success).toBe(false);
   });
 });
+
+describe('normalizeDriveSystem — メーカーごとの表記', () => {
+  it('スズキの「フルタイム4WD」を 4WD に写す', () => {
+    // アルトの諸元表の表記そのもの。写像表に無いと取り込みが例外で止まる
+    expect(normalizeDriveSystem('フルタイム4WD')).toBe('4WD');
+  });
+
+  it('スズキの「2WD（前2輪駆動）」を FF に写す', () => {
+    expect(normalizeDriveSystem('2WD（前2輪駆動）')).toBe('FF');
+  });
+
+  it('知らない表記は黙って FF に倒さず失敗する', () => {
+    // 誤った駆動方式で公開するより、取り込みを止めるほうがよい
+    expect(() => normalizeDriveSystem('謎の駆動')).toThrow(/解釈できません/);
+  });
+});
