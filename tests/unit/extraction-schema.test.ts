@@ -223,6 +223,11 @@ describe('normalizeDriveSystem — メーカーごとの表記', () => {
     expect(normalizeDriveSystem('2WD（FF）')).toBe('FF');
   });
 
+  it('スバルの「FWD」を FF に、「AWD」を 4WD に写す', () => {
+    expect(normalizeDriveSystem('FWD')).toBe('FF');
+    expect(normalizeDriveSystem('AWD')).toBe('4WD');
+  });
+
   it('知らない表記は黙って FF に倒さず失敗する', () => {
     // 誤った駆動方式で公開するより、取り込みを止めるほうがよい
     expect(() => normalizeDriveSystem('謎の駆動')).toThrow(/解釈できません/);
