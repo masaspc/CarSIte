@@ -5,7 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { models, specDocuments, specSources } from '@/db/schema';
 import { buildPdfUrl, isStale } from '@/lib/spec-url';
-import { fetchAndValidate, findLatestMonth } from '@/pipeline/fetch';
+import { fetchAndValidate, fetchDocument, findLatestMonth } from '@/pipeline/fetch';
 import { createFetchHttp, type Http } from '@/pipeline/http';
 import { countPdfPages } from '@/pipeline/pdf';
 
@@ -109,7 +109,7 @@ type SourceRow = {
   id: string;
   modelId: string;
   pdfBaseUrl: string;
-  urlKind: 'monthly' | 'fixed';
+  urlKind: 'monthly' | 'fixed' | 'html';
   knownMonth: string | null;
   consecutiveFailures: number;
 };
@@ -133,7 +133,7 @@ async function collectOne(
   let month: string | null = null;
   let url: string;
 
-  if (source.urlKind === 'fixed') {
+  if (source.urlKind === 'fixed' || source.urlKind === 'html') {
     url = source.pdfBaseUrl;
   } else {
     const found = await findLatestMonth(
@@ -167,8 +167,16 @@ async function collectOne(
   /** ログの見出し。fixed は年月を持たないので「最新版」と書く */
   const version = month ?? '最新版';
 
-  // 2. 取得して検査する
-  const pdf = await fetchAndValidate(url, deps.http, deps.countPages);
+  /*
+   * 2. 取得して検査する
+   *
+   * html はPDFではないので、ページ数・Content-Type・暗号化の検証を行わない。
+   * 原本を保存して sha256 で変更を検知する、という収集の役割は変わらない。
+   */
+  const pdf =
+    source.urlKind === 'html'
+      ? await fetchDocument(url, deps.http)
+      : await fetchAndValidate(url, deps.http, deps.countPages);
 
   const [duplicate] = await db
     .select({ id: specDocuments.id })
@@ -194,7 +202,10 @@ async function collectOne(
   }
 
   // 3. 書類として記録し、原本を残す
-  const storedPath = path.join(deps.storageDir, `${pdf.sha256}.pdf`);
+  const storedPath = path.join(
+    deps.storageDir,
+    `${pdf.sha256}.${source.urlKind === 'html' ? 'html' : 'pdf'}`,
+  );
   await mkdir(deps.storageDir, { recursive: true });
   await writeFile(storedPath, pdf.bytes);
 

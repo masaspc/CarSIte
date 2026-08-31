@@ -40,8 +40,11 @@ export const publicationStatusEnum = pgEnum('publication_status', PUBLICATION_ST
  * ホンダとスズキは年月を持たない固定URLで、同じURLの中身が差し替わる
  * （fit_spec_list.pdf / detail.pdf）。前者は最新の年月を探す必要があるが、
  * 後者は取りに行って sha256 を比べるだけでよい。
+ *
+ * html は三菱のようにPDFが存在せず、諸元がHTMLの表で公開されている場合。
+ * 取得の仕方は fixed と同じで、PDFとしての検証を行わない点だけが違う。
  */
-export const sourceUrlKindEnum = pgEnum('source_url_kind', ['monthly', 'fixed']);
+export const sourceUrlKindEnum = pgEnum('source_url_kind', ['monthly', 'fixed', 'html']);
 
 export type BodyType = (typeof bodyTypeEnum.enumValues)[number];
 export type EngineType = (typeof engineTypeEnum.enumValues)[number];

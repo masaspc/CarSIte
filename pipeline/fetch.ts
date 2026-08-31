@@ -49,6 +49,33 @@ export interface FetchedPdf {
  * 検査に落ちたものは例外にする。壊れたPDFや取説PDFを黙ってモデルに渡すと、
  * 費用が跳ね上がるうえに誤ったデータが承認キューに流れ込む。
  */
+/**
+ * PDFを持たないメーカーのために、検証を外して取得だけ行う。
+ *
+ * 三菱は諸元も装備もHTMLの表で公開しており、PDFが存在しない。
+ * spec_documents が記録しているのは「原本のある版・その sha256・保存先」であって、
+ * それがPDFである必要は無い。取り込み（ingest-spec）も書類の中身は見ない。
+ *
+ * PDFの検証（ページ数・Content-Type・暗号化）は当然できないので、
+ * ページ数は 1 を入れる。原本を保存して sha256 で変更を検知する、という
+ * 収集の役割はそのまま成立する。
+ */
+export async function fetchDocument(url: string, http: Http): Promise<FetchedPdf> {
+  const response = await http.get(url);
+  if (response.status !== 200) {
+    throw new Error(`書類の取得に失敗しました: HTTP ${response.status} ${url}`);
+  }
+  if (response.bytes.length === 0) {
+    throw new Error(`書類が空でした: ${url}`);
+  }
+  return {
+    bytes: response.bytes,
+    sha256: createHash('sha256').update(response.bytes).digest('hex'),
+    pageCount: 1,
+    byteSize: response.bytes.length,
+  };
+}
+
 export async function fetchAndValidate(
   url: string,
   http: Http,
