@@ -276,6 +276,54 @@ describe('applyChangeRequest — new_grade', () => {
     expect(created.publicationStatus).toBe('draft');
   });
 
+  it('新規作成でも寸法・出力・燃費内訳・エアバッグが入る', async () => {
+    /*
+     * 更新経路（buildGradePatch）と新規作成経路（buildNewGradeValues）で
+     * 書き込む列の一覧が別々になっており、寸法などを足したとき更新経路だけを
+     * 直していた。既存グレードの更新では入るのに新規作成では null のまま、
+     * という状態になっていた（ホンダ フィットを新規に作って発覚）。
+     */
+    const model = await newModel();
+    const dimensions = { length: 4080, width: 1695, height: 1540 };
+    const request = await newChangeRequest(model.id, {
+      kind: 'new_grade',
+      targetKey: `G/${POWERTRAIN}/4WD`,
+      diff: {
+        ...newGradeDiff,
+        airbags: { before: null, after: 6 },
+        transmissionType: { before: null, after: 'CVT' },
+        dimensions: { before: null, after: dimensions },
+        performance: { before: null, after: { maxPower: '78/6000', maxTorque: '127/4500' } },
+        fuelDetail: { before: null, after: { cityMode: 28, highwayMode: 27.9 } },
+      },
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('applied');
+
+    const [created] = await db
+      .select()
+      .from(grades)
+      .where(and(eq(grades.modelId, model.id), eq(grades.name, 'G')));
+    expect(created.airbags).toBe(6);
+    expect(created.transmissionType).toBe('CVT');
+    expect(created.dimensions).toEqual(dimensions);
+    expect(created.performance).toEqual({ maxPower: '78/6000', maxTorque: '127/4500' });
+    expect(created.fuelDetail).toEqual({ cityMode: 28, highwayMode: 27.9 });
+  });
+
+  it('jsonb 列に配列を渡した新規作成は blocked になる', async () => {
+    // 読み出す側（比較表）はオブジェクトとして扱う。形が違うと描画で落ちる
+    const model = await newModel();
+    const request = await newChangeRequest(model.id, {
+      kind: 'new_grade',
+      targetKey: `G/${POWERTRAIN}/4WD`,
+      diff: { ...newGradeDiff, dimensions: { before: null, after: [1, 2, 3] } },
+    });
+
+    expect(await applyChangeRequest(request.id, 'tester')).toBe('blocked');
+    expect(await countGrades(model.id)).toBe(0);
+  });
+
   it('同じものをもう一度適用しても行は増えない', async () => {
     const model = await newModel();
     await newGrade(model.id);

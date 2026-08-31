@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { grades, models } from '@/db/schema';
-import { findPublishedModel, listPublishedGrades } from '@/db/queries';
+import { PAGE_SIZE, findPublishedModel, listPublishedGrades } from '@/db/queries';
 
 const rand = () => Math.random().toString(36).slice(2, 10);
 
@@ -60,9 +60,25 @@ describe('listPublishedGrades', () => {
     expect(rows.every((r) => r.publicationStatus === 'published')).toBe(true);
   });
 
-  it('公開件数と総数が一致する', async () => {
-    const { rows, total } = await listPublishedGrades({});
-    expect(total).toBe(rows.length);
+  it('total は絞り込み全体の件数で、rows は1ページぶん', async () => {
+    /*
+     * 以前は total === rows.length を期待していたが、これは公開件数が
+     * PAGE_SIZE（24）に収まっているあいだだけ成り立つ式だった。実データが
+     * 34件になった時点で壊れた。ページングの意味そのものを確かめる形にする。
+     */
+    const first = await listPublishedGrades({});
+    expect(first.rows.length).toBeLessThanOrEqual(PAGE_SIZE);
+    expect(first.total).toBeGreaterThanOrEqual(first.rows.length);
+
+    if (first.total > PAGE_SIZE) {
+      expect(first.rows).toHaveLength(PAGE_SIZE);
+      const second = await listPublishedGrades({ page: 2 });
+      // 総数はページによらず同じ。次のページは別の行を返す
+      expect(second.total).toBe(first.total);
+      expect(second.rows.length).toBeGreaterThan(0);
+      const firstIds = new Set(first.rows.map((r) => r.id));
+      expect(second.rows.every((r) => !firstIds.has(r.id))).toBe(true);
+    }
   });
 
   it('価格の上限で絞り込める', async () => {
