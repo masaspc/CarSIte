@@ -370,6 +370,22 @@ function buildNewGradeValues(diff: Diff, modelId: string) {
 
   const wltcMode = after('wltcMode');
 
+  /*
+   * 任意の列は columnValue に通す。検証を1箇所にまとめるためで、
+   * ここに列名を並べ直すと更新経路（buildGradePatch）と食い違う。
+   *
+   * 実際に食い違った。寸法・出力・燃費内訳を足したとき更新経路だけを直したので、
+   * 既存グレードの更新では入るのに新規作成では null のまま、という状態になった。
+   * プリウスとヤリスは既に作成済みで更新経路を通ったため気づかず、
+   * ホンダ フィットを新規に作って初めて出た。
+   */
+  const extras: Record<string, unknown> = {};
+  for (const column of OPTIONAL_NEW_GRADE_COLUMNS) {
+    const value = columnValue(column, after(column));
+    if (value === INVALID) return null;
+    extras[column] = value;
+  }
+
   return {
     modelId,
     name,
@@ -384,9 +400,24 @@ function buildNewGradeValues(diff: Diff, modelId: string) {
     weight: asNullableInteger(after('weight')),
     displacement: asNullableInteger(after('displacement')),
     wltcMode: wltcMode === null ? null : String(wltcMode),
+    ...extras,
     ...features,
   };
 }
+
+/**
+ * 新規グレードにも書き込む任意の列。
+ *
+ * 必須の列（name / price / seating / engineType / driveSystem / powertrain）は
+ * 上で個別に検証している。ここは無くても作成できる列で、値があれば入れる。
+ */
+const OPTIONAL_NEW_GRADE_COLUMNS = [
+  'cruisingRange',
+  'airbags',
+  'transmissionType',
+  'gearCount',
+  ...JSON_GRADE_COLUMNS,
+] as const;
 
 async function applyNewModel(id: string, diff: Diff, decidedBy: string): Promise<ApplyResult> {
   const after = (key: string) => diff[key]?.after ?? null;
