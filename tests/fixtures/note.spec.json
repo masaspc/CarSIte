@@ -1,0 +1,264 @@
+{
+  "modelName": "ノート",
+  "grades": [
+    {
+      "name": "X",
+      "powertrain": "1.2L ハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6AA-E13",
+      "price": 2399100,
+      "seating": 5,
+      "weight": 1230,
+      "displacement": 1198,
+      "wltcMode": 28.4,
+      "engineType": "ハイブリッド",
+      "transmission": null,
+      "airbags": 7,
+      "dimensions": {
+        "length": 4045,
+        "width": 1695,
+        "height": 1520,
+        "wheelbase": 2580,
+        "groundClearance": 135,
+        "minTurningRadius": 4.9
+      },
+      "performance": {
+        "maxPower": "60kW（82PS）/6000rpm",
+        "maxTorque": "103N・m（10.5kgf・m）/4800rpm"
+      },
+      "fuelDetail": {
+        "cityMode": 28.3,
+        "suburbanMode": 30.6,
+        "highwayMode": 27.1
+      },
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "option",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "option",
+        "etc": "option",
+        "backCamera": "option",
+        "powerSeat": "none",
+        "seatHeater": "option",
+        "steeringHeater": "option",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
+    },
+    {
+      "name": "X Black Edition",
+      "powertrain": "1.2L ハイブリッド車",
+      "driveSystemRaw": "2WD",
+      "typeDesignation": "6AA-E13",
+      "price": 2499200,
+      "seating": 5,
+      "weight": 1230,
+      "displacement": 1198,
+      "wltcMode": 28.4,
+      "engineType": "ハイブリッド",
+      "transmission": null,
+      "airbags": 7,
+      "dimensions": {
+        "length": 4045,
+        "width": 1695,
+        "height": 1520,
+        "wheelbase": 2580,
+        "groundClearance": 135,
+        "minTurningRadius": 4.9
+      },
+      "performance": {
+        "maxPower": "60kW（82PS）/6000rpm",
+        "maxTorque": "103N・m（10.5kgf・m）/4800rpm"
+      },
+      "fuelDetail": {
+        "cityMode": 28.3,
+        "suburbanMode": 30.6,
+        "highwayMode": 27.1
+      },
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "option",
+        "blindSpotMonitor": "standard",
+        "camera360": "standard",
+        "parkingAssist": "none",
+        "navigation": "option",
+        "etc": "option",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "option",
+        "steeringHeater": "option",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
+    },
+    {
+      "name": "X FOUR",
+      "powertrain": "1.2L ハイブリッド車",
+      "driveSystemRaw": "4WD",
+      "typeDesignation": "6AA-SNE13",
+      "price": 2685100,
+      "seating": 5,
+      "weight": 1350,
+      "displacement": 1198,
+      "wltcMode": 23.8,
+      "engineType": "ハイブリッド",
+      "transmission": null,
+      "airbags": 7,
+      "dimensions": {
+        "length": 4045,
+        "width": 1695,
+        "height": 1520,
+        "wheelbase": 2580,
+        "groundClearance": 140,
+        "minTurningRadius": 4.9
+      },
+      "performance": {
+        "maxPower": "60kW（82PS）/6000rpm",
+        "maxTorque": "103N・m（10.5kgf・m）/4800rpm"
+      },
+      "fuelDetail": {
+        "cityMode": 23.5,
+        "suburbanMode": 25.7,
+        "highwayMode": 22.8
+      },
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "option",
+        "blindSpotMonitor": "option",
+        "camera360": "option",
+        "parkingAssist": "none",
+        "navigation": "option",
+        "etc": "option",
+        "backCamera": "option",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "standard",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
+    },
+    {
+      "name": "X FOUR Black Edition",
+      "powertrain": "1.2L ハイブリッド車",
+      "driveSystemRaw": "4WD",
+      "typeDesignation": "6AA-SNE13",
+      "price": 2785200,
+      "seating": 5,
+      "weight": 1350,
+      "displacement": 1198,
+      "wltcMode": 23.8,
+      "engineType": "ハイブリッド",
+      "transmission": null,
+      "airbags": 7,
+      "dimensions": {
+        "length": 4045,
+        "width": 1695,
+        "height": 1520,
+        "wheelbase": 2580,
+        "groundClearance": 140,
+        "minTurningRadius": 4.9
+      },
+      "performance": {
+        "maxPower": "60kW（82PS）/6000rpm",
+        "maxTorque": "103N・m（10.5kgf・m）/4800rpm"
+      },
+      "fuelDetail": {
+        "cityMode": 23.5,
+        "suburbanMode": 25.7,
+        "highwayMode": 22.8
+      },
+      "features": {
+        "collisionMitigationBrake": "standard",
+        "falseStartSuppression": "standard",
+        "laneDepartureWarning": "standard",
+        "laneKeepingAssist": "standard",
+        "adaptiveCruiseControl": "option",
+        "blindSpotMonitor": "standard",
+        "camera360": "standard",
+        "parkingAssist": "none",
+        "navigation": "option",
+        "etc": "option",
+        "backCamera": "standard",
+        "powerSeat": "none",
+        "seatHeater": "standard",
+        "steeringHeater": "standard",
+        "autoAircon": "standard",
+        "ledHeadlight": "standard",
+        "smartKey": "standard",
+        "powerBackDoor": "none",
+        "handsFreeBackDoor": "none",
+        "sunroof": "none"
+      }
+    }
+  ],
+  "_priceProvenance": {
+    "source": "https://www3.nissan.co.jp/vehicles/new/note/specifications.html#grade",
+    "readAt": "2026-08-31",
+    "readBy": "Claude Opus 5 が Chrome 経由でページを描画させ、2WD/4WD のタブを切り替えて読み取った",
+    "note": "グレード一覧の表は innerText に出ないため画面で読んだ。ページのWLTC値（28.4 / 23.8）が諸元表と一致することを確認済み。",
+    "excluded": "AUTECH LINE / AUTECH CROSSOVER（別の諸元表PDFを持つ別系統）と LV（福祉車両）は取り込んでいない。"
+  },
+  "_specProvenance": {
+    "source": "storage/pdfs/…（日産 ノート 主要装備一覧・主要諸元 / note_2608_specsheet.pdf）2ページ目の右側",
+    "readAt": "2026-08-31",
+    "layout": "ページ幅が1417ptあり、装備一覧と主要諸元が同じページの左右に並ぶ。「ページ単位で諸元か装備か決まる」という前提はトヨタでしか成り立たない。",
+    "transmission": "e-POWER は発電したモーターで直接駆動し変速機を持たない。メーカーのグレード一覧も「トランスミッション -」と表示するため null にした。",
+    "performance": "発電用エンジン HR12DE の値を入れた。駆動はモーター EM47（4WD は MM48 を追加）が行うが、トヨタ・ホンダでもエンジン側を採っているため揃えた。",
+    "urlKind": "URLのパスの途中に年月がある（/note/2608/pdf/note_2608_specsheet.pdf）。年月が2箇所に出るため monthly では組み立てられず fixed で登録した。月が変わると404になり、collect が3回失敗で人間に上げる。",
+    "cruisingRange": "諸元表に航続可能距離の記載が無いため null。"
+  },
+  "_featureProvenance": {
+    "source": "同じPDFの1ページ目全体と2ページ目の左側",
+    "readAt": "2026-08-31",
+    "legend": "水色(192,224,240)=標準装備、紫(192,160,208)=Black Edition専用装備、黄(240,240,176)=メーカーオプション、緑(168,216,192)=ディーラーオプション、桃(240,192,216)=架装オプション、白=設定なし。色が6種類あり、トヨタ(4種)・スズキ(3種)より多い。",
+    "optionMapping": "メーカーオプション・ディーラーオプション・架装オプションはいずれも option に写した。feature_availability に区別する値が無く、買い手から見れば「追加費用を払えば付く」で同じである。Black Edition専用装備（紫）は該当する行が20項目に無かった（内外装のトリムのみ）。",
+    "layoutPitfall": "装備表は左右2つのブロックに分かれ、それぞれに4列がある。最初は左側のラベルと右側の色を突き合わせてしまい、「UVカットグリーンガラスがディーラーオプション」のような明らかに誤った結果が出た。ラベルのx範囲と列のx範囲を対にして扱う必要がある。",
+    "columns": "4列（X / X Black Edition / X FOUR / X FOUR Black Edition）。65pt等間隔。左ブロックは x=444.8/510.3/575.5/640.8、右ブロックは x=1153.4/1219.0/1284.1/1349.3。",
+    "rowMapping": {
+      "collisionMitigationBrake": "インテリジェント エマージェンシーブレーキ。個別行ではなく全車標準装備の文章欄に記載",
+      "falseStartSuppression": "踏み間違い衝突防止アシスト",
+      "laneDepartureWarning": "LDW（車線逸脱警報）",
+      "laneKeepingAssist": "インテリジェント LI（車線逸脱防止支援システム）",
+      "adaptiveCruiseControl": "プロパイロット（ナビリンク機能付）。全グレードでメーカーオプション",
+      "blindSpotMonitor": "インテリジェント BSI（後側方衝突防止支援システム）／BSW（後側方車両検知警報）。Black Edition は標準、素のグレードはオプション",
+      "camera360": "インテリジェント アラウンドビューモニター（移動物検知機能付）。Black Edition は標準",
+      "parkingAssist": "記載なし。プロパイロット パーキングの設定が無いため全グレード none",
+      "navigation": "NissanConnectナビゲーションシステム（メーカーオプション）。日産オリジナルナビゲーション（ディーラーオプション）もあり、どちらも option",
+      "etc": "ETC2.0（ナビレコお買い得パックに含まれるディーラーオプション）",
+      "backCamera": "バックビューモニター（ディーラーオプション）。Black Edition はアラウンドビューモニターが標準で後方も映るため standard とした",
+      "powerSeat": "記載なし。運転席シートリフターはラチェット式（手動）。全グレード none",
+      "seatHeater": "前席ヒーター付シート。4WD は標準、2WD はホットプラスパッケージのオプション",
+      "steeringHeater": "ホットプラスパッケージに含まれるステアリングヒーター。4WD は標準、2WD はオプション",
+      "autoAircon": "オートエアコン",
+      "ledHeadlight": "LEDヘッドランプ（ハイ/ロービーム、マニュアルレベライザー付）",
+      "smartKey": "インテリジェントキー（運転席・助手席・バックドア感知、作動確認機能付）",
+      "powerBackDoor": "記載なし。全グレード none",
+      "handsFreeBackDoor": "記載なし。全グレード none",
+      "sunroof": "記載なし。全グレード none"
+    },
+    "airbags": "SRSエアバッグ〈前席〉（2）＋SRSニーエアバッグ〈運転席〉（1）＋SRSサイドエアバッグ〈前席〉（2）＋カーテンエアバッグ（2）＝7個。"
+  }
+}
