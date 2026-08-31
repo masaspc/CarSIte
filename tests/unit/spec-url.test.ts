@@ -123,3 +123,20 @@ describe('inferUrlKind / assertBaseUrlShape', () => {
     }
   });
 });
+
+describe('inferUrlKind — HTMLの収集元', () => {
+  it('.html で終わるURLは html', () => {
+    // 三菱はPDFを持たず、諸元も装備もHTMLの表で公開している
+    expect(inferUrlKind('https://www.mitsubishi-motors.co.jp/lineup/ek_x/spec/spe_02.html')).toBe(
+      'html',
+    );
+  });
+
+  it('html なのに .pdf を渡したら弾く', () => {
+    expect(() => assertBaseUrlShape('https://example.com/a.pdf', 'html')).toThrow(/HTMLページ/);
+  });
+
+  it('fixed なのに .html を渡したら弾く', () => {
+    expect(() => assertBaseUrlShape('https://example.com/a.html', 'fixed')).toThrow(/\.pdf で終わる/);
+  });
+});

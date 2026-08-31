@@ -30,7 +30,7 @@ function parseArgs(argv: string[]): Record<string, string> {
 
 export class RegistrationError extends Error {}
 
-export type UrlKind = 'monthly' | 'fixed';
+export type UrlKind = 'monthly' | 'fixed' | 'html';
 
 /**
  * URLの形から取得方式を決める。
@@ -43,7 +43,10 @@ export type UrlKind = 'monthly' | 'fixed';
  * 推測した結果を必ず表示して人が確かめられるようにする。
  */
 export function inferUrlKind(url: string): UrlKind {
-  return url.endsWith('_') ? 'monthly' : 'fixed';
+  if (url.endsWith('_')) return 'monthly';
+  // 三菱はPDFを持たず、諸元がHTMLの表で公開されている
+  if (/\.html?(?:$|[?#])/i.test(url)) return 'html';
+  return 'fixed';
 }
 
 /** URLの形を検査する。方式ごとに要求が違う */
@@ -57,6 +60,9 @@ export function assertBaseUrlShape(baseUrl: string, kind: UrlKind = inferUrlKind
     throw new RegistrationError(
       `monthly のベースパスは末尾を "_" にしてください（年月を後ろに付けるため）: ${baseUrl}`,
     );
+  }
+  if (kind === 'html' && !/\.html?(?:$|[?#])/i.test(baseUrl)) {
+    throw new RegistrationError(`html はHTMLページのURLを指定してください: ${baseUrl}`);
   }
   if (kind === 'fixed' && !/\.pdf(?:$|[?#])/i.test(baseUrl)) {
     throw new RegistrationError(
@@ -75,15 +81,16 @@ async function main() {
       '使い方: npm run register-source -- --model-slug <slug> --base-url <url> [--url-kind monthly|fixed]\n' +
         '  monthly … 年月を足す（トヨタ）。末尾が "_" のベースパス\n' +
         '  fixed   … 年月を持たない固定URL（ホンダ・スズキ）。.pdf で終わる完全なURL\n' +
+        '  html    … PDFが無くHTMLの表で公開されている場合（三菱）\n' +
         '  省略するとURLの形から推測する',
     );
   }
 
   const kindArg = args['url-kind'];
-  if (kindArg !== undefined && kindArg !== 'monthly' && kindArg !== 'fixed') {
-    throw new RegistrationError(`--url-kind は monthly か fixed です: ${kindArg}`);
+  if (kindArg !== undefined && !['monthly', 'fixed', 'html'].includes(kindArg)) {
+    throw new RegistrationError(`--url-kind は monthly / fixed / html です: ${kindArg}`);
   }
-  const urlKind: UrlKind = kindArg ?? inferUrlKind(baseUrl);
+  const urlKind: UrlKind = (kindArg as UrlKind | undefined) ?? inferUrlKind(baseUrl);
   assertBaseUrlShape(baseUrl, urlKind);
 
   const found = await db
