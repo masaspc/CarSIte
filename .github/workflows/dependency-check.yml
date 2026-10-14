@@ -1,0 +1,31 @@
+name: dependency-check
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/dependency-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  clean-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+        env:
+          # Unit tests import scripts that check this variable without querying a DB.
+          DATABASE_URL: postgresql://test:test@127.0.0.1:5432/carsite_test
+          # Keep the optional paid extraction test disabled.
+          ANTHROPIC_API_KEY: ''
